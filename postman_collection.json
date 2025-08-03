@@ -1,0 +1,513 @@
+{
+  "info": {
+    "name": "Inventory Management API",
+    "description": "Complete API collection for the Next.js 14 Inventory Management System",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Update User Settings",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1234567890\",\n  \"location\": \"New York, NY\",\n  \"bio\": \"Inventory manager\",\n  \"timezone\": \"America/New_York\",\n  \"language\": \"en\",\n  \"currency\": \"USD\",\n  \"dateFormat\": \"MM/DD/YYYY\",\n  \"emailNotifications\": true,\n  \"lowStockAlerts\": true,\n  \"weeklyReports\": false,\n  \"marketingEmails\": false,\n  \"theme\": \"system\",\n  \"autoLogout\": true,\n  \"twoFactorAuth\": false\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}/settings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Electronic devices and accessories\",\n  \"color\": \"#3B82F6\",\n  \"icon\": \"laptop\",\n  \"parentId\": null\n}"
+            },
+            "url": "{{baseUrl}}/api/categories"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory Items",
+      "item": [
+        {
+          "name": "Get Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/items",
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "key": "stockStatus",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Laptop\",\n  \"description\": \"High-performance laptop\",\n  \"quantity\": 10,\n  \"price\": 999.99,\n  \"categoryId\": \"{{categoryId}}\",\n  \"sku\": \"LAP001\",\n  \"barcode\": \"1234567890123\",\n  \"unit\": \"piece\",\n  \"minQuantity\": 2,\n  \"maxQuantity\": 50,\n  \"location\": \"Warehouse A\",\n  \"supplier\": \"Tech Supplies Inc\",\n  \"costPrice\": 800.00,\n  \"tags\": [\"electronics\", \"computer\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/items"
+          }
+        },
+        {
+          "name": "Get Item by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Laptop\",\n  \"description\": \"Updated description\",\n  \"quantity\": 15,\n  \"price\": 1099.99,\n  \"categoryId\": \"{{categoryId}}\",\n  \"sku\": \"LAP001-UPD\",\n  \"barcode\": \"1234567890124\",\n  \"unit\": \"piece\",\n  \"minQuantity\": 3,\n  \"maxQuantity\": 60,\n  \"location\": \"Warehouse B\",\n  \"supplier\": \"Updated Tech Supplies\",\n  \"costPrice\": 900.00,\n  \"tags\": [\"electronics\", \"computer\", \"updated\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Update Item Quantity",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 20,\n  \"type\": \"ADJUSTMENT\",\n  \"reason\": \"Stock adjustment\",\n  \"notes\": \"Manual inventory correction\"\n}"
+            },
+            "url": "{{baseUrl}}/api/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Delete Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Export Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/items/export",
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                },
+                {
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "key": "stockStatus",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - User Management",
+      "item": [
+        {
+          "name": "Get Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "role",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"role\": \"manager\",\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/users"
+          }
+        },
+        {
+          "name": "Get User by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Update User (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"role\": \"admin\",\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Bulk Actions (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"activate\",\n  \"userIds\": [\"{{userId1}}\", \"{{userId2}}\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/users/bulk"
+          }
+        },
+        {
+          "name": "Export Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/export",
+              "query": [
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "role",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Inventory Management",
+      "item": [
+        {
+          "name": "Get Global Inventory (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/inventory",
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "key": "stockStatus",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Global Inventory (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/inventory/export",
+              "query": [
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "key": "stockStatus",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Analytics",
+      "item": [
+        {
+          "name": "Get Analytics (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/analytics"
+          }
+        }
+      ]
+    }
+  ]
+} 
