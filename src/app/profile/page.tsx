@@ -1,112 +1,178 @@
 "use client";
 
-import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
-import { DashboardLayout } from "@/components/layout";
-import { ProfileForm } from "@/components/profile/ProfileForm";
-import { PersonalInventory } from "@/components/profile/PersonalInventory";
-import { AccountSettings } from "@/components/profile/AccountSettings";
-import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { User, Package, Settings, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Loader2, ArrowLeft, User, Save, Phone, MapPin, ShoppingBag } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user } = useUser();
-  const [activeTab, setActiveTab] = useState("profile");
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
 
-  if (!user) {
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/sign-in?callbackUrl=/profile");
+    } else if (status === "authenticated") {
+      setName(session?.user?.name || "");
+      fetchProfile();
+    }
+  }, [status, session, router]);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch("/api/users/me");
+      if (response.ok) {
+        const data = await response.json();
+        setName(data.name || session?.user?.name || "");
+        setPhone(data.phone || "");
+        setAddress(data.address || "");
+      }
+    } catch {
+      // Use session defaults
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, address }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch {
+      // Ignore error
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (status === "loading" || loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading profile...</p>
-          </div>
-        </div>
-      </DashboardLayout>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Profile Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-            <p className="text-muted-foreground">
-              Manage your account settings and view your personal inventory.
-            </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="px-3 sm:px-4 lg:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/shop" className="text-gray-500 hover:text-gray-900 transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <h1 className="text-lg font-semibold text-gray-900">My Profile</h1>
+          </div>
+          <Link href="/shop">
+            <Button variant="outline" size="sm" className="font-medium gap-1.5">
+              <ShoppingBag className="h-4 w-4" /> Shop
+            </Button>
+          </Link>
+        </div>
+      </header>
+
+      <div className="px-3 sm:px-4 lg:px-6 py-8">
+        {/* Profile Card */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+          <div className="p-6 flex items-center gap-4 border-b border-gray-100">
+            {session?.user?.image ? (
+              <img src={session.user.image} alt="Profile" className="w-16 h-16 rounded-full" />
+            ) : (
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                <User className="h-8 w-8 text-gray-400" />
+              </div>
+            )}
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">{name || "User"}</h2>
+              <p className="text-sm text-gray-500">{session?.user?.email}</p>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Full Name</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="pl-10 border-gray-200"
+                  placeholder="Your name"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Phone Number</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="pl-10 border-gray-200"
+                  placeholder="+251 9XX XXX XXX"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Address</label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="pl-10 border-gray-200"
+                  placeholder="Your address"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Button onClick={handleSave} disabled={saving} className="bg-gray-900 hover:bg-gray-800 font-medium gap-2">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {saved ? "Saved!" : "Save Changes"}
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Profile Overview Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={user.imageUrl} alt={user.fullName || "User"} />
-                <AvatarFallback className="text-lg">
-                  {user.firstName?.charAt(0) || user.emailAddresses[0]?.emailAddress?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <CardTitle className="text-xl">{user.fullName || "User"}</CardTitle>
-                <CardDescription className="text-base">
-                  {user.emailAddresses[0]?.emailAddress}
-                </CardDescription>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Badge variant="secondary">
-                    {user.createdAt ? `Member since ${new Date(user.createdAt).toLocaleDateString()}` : "Member"}
-                  </Badge>
-                </div>
-              </div>
+        {/* Quick Links */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/shop/orders">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow cursor-pointer">
+              <ShoppingBag className="h-5 w-5 text-gray-400 mb-2" />
+              <p className="font-semibold text-sm text-gray-900">My Orders</p>
+              <p className="text-xs text-gray-500">View order history</p>
             </div>
-          </CardHeader>
-        </Card>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Profile</span>
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center space-x-2">
-              <Package className="h-4 w-4" />
-              <span className="hidden sm:inline">My Inventory</span>
-            </TabsTrigger>
-            <TabsTrigger value="account" className="flex items-center space-x-2">
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Account</span>
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center space-x-2">
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Security</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="profile" className="space-y-6">
-            <ProfileForm />
-          </TabsContent>
-
-          <TabsContent value="inventory" className="space-y-6">
-            <PersonalInventory />
-          </TabsContent>
-
-          <TabsContent value="account" className="space-y-6">
-            <AccountSettings />
-          </TabsContent>
-
-          <TabsContent value="security" className="space-y-6">
-            <ChangePasswordForm />
-          </TabsContent>
-        </Tabs>
+          </Link>
+          <Link href="/shop">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow cursor-pointer">
+              <ShoppingBag className="h-5 w-5 text-gray-400 mb-2" />
+              <p className="font-semibold text-sm text-gray-900">Shop</p>
+              <p className="text-xs text-gray-500">Browse equipment</p>
+            </div>
+          </Link>
+        </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
-} 
+}

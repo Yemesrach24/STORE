@@ -1,46 +1,48 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'CUSTOMER';
+
 export interface IUser extends Document {
-  clerkId: string;
+  authId: string;
   name: string;
   email: string;
   firstName: string;
   lastName: string;
   imageUrl?: string;
-  role: 'admin' | 'manager' | 'user';
+  role: UserRole;
   isActive: boolean;
   lastLoginAt?: Date;
+  // Seller / Admin contact info (shown to buyers on order pages)
   phone?: string;
-  location?: string;
-  bio?: string;
+  whatsapp?: string;
+  telegram?: string;
+  instagram?: string;
+  // Telegram integration
+  telegramChatId?: string;
+  // Shop / store info (for sellers)
+  shopName?: string;
+  shopDescription?: string;
+  // Preferences
   timezone?: string;
   language?: string;
   currency?: string;
-  dateFormat?: string;
-  emailNotifications?: boolean;
-  lowStockAlerts?: boolean;
-  weeklyReports?: boolean;
-  marketingEmails?: boolean;
   theme?: 'light' | 'dark' | 'system';
-  autoLogout?: boolean;
-  twoFactorAuth?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const UserSchema: Schema = new Schema({
-  clerkId: {
+  authId: {
     type: String,
-    required: [true, 'Clerk ID is required'],
+    required: [true, 'Auth ID is required'],
     unique: true,
     trim: true,
-    index: true
   },
   name: {
     type: String,
     required: [true, 'Name is required'],
     trim: true,
-    maxlength: [100, 'Name cannot exceed 100 characters']
+    maxlength: [100, 'Name cannot exceed 100 characters'],
   },
   email: {
     type: String,
@@ -48,181 +50,138 @@ const UserSchema: Schema = new Schema({
     unique: true,
     trim: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email address']
   },
   firstName: {
     type: String,
     required: [true, 'First name is required'],
     trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    maxlength: [50, 'First name cannot exceed 50 characters'],
   },
   lastName: {
     type: String,
-    required: [true, 'Last name is required'],
     trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
+    default: '',
+    maxlength: [50, 'Last name cannot exceed 50 characters'],
   },
   imageUrl: {
     type: String,
     trim: true,
-    validate: {
-      validator: function(v: string) {
-        if (!v) return true; // Allow empty
-        return /^https?:\/\/.+/.test(v);
-      },
-      message: 'Image URL must be a valid HTTP/HTTPS URL'
-    }
   },
   role: {
     type: String,
     enum: {
-      values: ['admin', 'manager', 'user'],
-      message: 'Role must be either admin, manager, or user'
+      values: ['SUPER_ADMIN', 'ADMIN', 'CUSTOMER'],
+      message: 'Role must be SUPER_ADMIN, ADMIN, or CUSTOMER',
     },
-    default: 'user',
-    required: true
+    default: 'CUSTOMER',
+    required: true,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   lastLoginAt: {
     type: Date,
-    default: null
+    default: null,
   },
+  // Contact info
   phone: {
     type: String,
     trim: true,
-    maxlength: [20, 'Phone number cannot exceed 20 characters']
+    maxlength: [20, 'Phone number cannot exceed 20 characters'],
   },
-  location: {
+  address: {
     type: String,
     trim: true,
-    maxlength: [100, 'Location cannot exceed 100 characters']
+    maxlength: [200, 'Address cannot exceed 200 characters'],
   },
-  bio: {
+  whatsapp: {
     type: String,
     trim: true,
-    maxlength: [500, 'Bio cannot exceed 500 characters']
+    maxlength: [50, 'WhatsApp contact cannot exceed 50 characters'],
   },
+  telegram: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Telegram username cannot exceed 50 characters'],
+  },
+  instagram: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Instagram handle cannot exceed 50 characters'],
+  },
+  // Telegram integration
+  telegramChatId: {
+    type: String,
+    trim: true,
+  },
+  // Shop info
+  shopName: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Shop name cannot exceed 100 characters'],
+  },
+  shopDescription: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Shop description cannot exceed 500 characters'],
+  },
+  // Preferences
   timezone: {
     type: String,
     trim: true,
-    default: 'UTC'
+    default: 'UTC',
   },
   language: {
     type: String,
     trim: true,
     default: 'en',
-    enum: {
-      values: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'zh'],
-      message: 'Language must be a supported language code'
-    }
   },
   currency: {
     type: String,
     trim: true,
     default: 'USD',
-    enum: {
-      values: ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY'],
-      message: 'Currency must be a supported currency code'
-    }
-  },
-  dateFormat: {
-    type: String,
-    trim: true,
-    default: 'MM/DD/YYYY',
-    enum: {
-      values: ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD', 'MM-DD-YYYY'],
-      message: 'Date format must be a supported format'
-    }
-  },
-  emailNotifications: {
-    type: Boolean,
-    default: true
-  },
-  lowStockAlerts: {
-    type: Boolean,
-    default: true
-  },
-  weeklyReports: {
-    type: Boolean,
-    default: false
-  },
-  marketingEmails: {
-    type: Boolean,
-    default: false
   },
   theme: {
     type: String,
     enum: {
       values: ['light', 'dark', 'system'],
-      message: 'Theme must be light, dark, or system'
+      message: 'Theme must be light, dark, or system',
     },
-    default: 'system'
+    default: 'system',
   },
-  autoLogout: {
-    type: Boolean,
-    default: true
-  },
-  twoFactorAuth: {
-    type: Boolean,
-    default: false
-  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toObject: { virtuals: true },
 });
 
-// Create indexes for better query performance
-UserSchema.index({ clerkId: 1 }, { unique: true });
-UserSchema.index({ email: 1 }, { unique: true });
+// Indexes (unique already handled by field definitions)
 UserSchema.index({ role: 1 });
 UserSchema.index({ isActive: 1 });
 UserSchema.index({ createdAt: -1 });
-UserSchema.index({ lastLoginAt: -1 });
 
-// Compound indexes for common queries
+// Compound indexes
 UserSchema.index({ role: 1, isActive: 1 });
-UserSchema.index({ email: 1, isActive: 1 });
 
 // Virtual for full name
-UserSchema.virtual('fullName').get(function() {
+UserSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
-// Virtual for display name (uses name field or falls back to full name)
-UserSchema.virtual('displayName').get(function() {
-  return this.name || this.fullName;
-});
-
-// Pre-save middleware to set name if not provided
-UserSchema.pre('save', function(next) {
-  if (!this.name) {
-    this.name = this.fullName;
-  }
-  next();
-});
-
-// Instance method to check if user is admin
-UserSchema.methods.isAdmin = function(): boolean {
-  return this.role === 'admin';
+// Static method to find admins (SUPER_ADMIN + ADMIN)
+UserSchema.statics.findAdmins = function () {
+  return this.find({ role: { $in: ['SUPER_ADMIN', 'ADMIN'] }, isActive: true });
 };
 
-// Instance method to check if user is manager or admin
-UserSchema.methods.isManagerOrAdmin = function(): boolean {
-  return this.role === 'admin' || this.role === 'manager';
+// Static method to find the primary seller (first SUPER_ADMIN)
+UserSchema.statics.findPrimarySeller = function () {
+  return this.findOne({ role: 'SUPER_ADMIN', isActive: true });
 };
 
-// Static method to find active users
-UserSchema.statics.findActive = function() {
-  return this.find({ isActive: true });
+// Static method to find active customers
+UserSchema.statics.findCustomers = function () {
+  return this.find({ role: 'CUSTOMER', isActive: true });
 };
 
-// Static method to find users by role
-UserSchema.statics.findByRole = function(role: string) {
-  return this.find({ role, isActive: true });
-};
-
-export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema); 
+export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

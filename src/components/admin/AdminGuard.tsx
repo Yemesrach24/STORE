@@ -1,10 +1,10 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, AlertTriangle } from "lucide-react";
+import { Shield } from "lucide-react";
 import Link from "next/link";
 
 interface AdminGuardProps {
@@ -12,37 +12,15 @@ interface AdminGuardProps {
   fallback?: React.ReactNode;
 }
 
-export function AdminGuard({ children, fallback }: AdminGuardProps) {
-  const { user, isLoaded } = useUser();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+/**
+ * AdminGuard ensures the user is authenticated before rendering children.
+ * Role-based access control (SUPER_ADMIN vs ADMIN) is enforced server-side
+ * in API routes and page data fetching. This component only gates on login.
+ */
+export function AdminGuard({ children }: AdminGuardProps) {
+  const { status } = useSession();
 
-  useEffect(() => {
-    const checkUserRole = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/users/me');
-        if (response.ok) {
-          const userData = await response.json();
-          setUserRole(userData.role);
-        }
-      } catch (error) {
-        console.error('Error fetching user role:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (isLoaded) {
-      checkUserRole();
-    }
-  }, [user, isLoaded]);
-
-  if (!isLoaded || isLoading) {
+  if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -53,7 +31,7 @@ export function AdminGuard({ children, fallback }: AdminGuardProps) {
     );
   }
 
-  if (!user) {
+  if (status !== "authenticated") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
@@ -74,38 +52,5 @@ export function AdminGuard({ children, fallback }: AdminGuardProps) {
     );
   }
 
-  if (userRole !== 'admin') {
-    if (fallback) {
-      return <>{fallback}</>;
-    }
-
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <CardTitle>Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to access this page. Admin privileges are required.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Current role: <span className="font-medium">{userRole || 'Unknown'}</span>
-            </p>
-            <div className="flex gap-2 justify-center">
-              <Button variant="outline" asChild>
-                <Link href="/dashboard">Go to Dashboard</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/profile">View Profile</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return <>{children}</>;
-} 
+}

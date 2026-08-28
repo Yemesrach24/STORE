@@ -1,6 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ export default async function NewProduct() {
               <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <UserButton afterSignOutUrl="/" />
+              <SignOutButton />
             </div>
           </div>
         </div>

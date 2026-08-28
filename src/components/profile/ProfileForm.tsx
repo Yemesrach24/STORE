@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,10 +29,47 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function ProfileForm() {
-  const { user } = useUser();
+  const { data: session } = useSession();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [dbUser, setDbUser] = useState<any>(null);
+
+  // Load the full user record from the database (the session only carries
+  // name/email/image from the JWT).
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/users/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (mounted && data) setDbUser(data);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Shape a user object compatible with the rest of this component.
+  const user = dbUser
+    ? {
+        ...dbUser,
+        fullName: `${dbUser.firstName} ${dbUser.lastName}`.trim() || dbUser.name,
+        emailAddresses: dbUser.email ? [{ emailAddress: dbUser.email }] : [],
+        imageUrl: dbUser.imageUrl || session?.user?.image,
+      }
+    : session?.user
+      ? {
+          id: session.user.id,
+          name: session.user.name,
+          email: session.user.email,
+          imageUrl: session.user.image,
+          fullName: session.user.name,
+          firstName: session.user.name?.split(" ")[0] || "",
+          lastName: session.user.name?.split(" ").slice(1).join(" ") || "",
+          emailAddresses: session.user.email ? [{ emailAddress: session.user.email }] : [],
+        }
+      : null;
 
   const {
     register,
@@ -58,12 +95,6 @@ export function ProfileForm() {
 
     setIsUpdating(true);
     try {
-      // Update Clerk user data
-      await user.update({
-        firstName: data.firstName,
-        lastName: data.lastName,
-      });
-
       // Update our database user data
       const response = await fetch(`/api/users/${user.id}`, {
         method: "PATCH",
@@ -84,18 +115,16 @@ export function ProfileForm() {
         throw new Error("Failed to update profile");
       }
 
-      toast({
-        title: "Profile updated",
+      toast("Profile updated", {
         description: "Your profile has been successfully updated.",
       });
 
       reset(data);
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
+      toast("Error", {
         description: "Failed to update profile. Please try again.",
-        variant: "destructive",
+        className: "text-destructive",
       });
     } finally {
       setIsUpdating(false);
@@ -112,16 +141,14 @@ export function ProfileForm() {
       // For now, we'll just simulate the upload
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast({
-        title: "Avatar updated",
+      toast("Avatar updated", {
         description: "Your profile picture has been updated.",
       });
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      toast({
-        title: "Error",
+      toast("Error", {
         description: "Failed to upload avatar. Please try again.",
-        variant: "destructive",
+        className: "text-destructive",
       });
     } finally {
       setIsLoading(false);
@@ -259,7 +286,7 @@ export function ProfileForm() {
                   disabled
                 />
                 <p className="text-sm text-muted-foreground">
-                  Email address is managed by Clerk and cannot be changed here.
+                  Email address is managed by Google and cannot be changed here.
                 </p>
               </div>
 

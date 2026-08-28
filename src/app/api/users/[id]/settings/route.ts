@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from '@/lib/auth';
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { z } from "zod";
@@ -23,7 +23,7 @@ const settingsSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -31,8 +31,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     // Verify the user is updating their own settings
-    if (userId !== params.id) {
+    if (userId !== id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -43,7 +44,7 @@ export async function PATCH(
 
     // Update user settings
     const updatedUser = await User.findOneAndUpdate(
-      { clerkId: userId },
+      { authId: userId },
       { 
         $set: {
           ...validatedData,
@@ -91,7 +92,7 @@ export async function PATCH(
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid data", details: error.errors },
+        { error: "Invalid data", details: error.issues },
         { status: 400 }
       );
     }
@@ -105,7 +106,7 @@ export async function PATCH(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -113,14 +114,15 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     // Verify the user is accessing their own settings
-    if (userId !== params.id) {
+    if (userId !== id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     await dbConnect();
 
-    const user = await User.findOne({ clerkId: userId }).select({
+    const user = await User.findOne({ authId: userId }).select({
       _id: 1,
       name: 1,
       email: 1,

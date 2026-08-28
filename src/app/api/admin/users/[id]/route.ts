@@ -1,189 +1,91 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { requireSuperAdmin } from '@/lib/auth-helpers';
+import dbConnect from '@/lib/mongodb';
+import { User } from '@/models';
 
-const updateUserSchema = z.object({
-  firstName: z.string().min(1, "First name is required").max(50, "First name must be less than 50 characters"),
-  lastName: z.string().min(1, "Last name is required").max(50, "Last name must be less than 50 characters"),
-  email: z.string().email("Invalid email address"),
-  role: z.enum(["admin", "manager", "user"]),
-  isActive: z.boolean(),
-});
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    await requireAdmin();
-
-    await dbConnect();
-
-    const user = await User.findById(params.id).select({
-      _id: 1,
-      clerkId: 1,
-      name: 1,
-      email: 1,
-      firstName: 1,
-      lastName: 1,
-      role: 1,
-      isActive: 1,
-      createdAt: 1,
-      updatedAt: 1,
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      _id: user._id,
-      clerkId: user.clerkId,
-      name: user.name,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    });
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    
-    if (error instanceof Error && error.message.includes("Admin access required")) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
+// PUT /api/admin/users/[id] - Update user (SUPER_ADMIN only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
-
+    const user = await requireSuperAdmin();
     await dbConnect();
 
+    const { id } = await params;
     const body = await request.json();
-    const validatedData = updateUserSchema.parse(body);
+    const { role, isActive, phone, whatsapp, telegram, instagram, shopName, shopDescription } = body;
 
-    // Check if email is already taken by another user
-    const existingUser = await User.findOne({ 
-      email: validatedData.email,
-      _id: { $ne: params.id }
-    });
-    
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 409 }
-      );
+    // Don't allow changing own role
+    if (id === user.dbUserId && role && role !== user.role) {
+      return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
     }
 
-    // Update user
-    const updatedUser = await User.findByIdAndUpdate(
-      params.id,
-      {
-        ...validatedData,
-        name: `${validatedData.firstName} ${validatedData.lastName}`,
-        updatedAt: new Date(),
-      },
-      { new: true, runValidators: true }
-    );
+    const updateData: any = {};
+    if (role) updateData.role = role;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (phone !== undefined) updateData.phone = phone;
+    if (whatsapp !== undefined) updateData.whatsapp = whatsapp;
+    if (telegram !== undefined) updateData.telegram = telegram;
+    if (instagram !== undefined) updateData.instagram = instagram;
+    if (shopName !== undefined) updateData.shopName = shopName;
+    if (shopDescription !== undefined) updateData.shopDescription = shopDescription;
 
-    if (!updatedUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const updated = await User.findByIdAndUpdate(id, updateData, { new: true }).select('-__v');
+    if (!updated) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json({
-      message: "User updated successfully",
-      user: {
-        _id: updatedUser._id,
-        clerkId: updatedUser.clerkId,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        role: updatedUser.role,
-        isActive: updatedUser.isActive,
-        createdAt: updatedUser.createdAt,
-        updatedAt: updatedUser.updatedAt,
-      },
-    });
-  } catch (error) {
-    console.error("Error updating user:", error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid data", details: error.errors },
-        { status: 400 }
-      );
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    if (error instanceof Error && error.message.includes("Admin access required")) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (error.message === 'FORBIDDEN') {
+      return NextResponse.json({ error: 'Only SUPER_ADMIN can manage users' }, { status: 403 });
     }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Error updating user:', error);
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
   }
 }
 
+// DELETE /api/admin/users/[id] - Deactivate user (SUPER_ADMIN only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
-
+    const user = await requireSuperAdmin();
     await dbConnect();
 
-    const user = await User.findById(params.id);
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const { id } = await params;
+
+    if (id === user.dbUserId) {
+      return NextResponse.json({ error: 'Cannot deactivate yourself' }, { status: 400 });
     }
 
-    // Prevent deleting the last admin
-    if (user.role === 'admin') {
-      const adminCount = await User.countDocuments({ role: 'admin', isActive: true });
-      if (adminCount <= 1) {
-        return NextResponse.json(
-          { error: "Cannot delete the last admin user" },
-          { status: 400 }
-        );
-      }
+    const target = await User.findById(id);
+    if (!target) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Soft delete by setting isActive to false
-    await User.findByIdAndUpdate(params.id, { 
-      isActive: false,
-      updatedAt: new Date(),
-    });
-
-    return NextResponse.json({
-      message: "User deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    
-    if (error instanceof Error && error.message.includes("Admin access required")) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    // Only SUPER_ADMIN can deactivate other SUPER_ADMINs
+    if (target.role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Only SUPER_ADMIN can deactivate other admins' }, { status: 403 });
     }
 
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    target.isActive = false;
+    await target.save();
+
+    return NextResponse.json({ message: 'User deactivated successfully' });
+  } catch (error: any) {
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (error.message === 'FORBIDDEN') {
+      return NextResponse.json({ error: 'Only SUPER_ADMIN can manage users' }, { status: 403 });
+    }
+    console.error('Error deactivating user:', error);
+    return NextResponse.json({ error: 'Failed to deactivate user' }, { status: 500 });
   }
-} 
+}

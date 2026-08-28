@@ -79,12 +79,12 @@ export function UserInventory({ userId }: UserInventoryProps) {
 
   const getStockStatus = (item: InventoryItem) => {
     if (item.quantity === 0) {
-      return { status: "Out of Stock", color: "destructive" as const };
+      return { status: "Out of Stock", label: "Out of Stock", color: "destructive" as const };
     }
     if (item.quantity <= item.minQuantity) {
-      return { status: "Low Stock", color: "warning" as const };
+      return { status: "Low Stock", label: "Low Stock", color: "secondary" as const };
     }
-    return { status: "In Stock", color: "default" as const };
+    return { status: "In Stock", label: "In Stock", color: "default" as const };
   };
 
   const categories = Array.from(new Set(items.map((item) => item.category))).sort();
@@ -146,7 +146,7 @@ export function UserInventory({ userId }: UserInventoryProps) {
               <Package className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Total Value</p>
-                <p className="text-2xl font-bold">${stats.totalValue.toFixed(2)}</p>
+                <p className="text-2xl font-bold">Br {stats.totalValue.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -283,13 +283,13 @@ export function UserInventory({ userId }: UserInventoryProps) {
                         <div className="text-right">
                           <p className="text-sm font-medium">{item.quantity} units</p>
                           <p className="text-xs text-muted-foreground">
-                            ${totalValue.toFixed(2)} value
+                            Br {(totalValue ?? 0).toFixed(2)} value
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">${item.price.toFixed(2)}</span>
+                        <span className="font-medium">Br {(item.price ?? 0).toFixed(2)}</span>
                         <span className="text-muted-foreground">{item.category}</span>
                       </div>
 

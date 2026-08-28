@@ -1,108 +1,104 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
-import Item from "@/models/Item";
+import { NextRequest, NextResponse } from 'next/server';
+import { requireSuperAdmin } from '@/lib/auth-helpers';
+import dbConnect from '@/lib/mongodb';
+import { Item, Category, Order, User } from '@/models';
 
+// GET /api/admin/analytics - Admin dashboard analytics
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
-
+    let user;
+    try {
+      user = await requireSuperAdmin();
+    } catch (authErr: any) {
+      if (authErr?.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      if (authErr?.message === 'FORBIDDEN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      throw authErr;
+    }
     await dbConnect();
 
-    // Get user statistics
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ isActive: true });
-    const inactiveUsers = totalUsers - activeUsers;
-
-    // Calculate new users this month
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    
-    const newThisMonth = await User.countDocuments({
-      createdAt: { $gte: startOfMonth }
-    });
-
-    // Calculate growth rate (simplified - would need historical data for real calculation)
-    const growthRate = totalUsers > 0 ? Math.round((newThisMonth / totalUsers) * 100) : 0;
-
-    // Get inventory statistics
-    const totalItems = await Item.countDocuments();
-    const totalValueResult = await Item.aggregate([
-      { $group: { _id: null, total: { $sum: { $multiply: ["$price", "$quantity"] } } } }
+    const [
+      totalItems,
+      totalCategories,
+      totalOrders,
+      pendingOrders,
+      approvedOrders,
+      declinedOrders,
+      totalCustomers,
+      totalAdmins,
+      lowStockItems,
+      outOfStockItems,
+      orderStats,
+      recentOrders,
+      topItems,
+      categoryStats,
+      companyStats,
+    ] = await Promise.all([
+      Item.countDocuments({ isActive: true }),
+      Category.countDocuments({ isActive: true }),
+      Order.countDocuments({}),
+      Order.countDocuments({ status: 'PENDING' }),
+      Order.countDocuments({ status: 'APPROVED' }),
+      Order.countDocuments({ status: 'DECLINED' }),
+      User.countDocuments({ role: 'CUSTOMER', isActive: true }),
+      User.countDocuments({ role: { $in: ['SUPER_ADMIN', 'ADMIN'] }, isActive: true }),
+      Item.countDocuments({ isActive: true, stockStatus: 'low_stock' }),
+      Item.countDocuments({ isActive: true, stockStatus: 'out_of_stock' }),
+      Order.aggregate([
+        { $match: { status: 'APPROVED' } },
+        { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' }, avgOrderValue: { $avg: '$totalPrice' } } },
+      ]),
+      Order.find({}).sort({ createdAt: -1 }).limit(10).lean(),
+      Order.aggregate([
+        { $group: { _id: '$itemId', itemName: { $first: '$itemName' }, count: { $sum: 1 }, revenue: { $sum: '$totalPrice' } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+      ]),
+      Order.aggregate([
+        { $group: { _id: '$itemCategory', count: { $sum: 1 }, revenue: { $sum: '$totalPrice' } } },
+        { $sort: { count: -1 } },
+      ]),
+      // Company stats from orders
+      Order.aggregate([
+        { $match: { companyName: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$companyName', count: { $sum: 1 }, revenue: { $sum: '$totalPrice' } } },
+        { $sort: { count: -1 } },
+      ]),
     ]);
-    const totalValue = totalValueResult[0]?.total || 0;
-
-    const lowStockItems = await Item.countDocuments({ quantity: { $gt: 0, $lte: 10 } });
-    const outOfStockItems = await Item.countDocuments({ quantity: 0 });
-
-    const averagePriceResult = await Item.aggregate([
-      { $group: { _id: null, average: { $avg: "$price" } } }
-    ]);
-    const averagePrice = averagePriceResult[0]?.average || 0;
-
-    // System statistics (mock data for now)
-    const systemStats = {
-      uptime: 99.9,
-      databaseSize: "2.5 MB",
-      lastBackup: new Date().toLocaleDateString(),
-      activeSessions: Math.floor(Math.random() * 10) + 1, // Mock data
-    };
-
-    // Recent activity (mock data for now)
-    const recentActivity = [
-      {
-        id: "1",
-        type: "user_login",
-        description: "User logged in",
-        timestamp: new Date().toISOString(),
-        user: "John Doe",
-      },
-      {
-        id: "2",
-        type: "item_created",
-        description: "New item added to inventory",
-        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        user: "Jane Smith",
-      },
-      {
-        id: "3",
-        type: "user_registered",
-        description: "New user registered",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        user: "System",
-      },
-    ];
 
     return NextResponse.json({
-      users: {
-        total: totalUsers,
-        active: activeUsers,
-        inactive: inactiveUsers,
-        newThisMonth,
-        growthRate,
-      },
       inventory: {
         totalItems,
-        totalValue,
+        totalCategories,
         lowStockItems,
         outOfStockItems,
-        averagePrice,
       },
-      system: systemStats,
-      recentActivity,
+      orders: {
+        total: totalOrders,
+        pending: pendingOrders,
+        approved: approvedOrders,
+        declined: declinedOrders,
+      },
+      users: {
+        totalCustomers,
+        totalAdmins,
+      },
+      revenue: {
+        total: orderStats[0]?.totalRevenue || 0,
+        average: orderStats[0]?.avgOrderValue || 0,
+      },
+      recentOrders,
+      topItems,
+      categoryStats,
+      companyStats,
     });
-  } catch (error) {
-    console.error("Error fetching analytics:", error);
-    
-    if (error instanceof Error && error.message.includes("Admin access required")) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  } catch (error: any) {
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    if (error.message === 'FORBIDDEN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    console.error('Error fetching analytics:', error);
+    return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
   }
-} 
+}

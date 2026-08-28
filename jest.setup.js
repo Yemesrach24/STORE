@@ -44,31 +44,40 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
-// Mock Clerk
-jest.mock('@clerk/nextjs', () => ({
-  useUser: () => ({
-    isSignedIn: true,
-    user: {
-      id: 'test-user-id',
-      emailAddresses: [{ emailAddress: 'test@example.com' }],
-      firstName: 'Test',
-      lastName: 'User',
-      imageUrl: 'https://example.com/avatar.jpg',
+// Mock next-auth (Google OAuth sessions)
+jest.mock('next-auth/react', () => ({
+  SessionProvider: ({ children }) => children,
+  useSession: () => ({
+    data: {
+      user: {
+        id: 'test-user-id',
+        name: 'Test User',
+        email: 'test@example.com',
+        image: null,
+      },
     },
+    status: 'authenticated',
   }),
-  useAuth: () => ({
-    isSignedIn: true,
-    userId: 'test-user-id',
-  }),
-  SignIn: () => <div data-testid="sign-in">Sign In</div>,
-  SignUp: () => <div data-testid="sign-up">Sign Up</div>,
-  UserButton: () => <div data-testid="user-button">User Button</div>,
+  signIn: jest.fn(),
+  signOut: jest.fn(),
+}))
+
+// Mock the server-side auth helper used by API routes
+jest.mock('@/lib/auth', () => ({
+  auth: jest.fn(async () => ({ userId: 'test-user-id' })),
+  getCurrentUser: jest.fn(),
+  requireAuth: jest.fn(),
+  requireAdmin: jest.fn(),
+  requireManagerOrAdmin: jest.fn(),
+  ensureUserExists: jest.fn(),
 }))
 
 // Mock environment variables
-process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'test-publishable-key'
-process.env.CLERK_SECRET_KEY = 'test-secret-key'
 process.env.MONGODB_URI = 'mongodb://localhost:27017/test'
+process.env.AUTH_SECRET = 'test-secret'
+process.env.AUTH_GOOGLE_ID = 'test-google-id'
+process.env.AUTH_GOOGLE_SECRET = 'test-google-secret'
+process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
 
 // Global test utilities
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
@@ -97,4 +106,4 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
-}) 
+})

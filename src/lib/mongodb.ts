@@ -55,7 +55,10 @@ async function connectWithRetry(): Promise<typeof mongoose> {
   try {
     console.log('MongoDB: Attempting to connect...');
     
-    const mongooseInstance = await mongoose.connect(MONGODB_URI!, MONGODB_OPTIONS);
+    const mongooseInstance = await mongoose.connect(MONGODB_URI!, {
+  ...MONGODB_OPTIONS,
+  dbName: MONGODB_DB_NAME,
+});
     
     const connectionTime = Date.now() - startTime;
     console.log(`MongoDB: Connected successfully in ${connectionTime}ms`);

@@ -44,6 +44,11 @@
 }
 
 :root {
+  /* Brand color - change this single value to rebrand the entire site */
+  --brand: #8B1A1A;
+  --brand-light: #A52A2A;
+  --brand-dark: #6B1414;
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -51,7 +56,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0.245 0.199 15.085);
+  --primary-foreground: oklch(0.985 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -60,6 +66,9 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --brand: #8B1A1A;
+  --brand-light: #A52A2A;
+  --brand-dark: #6B1414;
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);

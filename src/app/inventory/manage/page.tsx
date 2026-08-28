@@ -105,9 +105,9 @@ export default function InventoryManagePage() {
         <ErrorBoundary>
           <InventoryTable
             onAdd={handleAddItem}
-            onEdit={handleEditItem}
-            onDelete={handleDeleteItem}
-            onView={handleViewItem}
+            onEdit={handleEditItem as any}
+            onDelete={handleDeleteItem as any}
+            onView={handleViewItem as any}
           />
 
           <ItemFormModal

@@ -218,7 +218,7 @@ export function InventoryTable({
       return { status: "Out of Stock", color: "destructive" as const };
     }
     if (item.quantity <= item.minQuantity) {
-      return { status: "Low Stock", color: "warning" as const };
+      return { status: "Low Stock", color: "secondary" as const };
     }
     return { status: "In Stock", color: "default" as const };
   };
@@ -416,9 +416,9 @@ export function InventoryTable({
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell>${item.price.toFixed(2)}</TableCell>
+                            <TableCell>Br {(item.price ?? 0).toFixed(2)}</TableCell>
                             <TableCell className="font-medium">
-                              ${totalValue.toFixed(2)}
+                              Br {(totalValue ?? 0).toFixed(2)}
                             </TableCell>
                             <TableCell>
                               <Badge variant={stockStatus.color}>

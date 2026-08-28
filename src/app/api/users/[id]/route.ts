@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import mongoose from 'mongoose';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -19,15 +19,15 @@ export async function GET(
     }
     
     await dbConnect();
+    const { id } = await params;
     
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
-    }
+    // Resolve the user by Mongo _id or by Google authId (profile forms send
+    // the authId from the session).
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { authId: id };
     
-    const user = await User.findById(params.id).select('-__v').lean();
+    const user = await User.findOne(query).select('-__v').lean();
     
     if (!user) {
       return NextResponse.json(
@@ -48,7 +48,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -61,13 +61,13 @@ export async function PUT(
     }
     
     await dbConnect();
+    const { id } = await params;
     
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
-    }
+    // Resolve the user by Mongo _id or by Google authId (profile forms send
+    // the authId from the session).
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { authId: id };
     
     const body = await request.json();
     
@@ -75,7 +75,7 @@ export async function PUT(
     if (body.email) {
       const existingEmail = await User.findOne({
         email: body.email,
-        _id: { $ne: params.id }
+        _id: { $ne: id }
       });
       if (existingEmail) {
         return NextResponse.json(
@@ -85,8 +85,8 @@ export async function PUT(
       }
     }
     
-    const user = await User.findByIdAndUpdate(
-      params.id,
+    const user = await User.findOneAndUpdate(
+      query,
       body,
       { new: true, runValidators: true }
     ).select('-__v');
@@ -119,7 +119,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -132,16 +132,16 @@ export async function DELETE(
     }
     
     await dbConnect();
+    const { id } = await params;
     
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
-    }
+    // Resolve the user by Mongo _id or by Google authId (profile forms send
+    // the authId from the session).
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { authId: id };
     
-    const user = await User.findByIdAndUpdate(
-      params.id,
+    const user = await User.findOneAndUpdate(
+      query,
       { isActive: false },
       { new: true }
     );

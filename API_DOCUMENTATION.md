@@ -8,10 +8,10 @@ This document provides comprehensive documentation for the Inventory Management 
 
 ## Authentication
 
-All API endpoints require authentication using Clerk. Include the authorization token in the request headers:
+All API endpoints require authentication. Sessions are established by signing in with Google (Auth.js) and are transmitted via the session cookie automatically; no manual Authorization header is needed.
 
 ```
-Authorization: Bearer <your-clerk-token>
+// No header needed — the session cookie is sent automatically
 ```
 
 ## API Endpoints
@@ -29,7 +29,7 @@ GET /api/users/me
   "success": true,
   "data": {
     "id": "507f1f77bcf86cd799439011",
-    "clerkId": "user_2abc123def456",
+    "authId": "google_oauth_sub_id",
     "firstName": "John",
     "lastName": "Doe",
     "email": "john.doe@example.com",
@@ -443,7 +443,7 @@ GET /api/admin/users
     "users": [
       {
         "id": "507f1f77bcf86cd799439011",
-        "clerkId": "user_2abc123def456",
+        "authId": "google_oauth_sub_id",
         "firstName": "John",
         "lastName": "Doe",
         "email": "john.doe@example.com",
@@ -738,12 +738,12 @@ Use the provided Postman collection (`postman_collection.json`) to test all endp
 1. Import the Postman collection
 2. Set up environment variables:
    - `baseUrl`: Your API base URL (e.g., `http://localhost:3000`)
-   - `authToken`: Your Clerk authentication token
+   - `authId`: The Google OAuth account id (sub) of the user
    - `userId`: User ID for testing
    - `itemId`: Item ID for testing
    - `categoryId`: Category ID for testing
 
-3. Get your authentication token from Clerk dashboard or browser developer tools
+3. Sign in with Google and use the session cookie automatically attached by the browser
 4. Update the `authToken` variable with your token
 5. Start testing the endpoints
 
@@ -752,10 +752,10 @@ Use the provided Postman collection (`postman_collection.json`) to test all endp
 Required environment variables for the API:
 
 ```env
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
-CLERK_WEBHOOK_SECRET=whsec_...
+# Google OAuth (Auth.js)
+AUTH_SECRET=your_auth_secret_here
+AUTH_GOOGLE_ID=your_google_client_id.apps.googleusercontent.com
+AUTH_GOOGLE_SECRET=your_google_client_secret
 
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/inventory-management

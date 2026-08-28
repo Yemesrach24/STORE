@@ -1,169 +1,111 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { requireAdmin } from '@/lib/auth-helpers';
 import dbConnect from '@/lib/mongodb';
-import { Item, User } from '@/models';
-import { itemQuerySchema } from '@/lib/validations/item';
+import { Item, Category } from '@/models';
 
+// GET /api/items - List items (admin sees all their items, public sees active)
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
     await dbConnect();
-    
-    // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-    
     const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
-    
-    // Validate query parameters
-    const validatedQuery = itemQuerySchema.parse(queryParams);
-    
-    const { page, limit, search, category, minPrice, maxPrice, inStock, lowStock, sortBy, sortOrder } = validatedQuery;
+    const categoryId = searchParams.get('categoryId');
+    const search = searchParams.get('search');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
-    
-    // Build query
-    const query: any = { 
-      userId: user._id,
-      isActive: true 
-    };
-    
-    // Search functionality
-    if (search) {
-      query.$text = { $search: search };
+
+    let user;
+    try {
+      user = await requireAdmin();
+    } catch {
+      // Public access
+      const query: any = { isActive: true };
+      if (categoryId) query.categoryId = categoryId;
+
+      const [items, total] = await Promise.all([
+        Item.find(query).populate('categoryId', 'name imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        Item.countDocuments(query),
+      ]);
+
+      return NextResponse.json({
+        items,
+        pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      });
     }
-    
-    // Category filter
-    if (category) {
-      query.category = category;
-    }
-    
-    // Price range filter
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      query.price = {};
-      if (minPrice !== undefined) query.price.$gte = minPrice;
-      if (maxPrice !== undefined) query.price.$lte = maxPrice;
-    }
-    
-    // Stock filters
-    if (inStock === true) {
-      query.quantity = { $gt: 0 };
-    }
-    
-    if (lowStock === true) {
-      query.$expr = { $lte: ['$quantity', '$minQuantity'] };
-    }
-    
-    // Build sort object
-    const sort: any = {};
-    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
-    
-    // Execute query
+
+    // Admin: get ALL items (any admin can see all items)
+    const query: any = { isActive: true };
+    if (categoryId) query.categoryId = categoryId;
+    if (search) query.$text = { $search: search };
+
     const [items, total] = await Promise.all([
-      Item.find(query)
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Item.countDocuments(query)
+      Item.find(query).populate('categoryId', 'name imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Item.countDocuments(query),
     ]);
-    
+
     return NextResponse.json({
       items,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-        hasNext: page * limit < total,
-        hasPrev: page > 1
-      }
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (error: any) {
     console.error('Error fetching items:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: error.errors },
-        { status: 400 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch items' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch items' }, { status: 500 });
   }
 }
 
+// POST /api/items - Create item (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
+    const user = await requireAdmin();
     await dbConnect();
-    
-    // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-    
+
     const body = await request.json();
-    
-    // Create item with user ID
-    const itemData = {
-      ...body,
-      userId: user._id
-    };
-    
-    const item = new Item(itemData);
+    const { name, description, uniqueNumber, categoryId, size, color, price, quantity, supplier, imageUrl, imageUrls, tags, location, companyName, companyPhone, companyWhatsapp, companyTelegram, companyInstagram, companyEmail } = body;
+
+    if (!name || !description || !categoryId || price === undefined || quantity === undefined) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Verify category exists
+    const category = await Category.findOne({ _id: categoryId, isActive: true });
+    if (!category) {
+      return NextResponse.json({ error: 'Category not found' }, { status: 400 });
+    }
+
+    // Generate unique number if not provided
+    const finalUniqueNumber = uniqueNumber || `TKD-${Date.now().toString(36).toUpperCase()}`;
+
+    const item = new Item({
+      name,
+      description,
+      uniqueNumber: finalUniqueNumber,
+      categoryId,
+      size,
+      color,
+      price,
+      quantity,
+      supplier,
+      imageUrl,
+      imageUrls: imageUrls || (imageUrl ? [imageUrl] : []),
+      tags,
+      location,
+      companyName,
+      companyPhone,
+      companyWhatsapp,
+      companyTelegram,
+      companyInstagram,
+      companyEmail,
+      createdBy: user.dbUserId,
+    });
+
     await item.save();
-    
+    await item.populate('categoryId', 'name imageUrl');
     return NextResponse.json(item, { status: 201 });
   } catch (error: any) {
     console.error('Error creating item:', error);
-    
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map((err: any) => err.message);
-      return NextResponse.json(
-        { error: 'Validation failed', details: errors },
-        { status: 400 }
-      );
+    if (error.code === 11000) {
+      return NextResponse.json({ error: 'Item with this unique number already exists' }, { status: 400 });
     }
-    
-    if (error.message === 'SKU or barcode already exists') {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to create item' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create item' }, { status: 500 });
   }
-} 
+}

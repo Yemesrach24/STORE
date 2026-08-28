@@ -2,8 +2,9 @@ require('dotenv').config({ path: '.env.local' });
 
 console.log('Testing environment variables...');
 console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'Set' : 'Not set');
-console.log('CLERK_PUBLISHABLE_KEY:', process.env.CLERK_PUBLISHABLE_KEY ? 'Set' : 'Not set');
-console.log('CLERK_SECRET_KEY:', process.env.CLERK_SECRET_KEY ? 'Set' : 'Not set');
+console.log('AUTH_SECRET:', process.env.AUTH_SECRET ? 'Set' : 'Not set');
+console.log('AUTH_GOOGLE_ID:', process.env.AUTH_GOOGLE_ID ? 'Set' : 'Not set');
+console.log('AUTH_GOOGLE_SECRET:', process.env.AUTH_GOOGLE_SECRET ? 'Set' : 'Not set');
 console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 
 // Test MongoDB connection

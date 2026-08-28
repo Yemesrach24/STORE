@@ -141,7 +141,7 @@ export function InventoryGrid({
                 <Package className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Total Value</p>
-                  <p className="text-2xl font-bold">${stats.totalValue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">Br {stats.totalValue.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>
@@ -253,9 +253,9 @@ export function InventoryGrid({
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredItems.map((item) => (
+          {filteredItems.map((item, index) => (
             <InventoryCard
-              key={item.id}
+              key={(item as any)._id || item.id || `item-${index}`}
               item={item}
               onEdit={onEdit}
               onDelete={onDelete}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 
@@ -12,15 +12,17 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
 
-    const user = await User.findOne({ clerkId: userId, isActive: true }).select({
+    const user = await User.findOne({ authId: userId, isActive: true }).select({
       _id: 1,
-      clerkId: 1,
+      authId: 1,
       name: 1,
       email: 1,
       firstName: 1,
       lastName: 1,
       imageUrl: 1,
       role: 1,
+      phone: 1,
+      address: 1,
       isActive: 1,
       createdAt: 1,
       updatedAt: 1,
@@ -32,13 +34,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       id: user._id,
-      clerkId: user.clerkId,
+      authId: user.authId,
       name: user.name,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       imageUrl: user.imageUrl,
       role: user.role,
+      phone: user.phone || '',
+      address: user.address || '',
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
@@ -52,7 +56,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function PUT(request: NextRequest) {
+async function updateUser(request: NextRequest) {
   try {
     const { userId } = await auth();
     
@@ -66,26 +70,22 @@ export async function PUT(request: NextRequest) {
     await dbConnect();
     
     const body = await request.json();
-    const { firstName, lastName, name, imageUrl } = body;
+    const { firstName, lastName, name, imageUrl, phone, address } = body;
     
-    // Validate required fields
-    if (!firstName || !lastName) {
-      return NextResponse.json(
-        { error: 'First name and last name are required' },
-        { status: 400 }
-      );
-    }
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
     
-    // Update user
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
+    if (name !== undefined) updateData.name = name;
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
+    
     const updatedUser = await User.findOneAndUpdate(
-      { clerkId: userId, isActive: true },
-      {
-        firstName,
-        lastName,
-        name: name || `${firstName} ${lastName}`,
-        imageUrl,
-        updatedAt: new Date()
-      },
+      { authId: userId, isActive: true },
+      updateData,
       { new: true, runValidators: true }
     ).lean();
     
@@ -110,7 +110,15 @@ export async function PUT(request: NextRequest) {
     
     return NextResponse.json(
       { error: 'Failed to update user profile' },
-      { status: 500 }
+        { status: 500 }
     );
   }
-} 
+}
+
+export async function PUT(request: NextRequest) {
+  return updateUser(request);
+}
+
+export async function PATCH(request: NextRequest) {
+  return updateUser(request);
+}

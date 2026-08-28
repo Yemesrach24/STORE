@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import { Item, User } from '@/models';
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     await dbConnect();
     
     // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
+    const user = await User.findOne({ authId: userId, isActive: true });
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,7 +32,8 @@ const accountSettingsSchema = z.object({
 type AccountSettingsData = z.infer<typeof accountSettingsSchema>;
 
 export function AccountSettings() {
-  const { user } = useUser();
+  const { data: session } = useSession();
+  const user = session?.user;
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -80,18 +81,16 @@ export function AccountSettings() {
         throw new Error("Failed to update settings");
       }
 
-      toast({
-        title: "Settings updated",
+      toast("Settings updated", {
         description: "Your account settings have been successfully updated.",
       });
 
       reset(data);
     } catch (error) {
       console.error("Error updating settings:", error);
-      toast({
-        title: "Error",
+      toast("Error", {
         description: "Failed to update settings. Please try again.",
-        variant: "destructive",
+        className: "text-destructive",
       });
     } finally {
       setIsUpdating(false);

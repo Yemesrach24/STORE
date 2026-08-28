@@ -5,7 +5,7 @@ A comprehensive inventory management application built with Next.js 14, TypeScri
 ## 🚀 Features
 
 ### 🔐 Authentication & Authorization
-- **Clerk Integration**: Secure user authentication with Clerk
+- **Google OAuth 2.0**: Secure user authentication with Google Sign-In (Auth.js)
 - **Role-Based Access Control**: Admin, Manager, and User roles
 - **Protected Routes**: Middleware-based route protection
 - **Session Management**: Secure session handling
@@ -51,7 +51,7 @@ A comprehensive inventory management application built with Next.js 14, TypeScri
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
-- **Authentication**: Clerk
+- **Authentication**: Google OAuth 2.0 via Auth.js (NextAuth)
 - **Database**: MongoDB with Mongoose
 - **Form Handling**: React Hook Form + Zod
 - **State Management**: React Hooks
@@ -92,14 +92,20 @@ cp env.example .env.local
 Update `.env.local` with your configuration:
 
 ```env
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
-CLERK_SECRET_KEY=sk_test_your_key_here
-CLERK_WEBHOOK_SECRET=whsec_your_webhook_secret
+# Google OAuth (Auth.js)
+# Generate with: openssl rand -base64 32
+AUTH_SECRET=your_auth_secret_here
+AUTH_GOOGLE_ID=your_google_client_id.apps.googleusercontent.com
+AUTH_GOOGLE_SECRET=your_google_client_secret
 
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/inventory-management
 ```
+
+> 📘 **Need the Google OAuth Client ID/Secret?** Follow the complete
+> step-by-step walkthrough in [`GOOGLE_OAUTH_SETUP.md`](./GOOGLE_OAUTH_SETUP.md) —
+> it covers the Google Cloud Console clicks, the exact redirect URI, and
+> troubleshooting for the most common errors.
 
 ### 4. Database Setup
 
@@ -144,7 +150,7 @@ http://localhost:3000/api
 ### Authentication
 All API endpoints require authentication. Include the authorization header:
 ```
-Authorization: Bearer <your-clerk-token>
+// Sessions are cookie-based — the NextAuth session cookie is sent automatically
 ```
 
 ### Endpoints
@@ -280,7 +286,7 @@ The application can be deployed to any platform that supports Next.js:
 
 1. Create production environment variables
 2. Set up production MongoDB database
-3. Configure Clerk for production
+3. Configure Google OAuth and AUTH_SECRET for production
 4. Set up domain and SSL certificates
 
 ## 🤝 Contributing
@@ -360,7 +366,7 @@ npm run test:seed
 ## 🙏 Acknowledgments
 
 - [Next.js](https://nextjs.org/) - React framework
-- [Clerk](https://clerk.com/) - Authentication
+- [Auth.js](https://authjs.dev/) - Authentication (Google OAuth 2.0)
 - [shadcn/ui](https://ui.shadcn.com/) - UI components
 - [Tailwind CSS](https://tailwindcss.com/) - CSS framework
 - [MongoDB](https://www.mongodb.com/) - Database

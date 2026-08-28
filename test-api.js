@@ -161,7 +161,7 @@ async function runTests() {
   }
   
   log('\n📝 Next Steps:', 'bright');
-  log('1. Set up authentication with Clerk', 'blue');
+  log('1. Sign in with Google (Auth.js) to establish a session', 'blue');
   log('2. Get your authentication token', 'blue');
   log('3. Use the Postman collection for authenticated testing', 'blue');
   log('4. Import postman_collection.json into Postman', 'blue');

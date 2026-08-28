@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { UserButton } from "@clerk/nextjs";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 import { 
   LayoutDashboard, 
   Package, 
@@ -58,10 +60,10 @@ export default function Navigation() {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            <UserButton afterSignOutUrl="/" />
+            <SignOutButton />
           </div>
         </div>
       </div>
     </nav>
   );
-} 
+}

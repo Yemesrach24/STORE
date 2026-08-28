@@ -194,7 +194,7 @@ describe('Component', () => {
 
 ### API Tests
 
-1. **Mock authentication**: Use Clerk auth mocks
+1. **Mock authentication**: Use the next-auth/react and @/lib/auth mocks in jest.setup.js
 2. **Test database operations**: Use test database
 3. **Test validation**: Send invalid data
 4. **Test authorization**: Test role-based access
@@ -284,8 +284,9 @@ The CI/CD pipeline includes:
 ```yaml
 # Test environment variables
 MONGODB_URI: mongodb://localhost:27017/test
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_dummy
-CLERK_SECRET_KEY: sk_test_dummy
+AUTH_SECRET: test-secret
+AUTH_GOOGLE_ID: test-google-id
+AUTH_GOOGLE_SECRET: test-google-secret
 ```
 
 ### Test Reports

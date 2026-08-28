@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import { Item, User } from '@/models';
 import mongoose from 'mongoose';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -19,9 +19,10 @@ export async function GET(
     }
     
     await dbConnect();
+    const { id } = await params;
     
     // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
+    const user = await User.findOne({ authId: userId, isActive: true });
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -29,7 +30,7 @@ export async function GET(
       );
     }
     
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: 'Invalid product ID' },
         { status: 400 }
@@ -37,7 +38,7 @@ export async function GET(
     }
     
     const product = await Item.findOne({
-      _id: params.id,
+      _id: id,
       userId: user._id,
       isActive: true
     }).lean();
@@ -61,7 +62,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -74,9 +75,10 @@ export async function PUT(
     }
     
     await dbConnect();
+    const { id } = await params;
     
     // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
+    const user = await User.findOne({ authId: userId, isActive: true });
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -84,7 +86,7 @@ export async function PUT(
       );
     }
     
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: 'Invalid product ID' },
         { status: 400 }
@@ -97,7 +99,7 @@ export async function PUT(
     if (body.sku) {
       const existingProduct = await Item.findOne({
         sku: body.sku,
-        _id: { $ne: params.id },
+        _id: { $ne: id },
         userId: user._id
       });
       if (existingProduct) {
@@ -110,7 +112,7 @@ export async function PUT(
     
     const product = await Item.findOneAndUpdate(
       {
-        _id: params.id,
+        _id: id,
         userId: user._id,
         isActive: true
       },
@@ -146,7 +148,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -159,9 +161,10 @@ export async function DELETE(
     }
     
     await dbConnect();
+    const { id } = await params;
     
     // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
+    const user = await User.findOne({ authId: userId, isActive: true });
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -169,7 +172,7 @@ export async function DELETE(
       );
     }
     
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: 'Invalid product ID' },
         { status: 400 }
@@ -178,7 +181,7 @@ export async function DELETE(
     
     const product = await Item.findOneAndUpdate(
       {
-        _id: params.id,
+        _id: id,
         userId: user._id,
         isActive: true
       },

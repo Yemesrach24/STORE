@@ -103,7 +103,7 @@ export async function seedDatabase() {
 
     // Create a test user
     const testUser = new User({
-      clerkId: 'test_user_123',
+      authId: 'test_user_123',
       name: 'Test User',
       email: 'test@example.com',
       firstName: 'Test',

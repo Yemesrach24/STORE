@@ -26,7 +26,7 @@ export async function initializeDatabase(): Promise<InitResult> {
     // Create indexes for all collections
     await Promise.all([
       // User indexes
-      User.collection.createIndex({ clerkId: 1 }, { unique: true }),
+      User.collection.createIndex({ authId: 1 }, { unique: true }),
       User.collection.createIndex({ email: 1 }, { unique: true }),
       User.collection.createIndex({ role: 1 }),
       User.collection.createIndex({ isActive: 1 }),
@@ -63,7 +63,7 @@ export async function initializeDatabase(): Promise<InitResult> {
       
       // Create a default admin user (this should be replaced by actual user registration)
       const defaultAdmin = new User({
-        clerkId: 'default_admin',
+        authId: 'default_admin',
         name: 'System Administrator',
         email: 'admin@inventory-system.com',
         firstName: 'System',

@@ -4,12 +4,11 @@ import { GET as getItem, PUT, DELETE } from '../items/[id]/route'
 import { seedTestDatabase, cleanupTestDatabase } from '@/lib/test-seed'
 import { Item, User } from '@/models'
 import dbConnect from '@/lib/mongodb'
+import mongoose from 'mongoose'
 
-// Mock Clerk auth
-jest.mock('@clerk/nextjs/server', () => ({
-  auth: jest.fn(() => ({
-    userId: 'test-user-id',
-  })),
+// Mock the app auth helper (NextAuth session wrapper)
+jest.mock('@/lib/auth', () => ({
+  auth: jest.fn(async () => ({ userId: 'test-user-id' })),
 }))
 
 describe('/api/items', () => {
@@ -25,7 +24,7 @@ describe('/api/items', () => {
     
     // Create test user
     testUser = await User.create({
-      clerkId: 'clerk_test_user_123',
+      authId: 'test-user-id',
       name: 'Test User',
       email: 'test@example.com',
       firstName: 'Test',
@@ -248,7 +247,7 @@ describe('/api/items', () => {
     it('returns 403 for item not owned by user', async () => {
       // Create item owned by different user
       const otherUser = await User.create({
-        clerkId: 'clerk_other_user_456',
+        authId: 'other-user-id',
         name: 'Other User',
         email: 'other@example.com',
         firstName: 'Other',

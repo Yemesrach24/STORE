@@ -49,7 +49,7 @@ export function InventoryCard({ item, onEdit, onDelete, onView, className }: Inv
       return { status: "out-of-stock", label: "Out of Stock", color: "destructive" as const };
     }
     if (item.quantity <= item.minQuantity) {
-      return { status: "low-stock", label: "Low Stock", color: "warning" as const };
+      return { status: "low-stock", label: "Low Stock", color: "secondary" as const };
     }
     if (item.quantity >= item.maxQuantity) {
       return { status: "overstocked", label: "Overstocked", color: "secondary" as const };
@@ -98,13 +98,13 @@ export function InventoryCard({ item, onEdit, onDelete, onView, className }: Inv
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {onView && (
-                <DropdownMenuItem onClick={() => onView(item)}>
+                <DropdownMenuItem key="view" onClick={() => onView(item)}>
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
                 </DropdownMenuItem>
               )}
               {onEdit && (
-                <DropdownMenuItem onClick={() => onEdit(item)}>
+                <DropdownMenuItem key="edit" onClick={() => onEdit(item)}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
@@ -112,6 +112,7 @@ export function InventoryCard({ item, onEdit, onDelete, onView, className }: Inv
               <DropdownMenuSeparator />
               {onDelete && (
                 <DropdownMenuItem 
+                  key="delete"
                   onClick={handleDelete}
                   disabled={isDeleting}
                   className="text-destructive focus:text-destructive"
@@ -139,14 +140,14 @@ export function InventoryCard({ item, onEdit, onDelete, onView, className }: Inv
             <div className="text-right">
               <p className="text-sm font-medium">{item.quantity} units</p>
               <p className="text-xs text-muted-foreground">
-                ${totalValue.toFixed(2)} value
+                Br {totalValue.toLocaleString()} value
               </p>
             </div>
           </div>
 
           {/* Price and Category */}
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">${item.price.toFixed(2)}</span>
+            <span className="font-medium">Br {item.price.toLocaleString()}</span>
             <span className="text-muted-foreground">{item.category}</span>
           </div>
 

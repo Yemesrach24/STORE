@@ -25,7 +25,7 @@ export const createItemSchema = z.object({
     .max(100, 'Barcode cannot exceed 100 characters')
     .optional(),
   unit: z.enum(['pieces', 'boxes', 'kg', 'liters', 'meters', 'pairs', 'sets', 'units'], {
-    errorMap: () => ({ message: 'Unit must be one of: pieces, boxes, kg, liters, meters, pairs, sets, units' })
+    message: 'Unit must be one of: pieces, boxes, kg, liters, meters, pairs, sets, units'
   }),
   minQuantity: z.number()
     .min(0, 'Minimum quantity cannot be negative')
@@ -52,14 +52,14 @@ export const createItemSchema = z.object({
 export const updateItemSchema = createItemSchema.partial();
 
 export const itemQuerySchema = z.object({
-  page: z.string().transform(Number).pipe(z.number().min(1)).default('1'),
-  limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).default('10'),
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(10),
   search: z.string().optional(),
   category: z.string().optional(),
-  minPrice: z.string().transform(Number).pipe(z.number().min(0)).optional(),
-  maxPrice: z.string().transform(Number).pipe(z.number().min(0)).optional(),
-  inStock: z.string().transform((val) => val === 'true').optional(),
-  lowStock: z.string().transform((val) => val === 'true').optional(),
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+  inStock: z.coerce.boolean().optional(),
+  lowStock: z.coerce.boolean().optional(),
   sortBy: z.enum(['name', 'price', 'quantity', 'createdAt', 'updatedAt']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });

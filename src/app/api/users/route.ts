@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -81,8 +81,8 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json();
     
-    // Check if user already exists with this clerkId
-    const existingUser = await User.findOne({ clerkId: body.clerkId });
+    // Check if user already exists with this authId
+    const existingUser = await User.findOne({ authId: body.authId });
     if (existingUser) {
       return NextResponse.json(
         { error: 'User already exists' },

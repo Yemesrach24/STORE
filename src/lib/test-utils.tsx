@@ -1,18 +1,13 @@
 import React, { ReactElement } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
-import { ClerkProvider } from '@clerk/nextjs'
-
-// Mock Clerk configuration for tests
-const mockClerkConfig = {
-  publishableKey: 'test-publishable-key',
-}
+import { SessionProvider } from 'next-auth/react'
 
 // Custom render function that includes providers
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
-    <ClerkProvider {...mockClerkConfig}>
+    <SessionProvider>
       {children}
-    </ClerkProvider>
+    </SessionProvider>
   )
 }
 
@@ -30,7 +25,7 @@ export { customRender as render }
 // Test data generators
 export const createMockUser = (overrides = {}) => ({
   id: 'test-user-id',
-  clerkId: 'clerk_test_user_123',
+  authId: 'google_test_user_123',
   name: 'Test User',
   email: 'test@example.com',
   firstName: 'Test',

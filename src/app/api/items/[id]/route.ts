@@ -1,313 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { requireAdmin } from '@/lib/auth-helpers';
 import dbConnect from '@/lib/mongodb';
-import { Item, User, Transaction } from '@/models';
-import { itemIdSchema, updateItemSchema, quantityUpdateSchema } from '@/lib/validations/item';
-import mongoose from 'mongoose';
+import { Item } from '@/models';
 
+// GET /api/items/[id] - Get single item (public)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
     await dbConnect();
-    
-    // Validate item ID
-    const { id } = itemIdSchema.parse(params);
-    
-    // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-    
-    const item = await Item.findOne({
-      _id: id,
-      userId: user._id,
-      isActive: true
-    }).lean();
-    
+    const { id } = await params;
+    const item = await Item.findOne({ _id: id, isActive: true })
+      .populate('categoryId', 'name imageUrl description')
+      .lean();
+
     if (!item) {
-      return NextResponse.json(
-        { error: 'Item not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
-    
+
     return NextResponse.json(item);
   } catch (error: any) {
     console.error('Error fetching item:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid item ID format' },
-        { status: 400 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch item' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch item' }, { status: 500 });
   }
 }
 
+// PUT /api/items/[id] - Update item (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
+    const user = await requireAdmin();
     await dbConnect();
-    
-    // Validate item ID
-    const { id } = itemIdSchema.parse(params);
-    
-    // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-    
+
+    const { id } = await params;
     const body = await request.json();
-    
-    // Validate update data
-    const updateData = updateItemSchema.parse(body);
-    
+
     const item = await Item.findOneAndUpdate(
-      {
-        _id: id,
-        userId: user._id,
-        isActive: true
-      },
-      updateData,
+      { _id: id },
+      body,
       { new: true, runValidators: true }
-    );
-    
+    ).populate('categoryId', 'name imageUrl');
+
     if (!item) {
-      return NextResponse.json(
-        { error: 'Item not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
-    
+
     return NextResponse.json(item);
   } catch (error: any) {
     console.error('Error updating item:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid data format', details: error.errors },
-        { status: 400 }
-      );
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Please sign in' }, { status: 401 });
     }
-    
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map((err: any) => err.message);
-      return NextResponse.json(
-        { error: 'Validation failed', details: errors },
-        { status: 400 }
-      );
+    if (error.message === 'FORBIDDEN') {
+      return NextResponse.json({ error: 'You do not have permission to update items' }, { status: 403 });
     }
-    
-    return NextResponse.json(
-      { error: 'Failed to update item' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update item' }, { status: 500 });
   }
 }
 
+// DELETE /api/items/[id] - Soft delete item (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
+    const user = await requireAdmin();
     await dbConnect();
-    
-    // Validate item ID
-    const { id } = itemIdSchema.parse(params);
-    
-    // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-    
+
+    const { id } = await params;
     const item = await Item.findOneAndUpdate(
-      {
-        _id: id,
-        userId: user._id,
-        isActive: true
-      },
+      { _id: id },
       { isActive: false },
       { new: true }
     );
-    
+
     if (!item) {
-      return NextResponse.json(
-        { error: 'Item not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
-    
+
     return NextResponse.json({ message: 'Item deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting item:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid item ID format' },
-        { status: 400 }
-      );
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Please sign in' }, { status: 401 });
     }
-    
-    return NextResponse.json(
-      { error: 'Failed to delete item' },
-      { status: 500 }
-    );
+    if (error.message === 'FORBIDDEN') {
+      return NextResponse.json({ error: 'You do not have permission to delete items' }, { status: 403 });
+    }
+    return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
   }
 }
-
-// PATCH endpoint for quantity updates
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    await dbConnect();
-    
-    // Validate item ID
-    const { id } = itemIdSchema.parse(params);
-    
-    // Get user from database
-    const user = await User.findOne({ clerkId: userId, isActive: true });
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-    
-    const body = await request.json();
-    
-    // Validate quantity update data
-    const { quantity, reason, notes } = quantityUpdateSchema.parse(body);
-    
-    // Get current item
-    const item = await Item.findOne({
-      _id: id,
-      userId: user._id,
-      isActive: true
-    });
-    
-    if (!item) {
-      return NextResponse.json(
-        { error: 'Item not found' },
-        { status: 404 }
-      );
-    }
-    
-    const previousQuantity = item.quantity;
-    const quantityChange = quantity - previousQuantity;
-    
-    // Determine transaction type
-    let transactionType: 'IN' | 'OUT' | 'ADJUSTMENT' = 'ADJUSTMENT';
-    if (quantityChange > 0) {
-      transactionType = 'IN';
-    } else if (quantityChange < 0) {
-      transactionType = 'OUT';
-    }
-    
-    // Update item quantity
-    item.quantity = quantity;
-    await item.save();
-    
-    // Create transaction record if there's a quantity change
-    if (quantityChange !== 0) {
-      const transaction = new Transaction({
-        itemId: item._id,
-        type: transactionType,
-        quantity: Math.abs(quantityChange),
-        previousQuantity,
-        newQuantity: quantity,
-        reason,
-        notes,
-        userId: user._id,
-        transactionDate: new Date()
-      });
-      
-      await transaction.save();
-    }
-    
-    return NextResponse.json({
-      item,
-      transaction: quantityChange !== 0 ? 'Transaction recorded' : 'No transaction needed'
-    });
-  } catch (error: any) {
-    console.error('Error updating item quantity:', error);
-    
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid data format', details: error.errors },
-        { status: 400 }
-      );
-    }
-    
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map((err: any) => err.message);
-      return NextResponse.json(
-        { error: 'Validation failed', details: errors },
-        { status: 400 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to update item quantity' },
-      { status: 500 }
-    );
-  }
-} 

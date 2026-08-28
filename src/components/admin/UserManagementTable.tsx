@@ -11,13 +11,18 @@ import { MoreHorizontal, Edit, Trash2, Crown, Shield, Users } from "lucide-react
 
 interface User {
   _id: string;
-  clerkId: string;
+  authId: string;
   name: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'manager' | 'user';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'CUSTOMER';
   isActive: boolean;
+  phone?: string;
+  whatsapp?: string;
+  telegram?: string;
+  instagram?: string;
+  shopName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,12 +52,12 @@ export function UserManagementTable({
 }: UserManagementTableProps) {
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case 'admin':
-        return <Badge variant="destructive"><Crown className="h-3 w-3 mr-1" />Admin</Badge>;
-      case 'manager':
-        return <Badge variant="secondary"><Shield className="h-3 w-3 mr-1" />Manager</Badge>;
+      case 'SUPER_ADMIN':
+        return <Badge variant="destructive"><Crown className="h-3 w-3 mr-1" />Super Admin</Badge>;
+      case 'ADMIN':
+        return <Badge variant="secondary"><Shield className="h-3 w-3 mr-1" />Admin</Badge>;
       default:
-        return <Badge variant="outline"><Users className="h-3 w-3 mr-1" />User</Badge>;
+        return <Badge variant="outline"><Users className="h-3 w-3 mr-1" />Customer</Badge>;
     }
   };
 

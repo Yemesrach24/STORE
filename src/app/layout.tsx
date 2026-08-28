@@ -1,7 +1,6 @@
 import { type Metadata } from 'next'
-import { ClerkProvider } from '@clerk/nextjs'
+import { SessionProvider } from 'next-auth/react'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { getClerkConfig } from '@/lib/clerk-config'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -16,8 +15,11 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Inventory Management System',
-  description: 'A comprehensive inventory management application built with Next.js 14',
+  title: 'TKD Store - Taekwondo Equipment',
+  description: 'Quality taekwondo equipment store. Browse and order martial arts gear.',
+  icons: {
+    icon: '/logo.png',
+  },
 }
 
 export default function RootLayout({
@@ -26,13 +28,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider {...getClerkConfig()}>
+    <SessionProvider>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           {children}
           <Toaster />
         </body>
       </html>
-    </ClerkProvider>
+    </SessionProvider>
   )
 }

@@ -65,7 +65,7 @@ export default function ItemDetailsPage() {
       return { status: "Out of Stock", color: "destructive" as const };
     }
     if (item.quantity <= item.minQuantity) {
-      return { status: "Low Stock", color: "warning" as const };
+      return { status: "Low Stock", color: "secondary" as const };
     }
     return { status: "In Stock", color: "default" as const };
   };
@@ -228,15 +228,15 @@ export default function ItemDetailsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Sale Price</p>
-                    <p className="text-2xl font-bold">${item.price.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">Br {(item.price ?? 0).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Cost Price</p>
-                    <p className="text-2xl font-bold">${item.costPrice.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">Br {(item.costPrice ?? 0).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Value</p>
-                    <p className="text-2xl font-bold">${totalValue.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">Br {(totalValue ?? 0).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Profit Margin</p>

@@ -24,7 +24,7 @@ const TransactionSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Item',
     required: [true, 'Item ID is required'],
-    index: true
+  
   },
   type: {
     type: String,
@@ -33,7 +33,7 @@ const TransactionSchema: Schema = new Schema({
       message: 'Transaction type must be IN, OUT, ADJUSTMENT, or TRANSFER'
     },
     required: [true, 'Transaction type is required'],
-    index: true
+  
   },
   quantity: {
     type: Number,
@@ -76,7 +76,7 @@ const TransactionSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'User ID is required'],
-    index: true
+  
   },
   location: {
     type: String,
@@ -100,7 +100,7 @@ const TransactionSchema: Schema = new Schema({
   transactionDate: {
     type: Date,
     default: Date.now,
-    index: true
+  
   }
 }, {
   timestamps: true,
@@ -129,22 +129,22 @@ TransactionSchema.index({
 });
 
 // Virtual for quantity change
-TransactionSchema.virtual('quantityChange').get(function() {
+TransactionSchema.virtual('quantityChange').get(function(this: ITransaction) {
   return this.newQuantity - this.previousQuantity;
 });
 
 // Virtual for absolute quantity change
-TransactionSchema.virtual('absoluteQuantityChange').get(function() {
-  return Math.abs(this.quantityChange);
+TransactionSchema.virtual('absoluteQuantityChange').get(function(this: ITransaction) {
+  return Math.abs(this.newQuantity - this.previousQuantity);
 });
 
 // Virtual for transaction value
-TransactionSchema.virtual('transactionValue').get(function() {
+TransactionSchema.virtual('transactionValue').get(function(this: ITransaction) {
   return this.quantity * (this.cost || 0);
 });
 
 // Pre-save middleware to validate transaction
-TransactionSchema.pre('save', function(next) {
+TransactionSchema.pre('save', function(this: ITransaction, next) {
   // Validate quantity changes based on transaction type
   if (this.type === 'IN') {
     if (this.newQuantity !== this.previousQuantity + this.quantity) {

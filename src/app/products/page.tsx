@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +68,7 @@ export default async function Products() {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Price:</span>
-                  <span className="font-medium">$99.99</span>
+                  <span className="font-medium">Br 99.99</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Stock:</span>

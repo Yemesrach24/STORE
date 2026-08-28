@@ -9,7 +9,7 @@ const generateMockUsers = (count = 10) => {
   
   for (let i = 0; i < count; i++) {
     users.push({
-      clerkId: `clerk_test_user_${i + 1}`,
+      authId: `google_test_user_${i + 1}`,
       name: `Test User ${i + 1}`,
       email: `testuser${i + 1}@example.com`,
       firstName: `Test${i + 1}`,
@@ -39,7 +39,7 @@ const generateMockUsers = (count = 10) => {
 }
 
 const generateMockCategories = (count = 15) => {
-  const categories = []
+  const categories: Array<{ name: string; description: string; slug: string; parentId: string | null; userId: string; isActive: boolean }> = []
   const categoryNames = [
     'Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports',
     'Automotive', 'Health & Beauty', 'Toys & Games', 'Food & Beverages',
@@ -52,7 +52,7 @@ const generateMockCategories = (count = 15) => {
       name: categoryNames[i] || `Category ${i + 1}`,
       description: `Description for ${categoryNames[i] || `Category ${i + 1}`}`,
       slug: (categoryNames[i] || `category-${i + 1}`).toLowerCase().replace(/\s+/g, '-'),
-      parentId: i > 5 ? categories[Math.floor(Math.random() * 6)]?.id : null,
+      parentId: i > 5 ? categories[Math.floor(Math.random() * 6)]?.name ?? null : null,
       userId: `test-user-${(i % 3) + 1}`,
       isActive: true,
     })

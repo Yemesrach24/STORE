@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +27,12 @@ interface InventoryItem {
   updatedAt: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface PersonalInventoryProps {}
 
 export function PersonalInventory({}: PersonalInventoryProps) {
-  const { user } = useUser();
+  const { data: session } = useSession();
+  const user = session?.user;
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function PersonalInventory({}: PersonalInventoryProps) {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
-        userId: user.id,
+        ...(user.id ? { userId: user.id } : {}),
         ...(searchTerm && { search: searchTerm }),
         ...(categoryFilter !== "all" && { category: categoryFilter }),
         ...(stockFilter !== "all" && { stockFilter }),
@@ -335,7 +337,7 @@ export function PersonalInventory({}: PersonalInventoryProps) {
                             Min: {item.minStockLevel}
                           </div>
                         </TableCell>
-                        <TableCell>${item.price.toFixed(2)}</TableCell>
+                        <TableCell>Br {(item.price ?? 0).toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge variant={stockStatus.variant}>
                             {stockStatus.label}

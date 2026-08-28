@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 interface ApiError {
@@ -14,8 +14,9 @@ interface ApiResponse<T> {
 }
 
 export function useApi() {
-  const { isSignedIn } = useAuth();
+  const { status } = useSession();
   const router = useRouter();
+  const isSignedIn = status === 'authenticated';
 
   const apiRequest = useCallback(async <T>(
     url: string, 

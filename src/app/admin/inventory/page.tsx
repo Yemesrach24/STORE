@@ -159,7 +159,7 @@ export default function AdminInventoryPage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${stats.totalValue.toLocaleString()}</div>
+                <div className="text-2xl font-bold">Br {stats.totalValue.toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">
                   Combined inventory value
                 </p>
@@ -311,7 +311,7 @@ export default function AdminInventoryPage() {
                             <Badge variant="outline">{item.category}</Badge>
                           </TableCell>
                           <TableCell>{item.quantity}</TableCell>
-                          <TableCell>${item.price.toFixed(2)}</TableCell>
+                          <TableCell>Br {(item.price ?? 0).toFixed(2)}</TableCell>
                           <TableCell>
                             <Badge variant={stockStatus.variant}>
                               {stockStatus.status}
