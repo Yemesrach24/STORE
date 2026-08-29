@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import Link from "next/link";
 
+
 export default async function SignInPage() {
   const { userId } = await auth();
 
@@ -50,9 +51,7 @@ export default async function SignInPage() {
         </div>
 
         <p className="text-center mt-6 text-sm text-gray-500">
-          <a href="/shop" className="text-gray-900 font-medium hover:underline">
-            ← Back to Shop
-          </a>
+         <Link href="/shop">Back to Shop</Link>
         </p>
       </div>
     </div>
