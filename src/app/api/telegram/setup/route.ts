@@ -3,21 +3,39 @@ import { NextResponse } from 'next/server';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 // Detect the public app URL for webhook registration.
-function getAppBaseUrl(): string {
-  // Explicit override (recommended in production).
+// Returns an object so callers can distinguish "explicit/stable" from "fallback".
+function getAppBaseUrl(): { url: string; stable: boolean } {
+  // Explicit override (recommended in production) — always trusted.
   if (process.env.TELEGRAM_WEBHOOK_URL) {
-    return process.env.TELEGRAM_WEBHOOK_URL.replace(/\/$/, '');
+    return { url: process.env.TELEGRAM_WEBHOOK_URL.replace(/\/$/, ''), stable: true };
   }
-  // Vercel injects the public deployment URL.
-  const vercelUrl = process.env.VERCEL_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
+
+  const vercelUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL || // stable production domain
+    process.env.VERCEL_URL; // may be a preview/alphabetical URL
+
   if (vercelUrl) {
-    return `https://${vercelUrl}`;
+    // Vercel preview URLs look like <project>-<hash>-<team>-projects.vercel.app
+    // and are temporary — never register a webhook against them.
+    const isPreview =
+      /vercel\.app$/i.test(vercelUrl) && /-projects\.vercel\.app$/i.test(vercelUrl) &&
+      /-\w+-[a-z0-9]+-projects$/i.test(vercelUrl.replace(/\.vercel\.app$/, ''));
+
+    if (!isPreview) {
+      return { url: `https://${vercelUrl}`, stable: false };
+    }
+    // Preview URL: do NOT register. Fall through to localhost so webhook
+    // registration is skipped (polling/dev behaviour), and surface a hint.
   }
-  // Next.js public URL fallback.
+
   if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
+    const url = process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
+    if (url.startsWith('https://') && !url.includes('localhost')) {
+      return { url, stable: false };
+    }
   }
-  return 'http://localhost:3000';
+
+  return { url: 'http://localhost:3000', stable: false };
 }
 
 function isHttps(url: string): boolean {
@@ -81,11 +99,18 @@ export async function GET() {
     //   to /api/telegram/webhook automatically (instant replies).
     // - Local development (http://localhost): no HTTPS, so clear the webhook
     //   and rely on manual polling via GET /api/telegram/webhook.
-    const baseUrl = getAppBaseUrl();
+    const { url: baseUrl, stable } = getAppBaseUrl();
     const webhookUrl = `${baseUrl}/api/telegram/webhook`;
+    const shouldRegister = isHttps(baseUrl);
+
+    // Warn clearly when we are falling back to a preview/unstable URL.
+    const urlWarning =
+      shouldRegister && !stable
+        ? '⚠️ Webhook registered against a non-explicit URL. Set TELEGRAM_WEBHOOK_URL to your production domain (e.g. https://store-nu-roan.vercel.app) to avoid preview-deployment breakage.'
+        : '';
 
     let webhookResult: any = null;
-    if (isHttps(baseUrl)) {
+    if (shouldRegister) {
       const setRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -96,7 +121,7 @@ export async function GET() {
       });
       webhookResult = await setRes.json();
     } else {
-      // Local dev: clear webhook so getUpdates polling works.
+      // Local dev / preview: clear webhook so getUpdates polling works.
       const delRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`);
       webhookResult = await delRes.json();
     }
@@ -105,7 +130,7 @@ export async function GET() {
     const webhookInfoRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo`);
     const webhookInfo = await webhookInfoRes.json();
 
-    const registered = isHttps(baseUrl);
+    const registered = shouldRegister;
 
     return NextResponse.json({
       success: true,
@@ -114,6 +139,7 @@ export async function GET() {
       webhookRegistered: registered ? webhookResult?.ok : false,
       webhookCleared: registered ? false : webhookResult?.ok,
       webhookUrl: registered ? webhookUrl : null,
+      urlWarning,
       webhookInfo: webhookInfo?.result,
       instructions: registered
         ? [
