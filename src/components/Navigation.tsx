@@ -31,7 +31,7 @@ export default function Navigation() {
           {/* Logo and Brand */}
           <div className="flex items-center space-x-8">
             <Link href="/dashboard" className="flex items-center space-x-2">
-              <Package className="h-8 w-8 text-blue-600" />
+              <Package className="h-8 w-8 text-[var(--brand)]" />
               <span className="text-xl font-bold text-gray-900">Inventory</span>
             </Link>
             
@@ -46,7 +46,7 @@ export default function Navigation() {
                       size="sm"
                       className={cn(
                         "flex items-center space-x-2",
-                        isActive && "bg-blue-600 text-white hover:bg-blue-700"
+                        isActive && "bg-[var(--brand)] text-white hover:bg-[var(--brand-light)]"
                       )}
                     >
                       <item.icon className="h-4 w-4" />

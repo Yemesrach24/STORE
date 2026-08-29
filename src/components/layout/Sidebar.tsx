@@ -163,7 +163,7 @@ export function Sidebar({ className }: SidebarProps) {
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                         isActive
-                          ? "bg-red-600 text-white shadow-md shadow-red-600/20"
+                          ? "bg-[var(--brand)] text-white shadow-md shadow-[var(--brand)]/20"
                           : "text-gray-400 hover:bg-gray-800 hover:text-white"
                       )}
                     >
@@ -184,7 +184,7 @@ export function Sidebar({ className }: SidebarProps) {
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                         isActive
-                          ? "bg-red-600 text-white shadow-md shadow-red-600/20"
+                          ? "bg-[var(--brand)] text-white shadow-md shadow-[var(--brand)]/20"
                           : "text-gray-400 hover:bg-gray-800 hover:text-white"
                       )}
                     >

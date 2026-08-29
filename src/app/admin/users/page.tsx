@@ -157,7 +157,7 @@ export default function AdminUsersPage() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground">Admins</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-[var(--brand)]">
                   {users.filter(u => ['SUPER_ADMIN', 'ADMIN'].includes(u.role)).length}
                 </p>
               </CardContent>

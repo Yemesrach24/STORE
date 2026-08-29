@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Search, Settings, User, LogOut } from "lucide-react";
+import { Bell, Search, User, LogOut } from "lucide-react";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -101,12 +101,6 @@ export function Header({ onSearch, className }: HeaderProps) {
                 <a href="/profile" className="cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a href="/settings" className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
                 </a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

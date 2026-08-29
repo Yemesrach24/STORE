@@ -21,7 +21,7 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
         <Header />
         
         {/* Page content */}
-        <main className={`flex-1 ${className}`}>
+        <main className={`flex-1 px-4 sm:px-6 lg:px-8 py-6 ${className}`}>
           {children}
         </main>
       </div>

@@ -163,7 +163,7 @@ export default function AdminTelegramPage() {
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={handlePoll} disabled={isPolling} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={handlePoll} disabled={isPolling} className="bg-[var(--brand)] hover:bg-[var(--brand-dark)]">
                   {isPolling ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
