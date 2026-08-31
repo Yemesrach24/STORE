@@ -206,12 +206,12 @@ export default function ShopOrdersPage() {
             {filteredOrders.map((order) => (
               <div key={order._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 {/* Order Header */}
-                <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50/50">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-gray-900">#{order.orderNumber}</span>
                     {statusBadge(order.status)}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {order.status === "PENDING" && (
                       <>
                         <Button

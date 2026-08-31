@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
-  ArrowLeft, Loader2, ShoppingBag, Phone, MessageCircle, Send,
+  ArrowLeft, Loader2, ShoppingBag, Phone, MessageCircle, Send, Mail,
   Package, Copy, Check, ChevronLeft, ChevronRight, Minus, Plus,
 } from "lucide-react";
 
@@ -355,37 +355,62 @@ export default function ItemDetailPage() {
             {/* Contact info — compact */}
             {(item.companyPhone || item.companyWhatsapp || item.companyTelegram || item.companyInstagram || item.companyEmail) && (
               <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm font-semibold text-gray-900 mb-1">{item.companyName || "TKD Store"}</p>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <p className="text-sm font-semibold text-gray-900 mb-3">{item.companyName || "TKD Store"}</p>
+                <div className="space-y-2">
                   {item.companyPhone && (
-                    <div className="flex items-center gap-1">
-                      <a href={`tel:${item.companyPhone}`} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:border-gray-300 transition-colors">
-                        <Phone className="h-3 w-3 text-green-600" /> Call
+                    <div className="flex items-center gap-2">
+                      <a href={`tel:${item.companyPhone}`} className="inline-flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-[var(--brand)] transition-colors flex-1 min-w-0">
+                        <Phone className="h-4 w-4 text-green-600 shrink-0" />
+                        <span className="truncate">{item.companyPhone}</span>
                       </a>
-                      <button onClick={() => copyToClipboard(item.companyPhone!, "phone")} className="p-1 text-gray-400 hover:text-gray-700">
-                        {copiedField === "phone" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                      <button onClick={() => copyToClipboard(item.companyPhone!, "phone")} className="p-2 text-gray-400 hover:text-gray-700 shrink-0" title="Copy phone">
+                        {copiedField === "phone" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                       </button>
                     </div>
                   )}
                   {item.companyWhatsapp && (
-                    <div className="flex items-center gap-1">
-                      <a href={`https://wa.me/${item.companyWhatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:border-gray-300 transition-colors">
-                        <MessageCircle className="h-3 w-3 text-green-500" /> WhatsApp
+                    <div className="flex items-center gap-2">
+                      <a href={`https://wa.me/${item.companyWhatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-green-400 transition-colors flex-1 min-w-0">
+                        <MessageCircle className="h-4 w-4 text-green-500 shrink-0" />
+                        <span className="truncate">{item.companyWhatsapp}</span>
                       </a>
-                      <button onClick={() => copyToClipboard(item.companyWhatsapp!, "wa")} className="p-1 text-gray-400 hover:text-gray-700">
-                        {copiedField === "wa" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                      <button onClick={() => copyToClipboard(item.companyWhatsapp!, "wa")} className="p-2 text-gray-400 hover:text-gray-700 shrink-0" title="Copy WhatsApp">
+                        {copiedField === "wa" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                       </button>
                     </div>
                   )}
                   {item.companyTelegram && (
-                    <a href={`https://t.me/${item.companyTelegram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:border-gray-300 transition-colors">
-                      <Send className="h-3 w-3 text-blue-500" /> Telegram
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <a href={`https://t.me/${item.companyTelegram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-blue-400 transition-colors flex-1 min-w-0">
+                        <Send className="h-4 w-4 text-blue-500 shrink-0" />
+                        <span className="truncate">@{item.companyTelegram.replace("@", "")}</span>
+                      </a>
+                      <button onClick={() => copyToClipboard(item.companyTelegram!, "tg")} className="p-2 text-gray-400 hover:text-gray-700 shrink-0" title="Copy username">
+                        {copiedField === "tg" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  )}
+                  {item.companyInstagram && (
+                    <div className="flex items-center gap-2">
+                      <a href={`https://instagram.com/${item.companyInstagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-pink-400 transition-colors flex-1 min-w-0">
+                        <Send className="h-4 w-4 text-pink-500 shrink-0" />
+                        <span className="truncate">@{item.companyInstagram.replace("@", "")}</span>
+                      </a>
+                      <button onClick={() => copyToClipboard(item.companyInstagram!, "ig")} className="p-2 text-gray-400 hover:text-gray-700 shrink-0" title="Copy username">
+                        {copiedField === "ig" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                    </div>
                   )}
                   {item.companyEmail && (
-                    <a href={`mailto:${item.companyEmail}`} className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:border-gray-300 transition-colors">
-                      Email
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <a href={`mailto:${item.companyEmail}`} className="inline-flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-gray-300 transition-colors flex-1 min-w-0">
+                        <Mail className="h-4 w-4 text-gray-500 shrink-0" />
+                        <span className="truncate">{item.companyEmail}</span>
+                      </a>
+                      <button onClick={() => copyToClipboard(item.companyEmail!, "email")} className="p-2 text-gray-400 hover:text-gray-700 shrink-0" title="Copy email">
+                        {copiedField === "email" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

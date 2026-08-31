@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { cn } from "@/lib/utils";
 import {
-  Search, Loader2, ChevronRight, User, LogOut,
+  Search, Loader2, ChevronRight, User, LogOut, Menu, X,
 } from "lucide-react";
 
 interface Category {
@@ -45,6 +46,7 @@ export default function ShopPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([fetchCategories(), fetchItems()]);
@@ -53,6 +55,23 @@ export default function ShopPage() {
   useEffect(() => {
     fetchItems();
   }, [selectedCategory]);
+
+  // Close mobile menu on Escape and lock body scroll while open
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   const fetchCategories = async () => {
     try {
@@ -121,7 +140,7 @@ export default function ShopPage() {
                 <div className="w-20 h-8 bg-gray-100 rounded-md animate-pulse" />
               ) : session ? (
                 <>
-                  <Link href="/profile">
+                  <Link href="/profile" className="hidden sm:block">
                     <Button variant="ghost" size="sm" className="text-gray-700 gap-1.5">
                       <User className="h-4 w-4" /> Profile
                     </Button>
@@ -134,16 +153,85 @@ export default function ShopPage() {
                   >
                     <LogOut className="h-4 w-4" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="md:hidden text-gray-700 -mr-1"
+                    aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                    aria-expanded={mobileMenuOpen}
+                    onClick={() => setMobileMenuOpen((v) => !v)}
+                  >
+                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  </Button>
                 </>
               ) : (
-                <Link href="/sign-in">
-                  <Button size="sm" className="bg-[var(--brand)] hover:bg-[var(--brand-dark)] text-white font-medium px-5">
-                    Sign In
+                <>
+                  <Link href="/sign-in">
+                    <Button size="sm" className="bg-[var(--brand)] hover:bg-[var(--brand-dark)] text-white font-medium px-4 sm:px-5">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="md:hidden text-gray-700 -mr-1"
+                    aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                    aria-expanded={mobileMenuOpen}
+                    onClick={() => setMobileMenuOpen((v) => !v)}
+                  >
+                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                   </Button>
-                </Link>
+                </>
               )}
             </div>
           </div>
+        </div>
+
+        {/* Mobile menu — overlay + slide-down panel */}
+        <div
+          className={cn(
+            "md:hidden fixed inset-0 z-40 transition-opacity duration-200",
+            mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          )}
+        >
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+          <nav
+            className={cn(
+              "relative bg-white shadow-xl border-b border-gray-200 transition-transform duration-200 ease-out",
+              mobileMenuOpen ? "translate-y-0" : "-translate-y-full"
+            )}
+          >
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700">Menu</span>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 text-gray-400 hover:text-gray-700 rounded-md"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-2 py-2">
+              <Link href="/shop" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-900 hover:bg-gray-50">Home</Link>
+              <a href="#equipment" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">Categories</a>
+              <a href="#products" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">All Products</a>
+              {status === "authenticated" && (
+                <>
+                  <Link href="/shop/orders" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">My Orders</Link>
+                  <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">Profile</Link>
+                </>
+              )}
+              {status === "authenticated" && (session?.user as any)?.role && ["SUPER_ADMIN", "ADMIN"].includes((session?.user as any)?.role) && (
+                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-semibold text-[var(--brand)] hover:bg-gray-50">
+                  Dashboard →
+                </Link>
+              )}
+            </div>
+          </nav>
         </div>
       </header>
 

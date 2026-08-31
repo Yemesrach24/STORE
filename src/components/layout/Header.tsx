@@ -15,7 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Search, User, LogOut } from "lucide-react";
+import { useSidebar } from "./sidebar-context";
+import { Bell, Search, User, LogOut, Menu, X } from "lucide-react";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -24,6 +25,7 @@ interface HeaderProps {
 
 export function Header({ onSearch, className }: HeaderProps) {
   const { data: session } = useSession();
+  const { isOpen, setIsOpen } = useSidebar();
   const user = session?.user;
   const [searchQuery, setSearchQuery] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
@@ -42,7 +44,18 @@ export function Header({ onSearch, className }: HeaderProps) {
 
   return (
     <header className={`sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${className}`}>
-      <div className="flex h-14 items-center gap-4 px-4 sm:px-6">
+      <div className="flex h-14 items-center gap-2 sm:gap-4 px-3 sm:px-6">
+        {/* Mobile sidebar toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="md:hidden -ml-1"
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+
         {/* Search */}
         <form onSubmit={handleSearch} className="flex-1 max-w-md">
           <div className="relative">

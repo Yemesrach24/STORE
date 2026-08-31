@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { useSidebar } from "./sidebar-context";
 import {
   LayoutDashboard,
   Package,
   BarChart3,
-  Menu,
   Users,
   ShoppingCart,
   FolderTree,
@@ -48,7 +46,7 @@ const buyerNavigation = [
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, setIsOpen } = useSidebar();
   const { data: session } = useSession();
 
   const isAdmin = pathname.startsWith("/admin") || pathname.startsWith("/dashboard") || pathname.startsWith("/inventory");
@@ -65,14 +63,10 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar (drawer) — trigger lives in the Header */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="sm" className="md:hidden" aria-label="Open sidebar">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0 border-0">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <div className="flex h-full flex-col bg-gray-950">
             <div className="flex h-14 items-center border-b border-gray-800 px-4">
               <Link href="/" className="flex items-center space-x-2">

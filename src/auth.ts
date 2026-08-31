@@ -7,6 +7,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   callbacks: {
     ...authConfig.callbacks,
+    async jwt({ token, user, trigger }) {
+      if (user) {
+        token.authId = user.id as string;
+        token.name = user.name;
+        token.email = user.email;
+        token.picture = user.image;
+      }
+
+      // Persist role in the token so it survives across navigations and
+      // refreshes (fixes dashboard link disappearing until re-login).
+      if (token.authId && (trigger === 'signIn' || trigger === 'update' || !token.role)) {
+        try {
+          await dbConnect();
+          const dbUser: any = await User.findOne({ authId: token.authId }).select('role isActive').lean();
+          token.role = dbUser?.isActive === false ? null : (dbUser?.role || 'CUSTOMER');
+        } catch (err) {
+          console.error('jwt: failed to load role', err);
+        }
+      }
+      return token;
+    },
     async signIn({ user }) {
       const authId = user.id;
       if (!authId) return false;
@@ -89,34 +110,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (token.authId) {
-        // Fetch role and dbUserId from MongoDB
+        (session.user as any).id = token.authId as string;
+        (session.user as any).role = token.role ?? null;
+        (session.user as any).name = token.name ?? "";
+        (session.user as any).email = token.email ?? "";
+        (session.user as any).image = token.picture ?? null;
+
+        // Fetch dbUserId from MongoDB (role is already persisted in the token)
         try {
           await dbConnect();
-          const dbUser: any = await User.findOne({ authId: token.authId }).lean();
+          const dbUser: any = await User.findOne({ authId: token.authId }).select('_id role isActive name email imageUrl').lean();
           if (dbUser) {
-            (session.user as any).id = token.authId as string;
-            (session.user as any).role = dbUser.role;
             (session.user as any).dbUserId = dbUser._id?.toString();
-            (session.user as any).name = dbUser.name || token.name || "";
-            (session.user as any).email = dbUser.email || token.email || "";
-            (session.user as any).image = dbUser.imageUrl || token.picture || null;
-          } else {
-            session.user = {
-              id: token.authId as string,
-              name: token.name ?? "",
-              email: token.email ?? "",
-              image: token.picture ?? null,
-              emailVerified: null,
-            };
+            (session.user as any).role = dbUser.isActive === false ? null : (dbUser.role ?? (session.user as any).role ?? null);
+            (session.user as any).name = dbUser.name || (session.user as any).name || "";
+            (session.user as any).email = dbUser.email || (session.user as any).email || "";
+            (session.user as any).image = dbUser.imageUrl || (session.user as any).image || null;
           }
         } catch {
-          session.user = {
-            id: token.authId as string,
-            name: token.name ?? "",
-            email: token.email ?? "",
-            image: token.picture ?? null,
-            emailVerified: null,
-          };
+          // keep token-provided values
         }
       }
       return session;
