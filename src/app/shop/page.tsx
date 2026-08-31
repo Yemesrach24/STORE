@@ -117,7 +117,7 @@ export default function ShopPage() {
               <img src="/logo.png" alt="TKD Store" className="w-10 h-10 rounded-full object-contain" />
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-gray-900 tracking-tight leading-none">TKD Store</span>
-                <span className="text-[9px] text-gray-400 tracking-widest uppercase">Taekwondo Equipment</span>
+                <span className="text-[10px] sm:text-[11px] text-gray-400 tracking-widest uppercase">Taekwondo Equipment</span>
               </div>
             </Link>
 
@@ -381,14 +381,14 @@ export default function ShopPage() {
                         )}
                       </div>
                       <CardContent className="p-3 md:p-4">
-                        <p className="text-[11px] text-[var(--brand)] font-semibold uppercase tracking-wide mb-1">
+                        <p className="text-xs text-[var(--brand)] font-semibold uppercase tracking-wide mb-1">
                           {item.categoryId?.name ?? "Uncategorized"}
                         </p>
                         <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 mb-1">
                           {item.name}
                         </h3>
                         {item.supplier && (
-                          <p className="text-[11px] text-gray-400 mb-1">
+                          <p className="text-xs text-gray-400 mb-1">
                             supplier: {item.supplier}
                           </p>
                         )}
@@ -398,7 +398,7 @@ export default function ShopPage() {
                         {item.tags && item.tags.length > 0 && (
                           <div className="flex gap-1 flex-wrap mb-3">
                             {item.tags.slice(0, 2).map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 text-gray-500 border-gray-200">
+                              <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0 text-gray-500 border-gray-200">
                                 {tag}
                               </Badge>
                             ))}

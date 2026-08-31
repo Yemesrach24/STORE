@@ -285,23 +285,23 @@ export default function ItemDetailPage() {
             <div className="grid grid-cols-2 gap-2">
               {item.size && (
                 <div className="bg-gray-50 rounded-lg px-3 py-2">
-                  <p className="text-[10px] text-gray-400 uppercase">Size</p>
+                  <p className="text-xs text-gray-400 uppercase">Size</p>
                   <p className="text-sm font-medium text-gray-900">{item.size}</p>
                 </div>
               )}
               {item.color && (
                 <div className="bg-gray-50 rounded-lg px-3 py-2">
-                  <p className="text-[10px] text-gray-400 uppercase">Color</p>
+                  <p className="text-xs text-gray-400 uppercase">Color</p>
                   <p className="text-sm font-medium text-gray-900">{item.color}</p>
                 </div>
               )}
               <div className="bg-gray-50 rounded-lg px-3 py-2">
-                <p className="text-[10px] text-gray-400 uppercase">In Stock</p>
+                <p className="text-xs text-gray-400 uppercase">In Stock</p>
                 <p className="text-sm font-medium text-gray-900">{item.quantity} units</p>
               </div>
               {item.location && (
                 <div className="bg-gray-50 rounded-lg px-3 py-2">
-                  <p className="text-[10px] text-gray-400 uppercase">Location</p>
+                  <p className="text-xs text-gray-400 uppercase">Location</p>
                   <p className="text-sm font-medium text-gray-900">{item.location}</p>
                 </div>
               )}

@@ -73,13 +73,13 @@ export function Sidebar({ className }: SidebarProps) {
                 <TKDLogo />
                 <div className="flex flex-col">
                   <span className="font-bold text-white text-sm leading-tight">TKD Store</span>
-                  <span className="text-[9px] text-gray-500 tracking-widest uppercase">Admin Panel</span>
+                  <span className="text-[10px] text-gray-500 tracking-widest uppercase">Admin Panel</span>
                 </div>
               </Link>
             </div>
             <ScrollArea className="flex-1">
               <div className="p-3">
-                <p className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Admin</p>
+                <p className="px-3 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Admin</p>
                 <nav className="grid gap-1">
                   {filteredAdminNav.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -101,7 +101,7 @@ export function Sidebar({ className }: SidebarProps) {
                     );
                   })}
                 </nav>
-                <p className="px-3 py-2 mt-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Shop</p>
+                <p className="px-3 py-2 mt-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Shop</p>
                 <nav className="grid gap-1">
                   {buyerNavigation.map((item) => {
                     const isActive = pathname.startsWith(item.href);
@@ -140,13 +140,13 @@ export function Sidebar({ className }: SidebarProps) {
               <TKDLogo />
               <div className="flex flex-col">
                 <span className="font-bold text-white text-sm leading-tight">TKD Store</span>
-                <span className="text-[9px] text-gray-500 tracking-widest uppercase">Admin Panel</span>
+                <span className="text-[10px] text-gray-500 tracking-widest uppercase">Admin Panel</span>
               </div>
             </Link>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-3">
-              <p className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Admin</p>
+              <p className="px-3 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Admin</p>
               <nav className="grid gap-1">
                 {filteredAdminNav.map((item) => {
                   const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -167,7 +167,7 @@ export function Sidebar({ className }: SidebarProps) {
                   );
                 })}
               </nav>
-              <p className="px-3 py-2 mt-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Shop</p>
+              <p className="px-3 py-2 mt-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Shop</p>
               <nav className="grid gap-1">
                 {buyerNavigation.map((item) => {
                   const isActive = pathname.startsWith(item.href);
