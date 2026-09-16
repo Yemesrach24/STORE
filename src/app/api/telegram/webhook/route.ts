@@ -30,38 +30,38 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
   const name = firstName ? ` <b>${firstName}</b>` : '';
   if (lang === 'am') {
     return [
-      `🥋 *እንኳን ወደ K-FORCE ETHIOPIA በደህና መጡ!*`,
+      `🥋 <b>እንኳን ወደ K-FORCE ETHIOPIA በደህና መጡ!</b>`,
       ``,
-      `ሰላም${name}! ጥራት ያለው *የቴኳንዶ መሣሪያ* የሚያገኙበት ቦታ.`,
+      `ሰላም${name}! ጥራት ያለው <b>የቴኳንዶ መሣሪያ</b> የሚያገኙበት ቦታ.`,
       ``,
-      `*የምናቀርበው:*`,
+      `<b>የምናቀርበው:</b>`,
       `• መከላከያ ፓድና ጋሻዎች`,
       `• ዶቦክ (ዩኒፎርም)`,
       `• የስፓሪንግ መሣሪያዎች`,
       `• የልምምድ ተጨማሪዎች`,
       `• ቀበቶና ተጨማሪዎች`,
       ``,
-      `🛒 *መደብራችንን ይጎብኙ:*`,
+      `🛒 <b>መደብራችንን ይጎብኙ:</b>`,
       `[ወደ K-FORCE ETHIOPIA](${STORE_URL})`,
       ``,
       `/shop ይጻፉ ለማሰስ ወይም /about ለበለጠ መረጃ።`,
     ].join('\n');
   }
   return [
-    `🥋 *Welcome to K-FORCE ETHIOPIA!*`,
+    `🥋 <b>Welcome to K-FORCE ETHIOPIA!</b>`,
     ``,
-    `Hi${name}! We are your one-stop shop for premium *taekwondo equipment*.`,
+    `Hi${name}! We are your one-stop shop for premium <b>taekwondo equipment</b>.`,
     ``,
-    `*What we offer:*`,
+    `<b>What we offer:</b>`,
     `• Protective Pads & Guards`,
     `• Doboks (Uniforms)`,
     `• Sparring Gear`,
     `• Training Accessories`,
     `• Belts & Accessories`,
     ``,
-    `🛒 *Browse our store:*`,
+    `🛒 <b>Browse our store:</b>`,
     `[Visit K-FORCE ETHIOPIA](${STORE_URL})`,
-      ``,
+    ``,
     `Quality gear for every practitioner — from beginners to black belts! 💪`,
     ``,
     `Type /shop to browse, or /about to learn more about us.`,
@@ -71,7 +71,7 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
 function getShopMessage(lang: 'en' | 'am'): string {
   if (lang === 'am') {
     return [
-      `🥊 *K-FORCE ETHIOPIA — የቴኳንዶ መሣሪያዎች*`,
+      `🥊 <b>K-FORCE ETHIOPIA — የቴኳንዶ መሣሪያዎች</b>`,
       ``,
       `ሙሉ የማሻሻያ መሣሪያዎቻችንን ይመልከቱ:`,
       `[ወደ K-FORCE ETHIOPIA](${STORE_URL})`,
@@ -82,7 +82,7 @@ function getShopMessage(lang: 'en' | 'am'): string {
     ].join('\n');
   }
   return [
-    `🥊 *K-FORCE ETHIOPIA — Taekwondo Equipment*`,
+    `🥊 <b>K-FORCE ETHIOPIA — Taekwondo Equipment</b>`,
     ``,
     `Browse our full catalog of martial arts gear:`,
     `[Visit K-FORCE ETHIOPIA](${STORE_URL})`,
@@ -93,49 +93,50 @@ function getShopMessage(lang: 'en' | 'am'): string {
   ].join('\n');
 }
 
-function getAboutMessage(lang: 'en' | 'am'): string {  if (lang === 'am') {
+function getAboutMessage(lang: 'en' | 'am'): string {
+  if (lang === 'am') {
     return [
-      `ℹ️ *ስለ K-FORCE ETHIOPIA*`,
+      `ℹ️ <b>ስለ K-FORCE ETHIOPIA</b>`,
       ``,
-      `K-FORCE ETHIOPIA የኢትዮጵያ *የቴኳንዶ እና ማሻሻያ መሣሪያዎች* ልዩ የመስመር ላይ ሱቅ ነው።`,
+      `K-FORCE ETHIOPIA የኢትዮጵያ <b>የቴኳንዶ እና ማሻሻያ መሣሪያዎች</b> ልዩ የመስመር ላይ ሱቅ ነው።`,
       ``,
-      `*የምናቀርበው:*`,
+      `<b>የምናቀርበው:</b>`,
       `• መከላከያ፣ ሄልሜት፣ የደረት መከላከያ`,
       `• የስፓሪንግ መሣሪያ፣ ጓንት፣ ቡትስ`,
       `• የልምምድ ዶቦክ እና ቀበቶ`,
       ``,
-      `*እንዴት ማዘዝ እንደሚቻል:*`,
+      `<b>እንዴት ማዘዝ እንደሚቻል:</b>`,
       `1. በድረ-ገጻችን ምርቶችን ይመልከቱ`,
       `2. ዕቃ ይምረጡና ያዙ`,
       `3. ሻጩን በስልክ/ዋትስአፕ/ቴሌግራም ያግኙ`,
       `4. ክፍያና አቅርቦትን በቀጥታ ያስተባብሩ`,
       ``,
-      `🌐 *ድረ-ገጽ:* [${STORE_URL_BASE}](${STORE_URL})`,
+      `🌐 <b>ድረ-ገጽ:</b> [${STORE_URL_BASE}](${STORE_URL})`,
     ].join('\n');
   }
   return [
-    `ℹ️ *About K-FORCE ETHIOPIA*`,
+    `ℹ️ <b>About K-FORCE ETHIOPIA</b>`,
     ``,
-    `K-FORCE ETHIOPIA is Ethiopia's specialized online shop for *taekwondo and martial arts equipment*.`,
+    `K-FORCE ETHIOPIA is Ethiopia's specialized online shop for <b>taekwondo and martial arts equipment</b>.`,
     ``,
     `We provide high-quality gear for practitioners of all levels — from white belt beginners to black belt masters.`,
     ``,
-    `*How to order:*`,
+    `<b>How to order:</b>`,
       `1. Browse products on our website`,
       `2. Select items and place an order`,
       `3. Contact the seller via phone, WhatsApp, or Telegram`,
       `4. Arrange payment and delivery directly`,
       ``,
-      `🌐 *Website:* [${STORE_URL_BASE}](${STORE_URL})`,
+      `🌐 <b>Website:</b> [${STORE_URL_BASE}](${STORE_URL})`,
   ].join('\n');
 }
 
 function getHelpMessage(lang: 'en' | 'am'): string {
   if (lang === 'am') {
     return [
-      `❓ *እርዳታ — K-FORCE ETHIOPIA*`,
+      `❓ <b>እርዳታ — K-FORCE ETHIOPIA</b>`,
       ``,
-      `*የሚገኙ ትዕዛዞች:*`,
+      `<b>የሚገኙ ትዕዛዞች:</b>`,
       `/start — የመግቢያ መልዕክት`,
       `/shop — መደብራችንን ይመልከቱ`,
       `/about — ስለ መደብራችን`,
@@ -146,12 +147,12 @@ function getHelpMessage(lang: 'en' | 'am'): string {
     ].join('\n');
   }
   return [
-    `❓ *Help — TKD Store*`,
+    `❓ <b>Help — K-FORCE ETHIOPIA</b>`,
     ``,
-    `*Available Commands:*`,
+    `<b>Available Commands:</b>`,
     `/start — Welcome message with store overview`,
     `/shop — Browse our store`,
-    `/about — Learn about TKD Store`,
+    `/about — Learn about K-FORCE ETHIOPIA`,
     `/help — Show this help message`,
     `/language — Change language`,
     ``,
@@ -261,7 +262,7 @@ async function handleMessage(update: TelegramUpdate) {
       await sendLangPrompt(chatId, firstName);
       return;
     }
-    await sendTelegramMessage(chatId, getWelcomeMessage(known, firstName), 'Markdown');
+    await sendTelegramMessage(chatId, getWelcomeMessage(known, firstName), 'HTML');
     return;
   }
 
@@ -280,7 +281,7 @@ async function handleMessage(update: TelegramUpdate) {
     reply = getWelcomeMessage(lang, firstName);
   }
 
-  await sendTelegramMessage(chatId, reply, 'Markdown');
+  await sendTelegramMessage(chatId, reply, 'HTML');
 }
 
 async function handleCallback(update: TelegramUpdate) {
@@ -295,7 +296,11 @@ async function handleCallback(update: TelegramUpdate) {
     await answerCallback(cq.id, lang === 'am' ? 'ቋንቋ ወደ አማርኛ ተቀይሯል' : 'Language set to English');
     // Then save language and send welcome message
     await saveUserLang(chatId, lang);
-    await sendTelegramMessage(chatId, getWelcomeMessage(lang, cq.message.chat.first_name), 'Markdown');
+    const welcomeMsg = getWelcomeMessage(lang, cq.message.chat.first_name);
+    const sent = await sendTelegramMessage(chatId, welcomeMsg, 'HTML');
+    if (!sent) {
+      console.error(`[TG] Failed to send welcome message to chat ${chatId} (lang=${lang})`);
+    }
   }
 }
 
@@ -304,6 +309,7 @@ export async function POST(request: NextRequest) {
   try {
     const update: TelegramUpdate = await request.json();
     if (update.callback_query) {
+      console.log(`[TG webhook] callback_query received: data=${update.callback_query.data}, chatId=${update.callback_query.message?.chat?.id}`);
       await handleCallback(update);
     } else if (update.message) {
       await handleMessage(update);
@@ -350,6 +356,10 @@ export async function GET() {
 
     for (const update of data.result) {
       if (update.callback_query) {
+        const cbChat = update.callback_query.message?.chat;
+        const cbName = cbChat?.first_name || 'Unknown';
+        processed.push({ from: cbName, message: `[callback: ${update.callback_query.data}]`, chatId: cbChat?.id ?? 0 });
+        console.log(`[TG poll] callback_query: data=${update.callback_query.data}, chatId=${cbChat?.id}`);
         await handleCallback(update);
       } else if (update.message?.text) {
         const chatName = update.message.chat.first_name || 'Unknown';
