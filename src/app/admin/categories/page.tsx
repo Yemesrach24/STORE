@@ -10,12 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { Folder, Plus, Edit, Trash2, Loader2, Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface Category {
   _id: string;
   name: string;
+  nameAm?: string;
   description?: string;
+  descriptionAm?: string;
   imageUrl?: string;
   parentId?: string | null;
   sortOrder: number;
@@ -25,12 +28,15 @@ interface Category {
 }
 
 export default function AdminCategoriesPage() {
+  const { t, ln } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formName, setFormName] = useState("");
+  const [formNameAm, setFormNameAm] = useState("");
   const [formDescription, setFormDescription] = useState("");
+  const [formDescriptionAm, setFormDescriptionAm] = useState("");
   const [formImageUrl, setFormImageUrl] = useState("");
   const [formParentId, setFormParentId] = useState("");
   const [formSortOrder, setFormSortOrder] = useState("0");
@@ -59,14 +65,18 @@ export default function AdminCategoriesPage() {
     if (category) {
       setEditingCategory(category);
       setFormName(category.name);
+      setFormNameAm(category.nameAm || "");
       setFormDescription(category.description || "");
+      setFormDescriptionAm(category.descriptionAm || "");
       setFormImageUrl(category.imageUrl || "");
       setFormParentId(category.parentId || "");
       setFormSortOrder(String(category.sortOrder));
     } else {
       setEditingCategory(null);
       setFormName("");
+      setFormNameAm("");
       setFormDescription("");
+      setFormDescriptionAm("");
       setFormImageUrl("");
       setFormParentId("");
       setFormSortOrder("0");
@@ -91,13 +101,13 @@ export default function AdminCategoriesPage() {
 
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.error || "Upload failed");
+        throw new Error(err.error || t("uploadFailed"));
       }
 
       const result = await response.json();
       setFormImageUrl(result.url);
     } catch (err: unknown) {
-      setUploadError(err instanceof Error ? err.message : "Failed to upload image");
+      setUploadError(err instanceof Error ? err.message : t("uploadFailedConfirm"));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -110,7 +120,9 @@ export default function AdminCategoriesPage() {
     try {
       const body = {
         name: formName,
+        nameAm: formNameAm || undefined,
         description: formDescription || undefined,
+        descriptionAm: formDescriptionAm || undefined,
         imageUrl: formImageUrl || undefined,
         parentId: formParentId || undefined,
         sortOrder: parseInt(formSortOrder) || 0,
@@ -159,12 +171,12 @@ export default function AdminCategoriesPage() {
               </div>
             )}
             <div>
-              <p className="font-medium">{cat.name}</p>
-              <p className="text-sm text-muted-foreground">{cat.description || "No description"}</p>
+              <p className="font-medium">{ln(cat.name, cat.nameAm)}</p>
+              <p className="text-sm text-muted-foreground">{ln(cat.description, cat.descriptionAm) || t("noDescription")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground mr-2">{cat.itemCount ?? 0} items</span>
+            <span className="text-sm text-muted-foreground mr-2">{t("itemsCountLabel", { count: cat.itemCount ?? 0 })}</span>
             <Button variant="ghost" size="sm" onClick={() => openModal(cat)}>
               <Edit className="h-4 w-4" />
             </Button>
@@ -184,17 +196,17 @@ export default function AdminCategoriesPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-              <p className="text-muted-foreground">Manage product categories. Create parent-child relationships.</p>
+              <h1 className="text-3xl font-bold tracking-tight">{t("categoriesTitle2")}</h1>
+              <p className="text-muted-foreground">{t("categoriesSubtitle")}</p>
             </div>
             <Button onClick={() => openModal()}>
-              <Plus className="mr-2 h-4 w-4" /> Add Category
+              <Plus className="mr-2 h-4 w-4" /> {t("addCategory")}
             </Button>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Category Tree</CardTitle>
+              <CardTitle>{t("categoryTree")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {loading ? (
@@ -204,9 +216,9 @@ export default function AdminCategoriesPage() {
               ) : categories.length === 0 ? (
                 <div className="text-center py-12">
                   <Folder className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-semibold">No categories yet</p>
-                  <p className="text-muted-foreground mb-4">Create your first category to organize products.</p>
-                  <Button onClick={() => openModal()}><Plus className="mr-2 h-4 w-4" /> Add Category</Button>
+                  <p className="text-lg font-semibold">{t("noCategoriesYet")}</p>
+                  <p className="text-muted-foreground mb-4">{t("createFirstCategory")}</p>
+                  <Button onClick={() => openModal()}><Plus className="mr-2 h-4 w-4" /> {t("addCategory")}</Button>
                 </div>
               ) : (
                 <div>{renderCategoryTree(categories)}</div>
@@ -217,19 +229,27 @@ export default function AdminCategoriesPage() {
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>{editingCategory ? "Edit Category" : "New Category"}</DialogTitle>
+                <DialogTitle>{editingCategory ? t("editCategory") : t("newCategory")}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Name *</Label>
-                  <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="e.g., Pads, Uniforms, Gloves" required />
+                  <Label>{t("nameEnglish")} *</Label>
+                  <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t("categoryNamePlaceholder")} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Category description" rows={2} />
+                  <Label>{t("nameAmharic")}</Label>
+                  <Input value={formNameAm} onChange={(e) => setFormNameAm(e.target.value)} placeholder={t("categoryNameAmPlaceholder")} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Category Image</Label>
+                  <Label>{t("descriptionLabel")}</Label>
+                  <Textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder={t("categoryDescriptionPlaceholder")} rows={2} />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("descriptionAmLabel")}</Label>
+                  <Textarea value={formDescriptionAm} onChange={(e) => setFormDescriptionAm(e.target.value)} placeholder={t("categoryDescriptionAmPlaceholder")} rows={2} />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("categoryImage")}</Label>
                   <div className="flex items-center gap-4">
                     {formImageUrl ? (
                       <div className="relative">
@@ -271,34 +291,32 @@ export default function AdminCategoriesPage() {
                         ) : (
                           <Upload className="mr-2 h-4 w-4" />
                         )}
-                        {isUploading ? "Uploading..." : "Upload Image"}
+                        {isUploading ? t("uploading") : t("uploadImage")}
                       </Button>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        JPEG, PNG, WebP or GIF. Max 5MB.
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{t("imageRequirements")}</p>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Parent Category</Label>
+                    <Label>{t("parentCategory")}</Label>
                     <select className="w-full p-2 border rounded text-sm" value={formParentId} onChange={(e) => setFormParentId(e.target.value)}>
-                      <option value="">None (Root)</option>
+                      <option value="">{t("noneRoot")}</option>
                       {categories.map((c) => (
-                        <option key={c._id} value={c._id}>{c.name}</option>
+                        <option key={c._id} value={c._id}>{ln(c.name, c.nameAm)}</option>
                       ))}
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Sort Order</Label>
+                    <Label>{t("sortOrder")}</Label>
                     <Input type="number" value={formSortOrder} onChange={(e) => setFormSortOrder(e.target.value)} min="0" />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>{t("cancel")}</Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {editingCategory ? "Update" : "Create"}
+                    {editingCategory ? t("update") : t("create")}
                   </Button>
                 </div>
               </form>
@@ -308,9 +326,9 @@ export default function AdminCategoriesPage() {
           {/* Delete confirmation */}
           <ConfirmDialog
             open={!!deleteConfirmId}
-            title="Delete Category"
-            message="Are you sure you want to delete this category? This cannot be undone."
-            confirmLabel="Delete"
+            title={t("deleteCategory")}
+            message={t("deleteCategoryConfirm")}
+            confirmLabel={t("delete")}
             variant="danger"
             onConfirm={() => deleteConfirmId && handleDelete(deleteConfirmId)}
             onCancel={() => setDeleteConfirmId(null)}
@@ -319,9 +337,9 @@ export default function AdminCategoriesPage() {
           {/* Upload error */}
           <ConfirmDialog
             open={!!uploadError}
-            title="Upload Failed"
-            message={uploadError || "Failed to upload image"}
-            confirmLabel="OK"
+            title={t("uploadFailed")}
+            message={uploadError || t("uploadFailedConfirm")}
+            confirmLabel={t("ok")}
             variant="info"
             onConfirm={() => setUploadError(null)}
             onCancel={() => setUploadError(null)}

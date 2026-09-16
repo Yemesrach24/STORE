@@ -6,10 +6,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Loader2, ArrowLeft, User, Save, Phone, MapPin, ShoppingBag } from "lucide-react";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
+  const { t } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -79,13 +82,16 @@ export default function ProfilePage() {
             <Link href="/shop" className="text-gray-500 hover:text-gray-900 transition-colors">
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-lg font-semibold text-gray-900">My Profile</h1>
+            <h1 className="text-lg font-semibold text-gray-900">{t("myProfile")}</h1>
           </div>
-          <Link href="/shop">
-            <Button variant="outline" size="sm" className="font-medium gap-1.5">
-              <ShoppingBag className="h-4 w-4" /> Shop
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link href="/shop">
+              <Button variant="outline" size="sm" className="font-medium gap-1.5">
+                <ShoppingBag className="h-4 w-4" /> {t("shop")}
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -94,34 +100,34 @@ export default function ProfilePage() {
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
           <div className="p-6 flex items-center gap-4 border-b border-gray-100">
             {session?.user?.image ? (
-              <img src={session.user.image} alt="Profile" className="w-16 h-16 rounded-full" />
+              <img src={session.user.image} alt={t("profilePhoto")} className="w-16 h-16 rounded-full" />
             ) : (
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                 <User className="h-8 w-8 text-gray-400" />
               </div>
             )}
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{name || "User"}</h2>
+              <h2 className="text-lg font-bold text-gray-900">{name || t("userLabel")}</h2>
               <p className="text-sm text-gray-500">{session?.user?.email}</p>
             </div>
           </div>
 
           <div className="p-6 space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Full Name</label>
+              <label className="text-sm font-medium text-gray-700">{t("fullName")}</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-10 border-gray-200"
-                  placeholder="Your name"
+                  placeholder={t("yourName")}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Phone Number</label>
+              <label className="text-sm font-medium text-gray-700">{t("phoneNumber")}</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -134,14 +140,14 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Address</label>
+              <label className="text-sm font-medium text-gray-700">{t("address")}</label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   className="pl-10 border-gray-200"
-                  placeholder="Your address"
+                  placeholder={t("yourAddress")}
                 />
               </div>
             </div>
@@ -149,7 +155,7 @@ export default function ProfilePage() {
             <div className="pt-2">
               <Button onClick={handleSave} disabled={saving} className="bg-gray-900 hover:bg-gray-800 font-medium gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {saved ? "Saved!" : "Save Changes"}
+                {saved ? t("saved") : t("saveChanges")}
               </Button>
             </div>
           </div>
@@ -160,15 +166,15 @@ export default function ProfilePage() {
           <Link href="/shop/orders">
             <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow cursor-pointer">
               <ShoppingBag className="h-5 w-5 text-gray-400 mb-2" />
-              <p className="font-semibold text-sm text-gray-900">My Orders</p>
-              <p className="text-xs text-gray-500">View order history</p>
+              <p className="font-semibold text-sm text-gray-900">{t("myOrders")}</p>
+              <p className="text-xs text-gray-500">{t("viewOrderHistory")}</p>
             </div>
           </Link>
           <Link href="/shop">
             <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow cursor-pointer">
               <ShoppingBag className="h-5 w-5 text-gray-400 mb-2" />
-              <p className="font-semibold text-sm text-gray-900">Shop</p>
-              <p className="text-xs text-gray-500">Browse equipment</p>
+              <p className="font-semibold text-sm text-gray-900">{t("shop")}</p>
+              <p className="text-xs text-gray-500">{t("browseEquipment")}</p>
             </div>
           </Link>
         </div>

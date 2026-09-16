@@ -25,6 +25,18 @@ export async function GET(request: NextRequest) {
       query.role = 'CUSTOMER';
     }
 
+    const search = searchParams.get('search');
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [
+        { name: { $regex: escaped, $options: 'i' } },
+        { email: { $regex: escaped, $options: 'i' } },
+        { firstName: { $regex: escaped, $options: 'i' } },
+        { lastName: { $regex: escaped, $options: 'i' } },
+        { phone: { $regex: escaped, $options: 'i' } },
+      ];
+    }
+
     const [users, total] = await Promise.all([
       User.find(query)
         .select('-__v')

@@ -19,7 +19,19 @@ export async function GET(request: NextRequest) {
     const query: any = { isActive: true };
 
     if (categoryId) query.categoryId = categoryId;
-    if (search) query.$text = { $search: search };
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [
+        { name: { $regex: escaped, $options: 'i' } },
+        { nameAm: { $regex: escaped, $options: 'i' } },
+        { description: { $regex: escaped, $options: 'i' } },
+        { descriptionAm: { $regex: escaped, $options: 'i' } },
+        { color: { $regex: escaped, $options: 'i' } },
+        { colorAm: { $regex: escaped, $options: 'i' } },
+        { tags: { $regex: escaped, $options: 'i' } },
+        { tagsAm: { $regex: escaped, $options: 'i' } },
+      ];
+    }
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = parseFloat(minPrice);
@@ -38,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     const [items, total] = await Promise.all([
       Item.find(query)
-        .populate('categoryId', 'name imageUrl')
+        .populate('categoryId', 'name nameAm imageUrl')
         .sort(sortOption)
         .skip(skip)
         .limit(limit)

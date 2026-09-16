@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, User, Mail, Shield } from "lucide-react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 interface User {
   _id: string;
@@ -31,6 +32,7 @@ interface UserFormModalProps {
 }
 
 export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormModalProps) {
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -92,58 +94,58 @@ export function UserFormModal({ open, onOpenChange, user, onSuccess }: UserFormM
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            {user ? "Edit User" : "Create User"}
+            {user ? t("editUser") : t("createUser")}
           </DialogTitle>
           <DialogDescription>
-            {user ? "Update user information and permissions." : "Create a new user account."}
+            {user ? t("updateUserDesc") : t("createUserDesc")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" required />
+              <Label htmlFor="firstName">{t("firstName")}</Label>
+              <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder={t("firstNamePlaceholder")} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" required />
+              <Label htmlFor="lastName">{t("lastName")}</Label>
+              <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder={t("lastNamePlaceholder")} required />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" /> Email
+              <Mail className="h-4 w-4" /> {t("email")}
             </Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" required />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("emailPlaceholder")} required />
           </div>
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Shield className="h-4 w-4" /> Role
+              <Shield className="h-4 w-4" /> {t("role")}
             </Label>
             <Select value={role} onValueChange={(v) => setRole(v as "SUPER_ADMIN" | "ADMIN" | "CUSTOMER")}>
-              <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("selectRole")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="CUSTOMER">Customer</SelectItem>
-                <SelectItem value="ADMIN">Admin</SelectItem>
-                <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
+                <SelectItem value="CUSTOMER">{t("customer")}</SelectItem>
+                <SelectItem value="ADMIN">{t("admin")}</SelectItem>
+                <SelectItem value="SUPER_ADMIN">{t("superAdmin")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label className="text-base">Account Status</Label>
-              <p className="text-sm text-muted-foreground">{isActive ? "Active" : "Disabled"}</p>
+              <Label className="text-base">{t("accountStatus")}</Label>
+              <p className="text-sm text-muted-foreground">{isActive ? t("active") : t("disabled")}</p>
             </div>
             <Switch checked={isActive} onCheckedChange={setIsActive} />
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>{t("cancel")}</Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? "Saving..." : user ? "Update User" : "Create User"}
+              {isSubmitting ? t("saving") : user ? t("updateUser") : t("createUser")}
             </Button>
           </div>
         </form>

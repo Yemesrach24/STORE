@@ -59,9 +59,9 @@ export async function PUT(
     await dbConnect();
     const { id } = await params;
     const body = await request.json();
-    const { status, statusNote } = body;
+    const { status, statusNote, lineItems } = body;
 
-    if (!status || !['APPROVED', 'DECLINED', 'PENDING'].includes(status)) {
+    if (status && !['APPROVED', 'DECLINED', 'PENDING'].includes(status)) {
       return NextResponse.json(
         { error: 'Status must be APPROVED, DECLINED, or PENDING' },
         { status: 400 }
@@ -105,14 +105,35 @@ export async function PUT(
       ).catch((e: any) => console.error('Stock restore failed:', e));
     }
 
+    // Build update fields
+    const updateFields: Record<string, any> = {
+      statusNote: statusNote || '',
+      statusUpdatedAt: new Date(),
+    };
+    if (status) {
+      updateFields.status = status;
+    }
+
+    // Handle lineItems (quantity) updates
+    if (Array.isArray(lineItems) && lineItems.length > 0) {
+      // Validate line items
+      for (const li of lineItems) {
+        if (!li.source || !['local', 'imported'].includes(li.source)) {
+          return NextResponse.json({ error: 'Invalid line item source' }, { status: 400 });
+        }
+        if (!li.quantity || li.quantity < 1) {
+          return NextResponse.json({ error: 'Quantity must be at least 1' }, { status: 400 });
+        }
+      }
+      updateFields.lineItems = lineItems;
+      // Recalculate total price from line items
+      updateFields.totalPrice = lineItems.reduce((sum: number, li: any) => sum + (li.unitPrice || 0) * (li.quantity || 0), 0);
+    }
+
     // Update the order
     const updatedOrder = await Order.findByIdAndUpdate(
       id,
-      {
-        status,
-        statusNote: statusNote || '',
-        statusUpdatedAt: new Date(),
-      },
+      updateFields,
       { new: true }
     );
 
@@ -126,17 +147,29 @@ export async function PUT(
       if (buyer?.telegramChatId) {
         const { sendTelegramMessage } = await import('@/lib/telegram');
         const statusEmoji = status === 'APPROVED' ? '✅' : status === 'DECLINED' ? '❌' : '⏳';
-        const msg = [
-          `${statusEmoji} <b>Order #${updatedOrder.orderNumber}</b> has been <b>${status}</b>`,
-          statusNote ? `📝 Note: ${statusNote}` : '',
-          '',
-          status === 'APPROVED'
-            ? '✅ Contact the seller to arrange payment and delivery.'
-            : status === 'DECLINED'
-            ? '❌ Your order was declined. Contact the seller for more info.'
-            : '⏳ Your order is pending review.',
-        ].filter(Boolean).join('\n');
-        await sendTelegramMessage(buyer.telegramChatId, msg, 'HTML');
+        const am = buyer.language === 'am';
+        const msg = am
+          ? [
+              `${statusEmoji} <b>ትዕዛዝ #${updatedOrder.orderNumber}</b> ወደ <b>${status}</b> ተቀይሯል`,
+              statusNote ? `📝 ማስታወሻ: ${statusNote}` : '',
+              '',
+              status === 'APPROVED'
+                ? '✅ ክፍያና አቅርቦትን ለማስተባበር ሻጩን ያግኙ።'
+                : status === 'DECLINED'
+                ? '❌ ትዕዛዝዎ ተግቷል። ለበለጠ መረጃ ሻጩን ያግኙ።'
+                : '⏳ ትዕዛዝዎ በመጠባበቅ ላይ ነው።',
+            ]
+          : [
+              `${statusEmoji} <b>Order #${updatedOrder.orderNumber}</b> has been <b>${status}</b>`,
+              statusNote ? `📝 Note: ${statusNote}` : '',
+              '',
+              status === 'APPROVED'
+                ? '✅ Contact the seller to arrange payment and delivery.'
+                : status === 'DECLINED'
+                ? '❌ Your order was declined. Contact the seller for more info.'
+                : '⏳ Your order is pending review.',
+            ];
+        await sendTelegramMessage(buyer.telegramChatId, msg.filter(Boolean).join('\n'), 'HTML');
       }
     } catch (e) {
       console.error('Telegram buyer notification failed:', e);

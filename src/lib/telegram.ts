@@ -15,9 +15,10 @@ const TELEGRAM_API_BASE = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
  * Send a text message via Telegram Bot API
  */
 export async function sendTelegramMessage(
-  chatId: string,
+  chatId: string | number,
   message: string,
-  parseMode: 'HTML' | 'Markdown' | 'MarkdownV2' = 'HTML'
+  parseMode: 'HTML' | 'Markdown' | 'MarkdownV2' = 'HTML',
+  replyMarkup?: any
 ): Promise<boolean> {
   if (!TELEGRAM_BOT_TOKEN) {
     console.warn('Telegram bot token not configured, skipping notification');
@@ -25,14 +26,19 @@ export async function sendTelegramMessage(
   }
 
   try {
+    const payload: any = {
+      chat_id: chatId,
+      text: message,
+      parse_mode: parseMode,
+    };
+    if (replyMarkup) {
+      payload.reply_markup = replyMarkup;
+    }
+
     const response = await fetch(`${TELEGRAM_API_BASE}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: parseMode,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();

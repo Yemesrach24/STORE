@@ -22,6 +22,7 @@ import {
   DollarSign,
   BarChart3
 } from "lucide-react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 interface InventoryItem {
   _id: string;
@@ -45,8 +46,16 @@ interface InventoryStats {
   totalCategories: number;
 }
 
+interface CategoryOption {
+  _id: string;
+  name: string;
+  nameAm?: string;
+}
+
 export default function AdminInventoryPage() {
+  const { t, ln } = useLanguage();
   const [items, setItems] = useState<InventoryItem[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [stats, setStats] = useState<InventoryStats>({
     totalItems: 0,
     totalValue: 0,
@@ -69,6 +78,13 @@ export default function AdminInventoryPage() {
     fetchInventory();
   }, [currentPage, searchTerm, categoryFilter, stockFilter]);
 
+  useEffect(() => {
+    fetch("/api/shop/categories")
+      .then((r) => r.json())
+      .then((data) => setCategories(data.categories || []))
+      .catch(() => {});
+  }, []);
+
   const fetchInventory = async () => {
     setLoading(true);
     try {
@@ -81,14 +97,14 @@ export default function AdminInventoryPage() {
       });
 
       const response = await fetch(`/api/admin/inventory?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch inventory");
+      if (!response.ok) throw new Error(t("failedToLoadInventory"));
 
       const data = await response.json();
       setItems(data.items);
       setStats(data.stats);
       setTotalPages(Math.ceil(data.total / itemsPerPage));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load inventory");
+      setError(err instanceof Error ? err.message : t("failedToLoadInventory"));
     } finally {
       setLoading(false);
     }
@@ -114,9 +130,9 @@ export default function AdminInventoryPage() {
   };
 
   const getStockStatus = (quantity: number) => {
-    if (quantity === 0) return { status: "Out of Stock", variant: "destructive" as const };
-    if (quantity <= 10) return { status: "Low Stock", variant: "secondary" as const };
-    return { status: "In Stock", variant: "default" as const };
+    if (quantity === 0) return { status: t("outOfStock"), variant: "destructive" as const };
+    if (quantity <= 10) return { status: t("lowStock"), variant: "secondary" as const };
+    return { status: t("inStock"), variant: "default" as const };
   };
 
   return (
@@ -126,15 +142,15 @@ export default function AdminInventoryPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Global Inventory</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t("globalInventoryTitle")}</h1>
               <p className="text-muted-foreground">
-                Overview of all inventory items across the system.
+                {t("globalInventorySubtitle")}
               </p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={exportInventory}>
                 <Download className="mr-2 h-4 w-4" />
-                Export
+                {t("export")}
               </Button>
             </div>
           </div>
@@ -143,49 +159,49 @@ export default function AdminInventoryPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("totalItems")}</CardTitle>
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalItems}</div>
                 <p className="text-xs text-muted-foreground">
-                  Across all users
+                  {t("acrossAllUsers")}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("totalValue")}</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">Br {stats.totalValue.toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">
-                  Combined inventory value
+                  {t("combinedInventoryValue")}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("lowStock")}</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-amber-600">{stats.lowStockItems}</div>
                 <p className="text-xs text-muted-foreground">
-                  Items needing attention
+                  {t("itemsNeedingAttention")}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("outOfStock")}</CardTitle>
                 <TrendingDown className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">{stats.outOfStockItems}</div>
                 <p className="text-xs text-muted-foreground">
-                  Items with zero quantity
+                  {t("itemsWithZeroQuantity")}
                 </p>
               </CardContent>
             </Card>
@@ -196,17 +212,17 @@ export default function AdminInventoryPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Filter className="h-5 w-5" />
-                Filters
+                {t("filters")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Search</label>
+                  <label className="text-sm font-medium">{t("searchLabel")}</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search items..."
+                      placeholder={t("searchItemsPlaceholder")}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -214,31 +230,32 @@ export default function AdminInventoryPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Category</label>
+                  <label className="text-sm font-medium">{t("categoryLabel")}</label>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All categories" />
+                      <SelectValue placeholder={t("allCategories")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      <SelectItem value="electronics">Electronics</SelectItem>
-                      <SelectItem value="clothing">Clothing</SelectItem>
-                      <SelectItem value="books">Books</SelectItem>
-                      <SelectItem value="tools">Tools</SelectItem>
+                      <SelectItem value="all">{t("allCategories")}</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat._id} value={cat._id}>
+                          {ln(cat.name, cat.nameAm)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Stock Status</label>
+                  <label className="text-sm font-medium">{t("stockStatusLabel")}</label>
                   <Select value={stockFilter} onValueChange={setStockFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All statuses" />
+                      <SelectValue placeholder={t("allStatuses")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="in-stock">In Stock</SelectItem>
-                      <SelectItem value="low-stock">Low Stock</SelectItem>
-                      <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                      <SelectItem value="all">{t("allStatuses")}</SelectItem>
+                      <SelectItem value="in-stock">{t("inStock")}</SelectItem>
+                      <SelectItem value="low-stock">{t("lowStock")}</SelectItem>
+                      <SelectItem value="out-of-stock">{t("outOfStock")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -249,9 +266,9 @@ export default function AdminInventoryPage() {
           {/* Inventory Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Inventory Items</CardTitle>
+              <CardTitle>{t("inventoryItems")}</CardTitle>
               <CardDescription>
-                {items.length} items found • Page {currentPage} of {totalPages}
+                {t("inventoryItemsDesc", { count: items.length, current: currentPage, total: totalPages })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -270,27 +287,27 @@ export default function AdminInventoryPage() {
               ) : error ? (
                 <div className="text-center py-8">
                   <p className="text-destructive mb-4">{error}</p>
-                  <Button onClick={() => window.location.reload()}>Try Again</Button>
+                  <Button onClick={() => window.location.reload()}>{t("tryAgain")}</Button>
                 </div>
               ) : items.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No items found</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t("noInventoryItems")}</h3>
                   <p className="text-muted-foreground">
-                    No inventory items match your current filters.
+                    {t("noInventoryItemsDesc")}
                   </p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
+                      <TableHead>{t("itemColumn")}</TableHead>
+                      <TableHead>{t("ownerColumn")}</TableHead>
+                      <TableHead>{t("categoryColumn")}</TableHead>
+                      <TableHead>{t("quantity")}</TableHead>
+                      <TableHead>{t("price")}</TableHead>
+                      <TableHead>{t("statusHeading")}</TableHead>
+                      <TableHead>{t("createdColumn")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

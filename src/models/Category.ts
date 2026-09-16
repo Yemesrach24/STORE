@@ -2,7 +2,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICategory extends Document {
   name: string;
+  nameAm?: string;
   description?: string;
+  descriptionAm?: string;
   imageUrl?: string;
   parentId?: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
@@ -19,10 +21,20 @@ const CategorySchema: Schema = new Schema({
     trim: true,
     maxlength: [100, 'Category name cannot exceed 100 characters'],
   },
+  nameAm: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Amharic category name cannot exceed 100 characters'],
+  },
   description: {
     type: String,
     trim: true,
     maxlength: [500, 'Description cannot exceed 500 characters'],
+  },
+  descriptionAm: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Amharic description cannot exceed 500 characters'],
   },
   imageUrl: {
     type: String,

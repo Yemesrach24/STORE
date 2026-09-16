@@ -3,6 +3,7 @@
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 export function SignOutButton({
   variant = "ghost",
@@ -13,6 +14,7 @@ export function SignOutButton({
   className?: string;
   size?: "default" | "sm" | "lg" | "icon";
 }) {
+  const { t } = useLanguage();
   return (
     <Button
       variant={variant}
@@ -21,7 +23,7 @@ export function SignOutButton({
       onClick={() => signOut({ callbackUrl: "/" })}
     >
       <LogOut className="mr-2 h-4 w-4" />
-      Sign out
+      {t("signOut")}
     </Button>
   );
 }

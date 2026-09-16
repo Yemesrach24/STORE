@@ -12,7 +12,7 @@ export async function GET(
     await dbConnect();
     const { id } = await params;
     const item = await Item.findOne({ _id: id, isActive: true })
-      .populate('categoryId', 'name imageUrl description')
+      .populate('categoryId', 'name nameAm imageUrl description descriptionAm')
       .lean();
 
     if (!item) {
@@ -42,7 +42,7 @@ export async function PUT(
       { _id: id },
       body,
       { new: true, runValidators: true }
-    ).populate('categoryId', 'name imageUrl');
+    ).populate('categoryId', 'name nameAm description descriptionAm imageUrl');
 
     if (!item) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
@@ -56,6 +56,10 @@ export async function PUT(
     }
     if (error.message === 'FORBIDDEN') {
       return NextResponse.json({ error: 'You do not have permission to update items' }, { status: 403 });
+    }
+    if (error.name === 'ValidationError') {
+      const message = Object.values(error.errors || {}).map((e: any) => e.message).join(', ');
+      return NextResponse.json({ error: message || 'Validation failed' }, { status: 400 });
     }
     return NextResponse.json({ error: 'Failed to update item' }, { status: 500 });
   }

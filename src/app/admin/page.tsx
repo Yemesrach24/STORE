@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { 
   Users, 
   Package, 
@@ -20,6 +21,7 @@ import {
 import Link from "next/link";
 
 export default function AdminPage() {
+  const { t } = useLanguage();
   return (
     <AdminGuard>
       <DashboardLayout>
@@ -27,14 +29,12 @@ export default function AdminPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
-              <p className="text-muted-foreground">
-                Manage users, inventory, and system settings.
-              </p>
+              <h1 className="text-3xl font-bold tracking-tight">{t("adminPanel")}</h1>
+              <p className="text-muted-foreground">{t("adminPanelSubtitle")}</p>
             </div>
             <Badge variant="secondary" className="w-fit">
               <Shield className="mr-2 h-4 w-4" />
-              Admin Access
+              {t("adminAccess")}
             </Badge>
           </div>
 
@@ -42,50 +42,46 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("totalUsers")}</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">0</div>
                 <p className="text-xs text-muted-foreground">
-                  +0 from last month
+                  +0 {t("fromLastMonth")}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("totalItems")}</CardTitle>
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">0</div>
                 <p className="text-xs text-muted-foreground">
-                  +0 from last month
+                  +0 {t("fromLastMonth")}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("activeSessions")}</CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">
-                  Currently online
-                </p>
+                <p className="text-xs text-muted-foreground">{t("currentlyOnline")}</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">System Status</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("systemStatus")}</CardTitle>
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">Online</div>
-                <p className="text-xs text-muted-foreground">
-                  All systems operational
-                </p>
+                <div className="text-2xl font-bold text-green-600">{t("online")}</div>
+                <p className="text-xs text-muted-foreground">{t("allSystemsOperational")}</p>
               </CardContent>
             </Card>
           </div>
@@ -97,31 +93,27 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  User Management
+                  {t("manageUsersTitle")}
                 </CardTitle>
-                <CardDescription>
-                  Manage user accounts, roles, and permissions.
-                </CardDescription>
+                <CardDescription>{t("userManagementDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Total Users:</span>
+                    <span>{t("totalUsers")}:</span>
                     <span className="font-medium">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Active Users:</span>
+                    <span>{t("activeUsers")}:</span>
                     <span className="font-medium text-green-600">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Pending Approvals:</span>
+                    <span>{t("pendingApprovals")}:</span>
                     <span className="font-medium text-amber-600">0</span>
                   </div>
                 </div>
                 <Button asChild className="w-full">
-                  <Link href="/admin/users">
-                    Manage Users
-                  </Link>
+                  <Link href="/admin/users">{t("manageUsers")}</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -131,31 +123,27 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Global Inventory
+                  {t("globalInventory")}
                 </CardTitle>
-                <CardDescription>
-                  Overview of all inventory across the system.
-                </CardDescription>
+                <CardDescription>{t("globalInventoryDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Total Items:</span>
+                    <span>{t("totalItems")}:</span>
                     <span className="font-medium">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Low Stock:</span>
+                    <span>{t("lowStockTitle")}:</span>
                     <span className="font-medium text-amber-600">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Out of Stock:</span>
+                    <span>{t("outOfStock")}:</span>
                     <span className="font-medium text-red-600">0</span>
                   </div>
                 </div>
                 <Button asChild className="w-full">
-                  <Link href="/admin/inventory">
-                    View Inventory
-                  </Link>
+                  <Link href="/admin/inventory">{t("viewInventory")}</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -165,31 +153,27 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Analytics
+                  {t("analytics")}
                 </CardTitle>
-                <CardDescription>
-                  System-wide analytics and performance metrics.
-                </CardDescription>
+                <CardDescription>{t("analyticsDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Daily Active Users:</span>
+                    <span>{t("dailyActiveUsers")}:</span>
                     <span className="font-medium">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Monthly Growth:</span>
+                    <span>{t("monthlyGrowth")}:</span>
                     <span className="font-medium text-green-600">+0%</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>System Uptime:</span>
+                    <span>{t("systemUptime")}:</span>
                     <span className="font-medium">99.9%</span>
                   </div>
                 </div>
                 <Button asChild className="w-full">
-                  <Link href="/admin/analytics">
-                    View Analytics
-                  </Link>
+                  <Link href="/admin/analytics">{t("viewAnalytics")}</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -199,31 +183,27 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Role Management
+                  {t("roleManagement")}
                 </CardTitle>
-                <CardDescription>
-                  Manage user roles and permissions.
-                </CardDescription>
+                <CardDescription>{t("roleManagementDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Admins:</span>
+                    <span>{t("admins")}:</span>
                     <span className="font-medium">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Managers:</span>
+                    <span>{t("managers")}:</span>
                     <span className="font-medium">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Regular Users:</span>
+                    <span>{t("regularUsers")}:</span>
                     <span className="font-medium">0</span>
                   </div>
                 </div>
                 <Button asChild className="w-full">
-                  <Link href="/admin/roles">
-                    Manage Roles
-                  </Link>
+                  <Link href="/admin/roles">{t("manageRoles")}</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -233,31 +213,27 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5" />
-                  Activity Logs
+                  {t("activityLogs")}
                 </CardTitle>
-                <CardDescription>
-                  Monitor user activity and system events.
-                </CardDescription>
+                <CardDescription>{t("activityLogsDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Today's Events:</span>
+                    <span>{t("todaysEvents")}:</span>
                     <span className="font-medium">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>This Week:</span>
+                    <span>{t("thisWeek")}:</span>
                     <span className="font-medium">0</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Alerts:</span>
+                    <span>{t("alerts")}:</span>
                     <span className="font-medium text-red-600">0</span>
                   </div>
                 </div>
                 <Button asChild className="w-full">
-                  <Link href="/admin/logs">
-                    View Logs
-                  </Link>
+                  <Link href="/admin/logs">{t("viewLogs")}</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -267,31 +243,27 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="h-5 w-5" />
-                  System Settings
+                  {t("systemSettings")}
                 </CardTitle>
-                <CardDescription>
-                  Configure system-wide settings and preferences.
-                </CardDescription>
+                <CardDescription>{t("systemSettingsDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Database Size:</span>
+                    <span>{t("databaseSize")}:</span>
                     <span className="font-medium">0 MB</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Backup Status:</span>
-                    <span className="font-medium text-green-600">Up to date</span>
+                    <span>{t("backupStatus")}:</span>
+                    <span className="font-medium text-green-600">{t("upToDate")}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Last Maintenance:</span>
-                    <span className="font-medium">Today</span>
+                    <span>{t("lastMaintenance")}:</span>
+                    <span className="font-medium">{t("today")}</span>
                   </div>
                 </div>
                 <Button asChild className="w-full">
-                  <Link href="/admin/settings">
-                    Configure
-                  </Link>
+                  <Link href="/admin/settings">{t("configure")}</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -302,19 +274,15 @@ export default function AdminPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Recent Activity
+                {t("recentActivity")}
               </CardTitle>
-              <CardDescription>
-                Latest system events and user activities.
-              </CardDescription>
+              <CardDescription>{t("recentActivityDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
                 <Database className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Recent Activity</h3>
-                <p className="text-muted-foreground">
-                  Activity logs will appear here as users interact with the system.
-                </p>
+                <h3 className="text-lg font-semibold mb-2">{t("noRecentActivity")}</h3>
+                <p className="text-muted-foreground">{t("noRecentActivityDesc")}</p>
               </div>
             </CardContent>
           </Card>

@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useSidebar } from "./sidebar-context";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { Bell, Search, User, LogOut, Menu, X } from "lucide-react";
 
 interface HeaderProps {
@@ -26,6 +28,7 @@ interface HeaderProps {
 export function Header({ onSearch, className }: HeaderProps) {
   const { data: session } = useSession();
   const { isOpen, setIsOpen } = useSidebar();
+  const { t } = useLanguage();
   const user = session?.user;
   const [searchQuery, setSearchQuery] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
@@ -50,7 +53,7 @@ export function Header({ onSearch, className }: HeaderProps) {
           variant="ghost"
           size="sm"
           className="md:hidden -ml-1"
-          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-label={isOpen ? t("close") : t("menu")}
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -61,7 +64,7 @@ export function Header({ onSearch, className }: HeaderProps) {
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search inventory..."
+              placeholder={t("searchInventory")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
@@ -71,9 +74,10 @@ export function Header({ onSearch, className }: HeaderProps) {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          <LanguageSwitcher className="hidden sm:flex" />
           {/* Notifications */}
           <Link href="/admin/orders">
-            <Button variant="ghost" size="sm" className="relative">
+            <Button variant="ghost" size="sm" className="relative" aria-label={t("notifications")}>
               <Bell className="h-4 w-4" />
               {pendingCount > 0 && (
                 <Badge
@@ -91,7 +95,7 @@ export function Header({ onSearch, className }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.image ?? undefined} alt={user?.name || "User"} />
+                  <AvatarImage src={user?.image ?? undefined} alt={user?.name || t("userLabel")} />
                   <AvatarFallback>
                     {user?.name?.charAt(0) || user?.email?.charAt(0) || "U"}
                   </AvatarFallback>
@@ -102,7 +106,7 @@ export function Header({ onSearch, className }: HeaderProps) {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {user?.name || "User"}
+                    {user?.name || t("userLabel")}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
@@ -113,7 +117,7 @@ export function Header({ onSearch, className }: HeaderProps) {
               <DropdownMenuItem asChild>
                 <a href="/profile" className="cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                  <span>{t("profile")}</span>
                 </a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -122,7 +126,7 @@ export function Header({ onSearch, className }: HeaderProps) {
                 onClick={() => signOut({ callbackUrl: "/" })}
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out</span>
+                <span>{t("signOut")}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

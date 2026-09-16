@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MoreHorizontal, Edit, Trash2, Crown, Shield, Users } from "lucide-react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 interface User {
   _id: string;
@@ -50,14 +51,16 @@ export function UserManagementTable({
   onDeleteUser,
   onBulkAction,
 }: UserManagementTableProps) {
+  const { t } = useLanguage();
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'SUPER_ADMIN':
-        return <Badge variant="destructive"><Crown className="h-3 w-3 mr-1" />Super Admin</Badge>;
+        return <Badge variant="destructive"><Crown className="h-3 w-3 mr-1" />{t("superAdmin")}</Badge>;
       case 'ADMIN':
-        return <Badge variant="secondary"><Shield className="h-3 w-3 mr-1" />Admin</Badge>;
+        return <Badge variant="secondary"><Shield className="h-3 w-3 mr-1" />{t("admin")}</Badge>;
       default:
-        return <Badge variant="outline"><Users className="h-3 w-3 mr-1" />Customer</Badge>;
+        return <Badge variant="outline"><Users className="h-3 w-3 mr-1" />{t("customer")}</Badge>;
     }
   };
 
@@ -65,8 +68,8 @@ export function UserManagementTable({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Users</CardTitle>
-          <CardDescription>Loading users...</CardDescription>
+          <CardTitle>{t("usersCard")}</CardTitle>
+          <CardDescription>{t("loadingUsers")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -91,7 +94,7 @@ export function UserManagementTable({
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center">
             <p className="text-destructive mb-4">{error}</p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
+            <Button onClick={() => window.location.reload()}>{t("tryAgain")}</Button>
           </div>
         </CardContent>
       </Card>
@@ -101,30 +104,30 @@ export function UserManagementTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Users</CardTitle>
+        <CardTitle>{t("usersCard")}</CardTitle>
         <CardDescription>
-          {users.length} users found • Page {currentPage} of {totalPages}
+          {t("usersFoundLabel", { count: users.length, current: currentPage, total: totalPages })}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {users.length === 0 ? (
           <div className="text-center py-8">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No users found</h3>
+            <h3 className="text-lg font-semibold mb-2">{t("noUsersFound")}</h3>
             <p className="text-muted-foreground">
-              No users match your current filters.
+              {t("noUsersMatch")}
             </p>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t("userColumn")}</TableHead>
+                <TableHead>{t("emailColumn")}</TableHead>
+                <TableHead>{t("roleColumn")}</TableHead>
+                <TableHead>{t("statusColumn")}</TableHead>
+                <TableHead>{t("createdColumn")}</TableHead>
+                <TableHead>{t("actionsColumn")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -150,7 +153,7 @@ export function UserManagementTable({
                   <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>
                     <Badge variant={user.isActive ? "default" : "secondary"}>
-                      {user.isActive ? "Active" : "Inactive"}
+                      {user.isActive ? t("active") : t("inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell>

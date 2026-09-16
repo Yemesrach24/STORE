@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/components/layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import {
   Select,
   SelectContent,
@@ -31,31 +32,41 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+interface LineItem {
+  source: 'local' | 'imported';
+  size?: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 interface Order {
   _id: string;
   orderNumber: string;
   buyerName: string;
-  buyerEmail: string;
+  buyerEmail?: string;
   buyerPhone?: string;
+  buyerClub?: string;
   itemName: string;
+  itemNameAm?: string;
   itemCategory: string;
-  itemSize?: string;
+  itemCategoryAm?: string;
   itemColor?: string;
   itemImage?: string;
-  quantity: number;
-  unitPrice: number;
+  lineItems: LineItem[];
   totalPrice: number;
   message?: string;
   status: "PENDING" | "APPROVED" | "DECLINED";
   statusNote?: string;
   orderDate: string;
   companyName?: string;
+  companyNameAm?: string;
   companyPhone?: string;
   companyWhatsapp?: string;
   createdAt: string;
 }
 
 export default function AdminOrdersPage() {
+  const { t, ln, locale } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [allCounts, setAllCounts] = useState({ total: 0, PENDING: 0, APPROVED: 0, DECLINED: 0 });
   const [loading, setLoading] = useState(true);
@@ -63,6 +74,8 @@ export default function AdminOrdersPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ orderId: string; status: "APPROVED" | "DECLINED" | "PENDING" } | null>(null);
+  const [editingLineItems, setEditingLineItems] = useState<LineItem[]>([]);
+  const [isEditingQty, setIsEditingQty] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -113,6 +126,33 @@ export default function AdminOrdersPage() {
     setConfirmAction({ orderId, status });
   };
 
+  const startEditQty = (order: Order) => {
+    setEditingLineItems(order.lineItems.map(li => ({ ...li })));
+    setIsEditingQty(true);
+  };
+
+  const saveQty = async () => {
+    if (!selectedOrder) return;
+    try {
+      const res = await fetch(`/api/orders/${selectedOrder._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lineItems: editingLineItems }),
+      });
+      if (res.ok) {
+        setIsEditingQty(false);
+        setSelectedOrder(null);
+        fetchOrders();
+      }
+    } catch (err) {
+      console.error("Error updating qty:", err);
+    }
+  };
+
+  const updateLineItemQty = (idx: number, qty: number) => {
+    setEditingLineItems(prev => prev.map((li, i) => i === idx ? { ...li, quantity: Math.max(1, qty) } : li));
+  };
+
   const updateOrderStatus = async () => {
     if (!confirmAction) return;
     setUpdatingId(confirmAction.orderId);
@@ -144,21 +184,21 @@ export default function AdminOrdersPage() {
         return (
           <Badge className="bg-amber-50 text-amber-700 border border-amber-200">
             <Clock className="h-3 w-3 mr-1" />
-            Pending
+            {t("pending")}
           </Badge>
         );
       case "APPROVED":
         return (
           <Badge className="bg-green-50 text-green-700 border border-green-200">
             <CheckCircle className="h-3 w-3 mr-1" />
-            Approved
+            {t("approved")}
           </Badge>
         );
       case "DECLINED":
         return (
           <Badge className="bg-red-50 text-red-700 border border-red-200">
             <XCircle className="h-3 w-3 mr-1" />
-            Declined
+            {t("declined")}
           </Badge>
         );
       default:
@@ -168,9 +208,9 @@ export default function AdminOrdersPage() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "APPROVED": return "Approve";
-      case "DECLINED": return "Decline";
-      case "PENDING": return "Set to Pending";
+      case "APPROVED": return t("approve");
+      case "DECLINED": return t("decline");
+      case "PENDING": return t("setPending");
       default: return status;
     }
   };
@@ -181,29 +221,27 @@ export default function AdminOrdersPage() {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Orders</h1>
-            <p className="text-muted-foreground text-sm">
-              Manage customer orders and update status.
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t("ordersTitle")}</h1>
+            <p className="text-muted-foreground text-sm">{t("ordersSubtitle")}</p>
           </div>
 
           {/* Stats - always show ALL counts regardless of filter */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             <Card>
               <CardContent className="p-3 sm:p-4">
-                <p className="text-xs sm:text-sm text-muted-foreground">Pending</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{t("pending")}</p>
                 <p className="text-xl sm:text-2xl font-bold text-amber-600">{allCounts.PENDING}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-3 sm:p-4">
-                <p className="text-xs sm:text-sm text-muted-foreground">Approved</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{t("approved")}</p>
                 <p className="text-xl sm:text-2xl font-bold text-green-600">{allCounts.APPROVED}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-3 sm:p-4">
-                <p className="text-xs sm:text-sm text-muted-foreground">Declined</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{t("declined")}</p>
                 <p className="text-xl sm:text-2xl font-bold text-red-600">{allCounts.DECLINED}</p>
               </CardContent>
             </Card>
@@ -213,13 +251,13 @@ export default function AdminOrdersPage() {
           <div className="flex gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t("filterByStatus")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Orders</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="DECLINED">Declined</SelectItem>
+                <SelectItem value="all">{t("allOrders")}</SelectItem>
+                <SelectItem value="PENDING">{t("pending")}</SelectItem>
+                <SelectItem value="APPROVED">{t("approved")}</SelectItem>
+                <SelectItem value="DECLINED">{t("declined")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -234,9 +272,9 @@ export default function AdminOrdersPage() {
               ) : orders.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-semibold">No orders found</p>
+                  <p className="text-lg font-semibold">{t("noOrdersFoundAdmin")}</p>
                   <p className="text-sm text-muted-foreground">
-                    {statusFilter !== "all" ? "Try a different filter" : "Orders will appear here when customers place them"}
+                    {statusFilter !== "all" ? t("tryDifferentFilter") : t("ordersWillAppear")}
                   </p>
                 </div>
               ) : (
@@ -248,28 +286,30 @@ export default function AdminOrdersPage() {
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="font-mono text-xs text-muted-foreground">{order.orderNumber}</p>
-                            <p className="font-medium text-sm">{order.itemName}</p>
+                            <p className="font-medium text-sm">{ln(order.itemName, order.itemNameAm)}</p>
                           </div>
                           {getStatusBadge(order.status)}
                         </div>
                         <div className="text-xs text-muted-foreground space-y-1">
-                          <p>Buyer: {order.buyerName}</p>
-                          {order.companyName && <p>Company: {order.companyName}</p>}
-                          <p>Qty: {order.quantity} — Total: Br {(order.totalPrice ?? 0).toLocaleString()}</p>
-                          <p>{new Date(order.orderDate).toLocaleDateString()}</p>
+                          <p>{t("buyer")}: {order.buyerName}</p>
+                          {order.buyerPhone && <p>{t("phone")}: {order.buyerPhone}</p>}
+                          {order.buyerClub && <p>{t("club")}: {order.buyerClub}</p>}
+                          {(order.companyName || order.companyNameAm) && <p>{t("company")}: {ln(order.companyName, order.companyNameAm)}</p>}
+                          <p>{t("qty")}: {order.lineItems?.reduce((s: number, li: LineItem) => s + li.quantity, 0) ?? 0} — {t("total")}: Br {(order.totalPrice ?? 0).toLocaleString()}</p>
+                          <p>{new Date(order.orderDate).toLocaleDateString(locale)}</p>
                         </div>
                         <div className="flex gap-1 pt-1">
                           <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
-                            <Eye className="h-3 w-3 mr-1" /> View
+                            <Eye className="h-3 w-3 mr-1" /> {t("view")}
                           </Button>
                           {order.status !== "APPROVED" && (
                             <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => confirmStatusChange(order._id, "APPROVED")}>
-                              <CheckCircle className="h-3 w-3 mr-1" /> Approve
+                              <CheckCircle className="h-3 w-3 mr-1" /> {t("approve")}
                             </Button>
                           )}
                           {order.status !== "DECLINED" && (
                             <Button size="sm" variant="destructive" onClick={() => confirmStatusChange(order._id, "DECLINED")}>
-                              <XCircle className="h-3 w-3 mr-1" /> Decline
+                              <XCircle className="h-3 w-3 mr-1" /> {t("decline")}
                             </Button>
                           )}
                         </div>
@@ -282,15 +322,15 @@ export default function AdminOrdersPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Order #</TableHead>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Buyer</TableHead>
-                          <TableHead>Company</TableHead>
-                          <TableHead>Qty</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Actions</TableHead>
+                          <TableHead>{t("adminOrderNumber")}</TableHead>
+                          <TableHead>{t("item")}</TableHead>
+                          <TableHead>{t("buyer")}</TableHead>
+                          <TableHead>{t("company")}</TableHead>
+                          <TableHead>{t("qty")}</TableHead>
+                          <TableHead>{t("total")}</TableHead>
+                          <TableHead>{t("status")}</TableHead>
+                          <TableHead>{t("date")}</TableHead>
+                          <TableHead>{t("actions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -298,18 +338,19 @@ export default function AdminOrdersPage() {
                           <TableRow key={order._id}>
                             <TableCell className="font-mono text-sm">{order.orderNumber}</TableCell>
                             <TableCell>
-                              <p className="font-medium text-sm">{order.itemName}</p>
-                              <p className="text-xs text-muted-foreground">{order.itemCategory}</p>
+                              <p className="font-medium text-sm">{ln(order.itemName, order.itemNameAm)}</p>
+                              <p className="text-xs text-muted-foreground">{ln(order.itemCategory, order.itemCategoryAm)}</p>
                             </TableCell>
                             <TableCell>
                               <p className="font-medium text-sm">{order.buyerName}</p>
-                              <p className="text-xs text-muted-foreground">{order.buyerEmail}</p>
+                              {order.buyerPhone && <p className="text-xs text-muted-foreground">{order.buyerPhone}</p>}
+                              {order.buyerClub && <p className="text-xs text-muted-foreground">{order.buyerClub}</p>}
                             </TableCell>
-                            <TableCell className="text-sm">{order.companyName || "—"}</TableCell>
-                            <TableCell>{order.quantity}</TableCell>
+                            <TableCell className="text-sm">{ln(order.companyName, order.companyNameAm) || "—"}</TableCell>
+                            <TableCell>{order.lineItems?.reduce((s: number, li: LineItem) => s + li.quantity, 0) ?? 0}</TableCell>
                             <TableCell className="font-medium">Br {(order.totalPrice ?? 0).toLocaleString()}</TableCell>
                             <TableCell>{getStatusBadge(order.status)}</TableCell>
-                            <TableCell className="text-sm">{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-sm">{new Date(order.orderDate).toLocaleDateString(locale)}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
                                 <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
@@ -343,62 +384,93 @@ export default function AdminOrdersPage() {
               <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <CardContent className="p-5 sm:p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold">Order #{selectedOrder.orderNumber}</h2>
+                    <h2 className="text-lg font-bold">{t("orderNumber")}{selectedOrder.orderNumber}</h2>
                     {getStatusBadge(selectedOrder.status)}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="font-medium text-muted-foreground text-xs">Item</p>
-                      <p className="font-medium">{selectedOrder.itemName}</p>
-                      <p className="text-muted-foreground">{selectedOrder.itemCategory}</p>
-                      {selectedOrder.itemSize && <p>Size: {selectedOrder.itemSize}</p>}
-                      {selectedOrder.itemColor && <p>Color: {selectedOrder.itemColor}</p>}
+                      <p className="font-medium text-muted-foreground text-xs">{t("item")}</p>
+                      <p className="font-medium">{ln(selectedOrder.itemName, selectedOrder.itemNameAm)}</p>
+                      <p className="text-muted-foreground">{ln(selectedOrder.itemCategory, selectedOrder.itemCategoryAm)}</p>
+                      {selectedOrder.itemColor && <p>{t("color")}: {selectedOrder.itemColor}</p>}
                     </div>
                     <div>
-                      <p className="font-medium text-muted-foreground text-xs">Buyer</p>
+                      <p className="font-medium text-muted-foreground text-xs">{t("buyer")}</p>
                       <p className="font-medium">{selectedOrder.buyerName}</p>
-                      <p className="text-muted-foreground">{selectedOrder.buyerEmail}</p>
-                      {selectedOrder.buyerPhone && <p>{selectedOrder.buyerPhone}</p>}
+                      {selectedOrder.buyerPhone && <p className="text-muted-foreground">{selectedOrder.buyerPhone}</p>}
+                      {selectedOrder.buyerClub && <p className="text-muted-foreground">{selectedOrder.buyerClub}</p>}
                     </div>
                   </div>
 
-                  {selectedOrder.companyName && (
+                  {(selectedOrder.companyName || selectedOrder.companyNameAm) && (
                     <div className="text-sm">
-                      <p className="font-medium text-muted-foreground text-xs">Company</p>
-                      <p>{selectedOrder.companyName}</p>
+                      <p className="font-medium text-muted-foreground text-xs">{t("company")}</p>
+                      <p>{ln(selectedOrder.companyName, selectedOrder.companyNameAm)}</p>
                     </div>
                   )}
 
-                  <div className="text-sm border-t pt-3">
-                    <p>Qty: {selectedOrder.quantity} × Br {(selectedOrder.unitPrice ?? 0).toLocaleString()}</p>
-                    <p className="text-lg font-bold">Total: Br {(selectedOrder.totalPrice ?? 0).toLocaleString()}</p>
+                  <div className="text-sm border-t pt-3 space-y-1">
+                    {isEditingQty ? (
+                      editingLineItems.map((li: LineItem, idx: number) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground w-20">
+                            {li.source === 'local' ? t('sourceLocal') : t('sourceImported')}{li.size ? ` ${li.size}` : ''}
+                          </span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={li.quantity}
+                            onChange={(e) => updateLineItemQty(idx, parseInt(e.target.value) || 1)}
+                            className="w-16 border rounded px-2 py-1 text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground">× Br {(li.unitPrice ?? 0).toLocaleString()}</span>
+                        </div>
+                      ))
+                    ) : (
+                      selectedOrder.lineItems?.map((li: LineItem, idx: number) => (
+                        <p key={idx}>
+                          {li.source === 'local' ? t('sourceLocal') : t('sourceImported')} {li.size ? `${li.size} × ` : ''}{li.quantity} @ Br {(li.unitPrice ?? 0).toLocaleString()}
+                        </p>
+                      ))
+                    )}
+                    <div className="flex items-center justify-between pt-1">
+                      <p className="text-lg font-bold">{t("total")}: Br {(isEditingQty ? editingLineItems.reduce((s, li) => s + (li.unitPrice ?? 0) * li.quantity, 0) : selectedOrder.totalPrice ?? 0).toLocaleString()}</p>
+                      {!isEditingQty ? (
+                        <Button variant="ghost" size="sm" onClick={() => startEditQty(selectedOrder)}>{t("edit")}</Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setIsEditingQty(false)}>{t("cancel")}</Button>
+                          <Button size="sm" onClick={saveQty}>{t("save")}</Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {selectedOrder.message && (
                     <div className="p-3 bg-muted rounded-lg text-sm">
-                      <p className="font-medium text-muted-foreground mb-1">Buyer Message:</p>
+                      <p className="font-medium text-muted-foreground mb-1">{t("buyerMessage")}</p>
                       <p>{selectedOrder.message}</p>
                     </div>
                   )}
 
                   {/* ALL status buttons always visible with confirmation */}
                   <div className="space-y-2 pt-2 border-t">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Change Status</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase">{t("changeStatus")}</p>
                     <div className="flex gap-2 flex-wrap">
                       {selectedOrder.status !== "PENDING" && (
                         <Button variant="outline" size="sm" onClick={() => { setSelectedOrder(null); confirmStatusChange(selectedOrder._id, "PENDING"); }} disabled={updatingId === selectedOrder._id}>
-                          <RotateCcw className="h-3 w-3 mr-1" /> Set Pending
+                          <RotateCcw className="h-3 w-3 mr-1" /> {t("setPending")}
                         </Button>
                       )}
                       {selectedOrder.status !== "APPROVED" && (
                         <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => { setSelectedOrder(null); confirmStatusChange(selectedOrder._id, "APPROVED"); }} disabled={updatingId === selectedOrder._id}>
-                          <CheckCircle className="h-3 w-3 mr-1" /> Approve
+                          <CheckCircle className="h-3 w-3 mr-1" /> {t("approve")}
                         </Button>
                       )}
                       {selectedOrder.status !== "DECLINED" && (
                         <Button size="sm" variant="destructive" onClick={() => { setSelectedOrder(null); confirmStatusChange(selectedOrder._id, "DECLINED"); }} disabled={updatingId === selectedOrder._id}>
-                          <XCircle className="h-3 w-3 mr-1" /> Decline
+                          <XCircle className="h-3 w-3 mr-1" /> {t("decline")}
                         </Button>
                       )}
                     </div>
@@ -406,13 +478,13 @@ export default function AdminOrdersPage() {
 
                   {selectedOrder.statusNote && (
                     <div className="p-3 bg-muted rounded-lg text-sm">
-                      <p className="font-medium text-muted-foreground mb-1">Status Note:</p>
+                      <p className="font-medium text-muted-foreground mb-1">{t("statusNote")}</p>
                       <p>{selectedOrder.statusNote}</p>
                     </div>
                   )}
 
                   <Button variant="outline" className="w-full" onClick={() => setSelectedOrder(null)}>
-                    Close
+                    {t("close")}
                   </Button>
                 </CardContent>
               </Card>
@@ -433,14 +505,14 @@ export default function AdminOrdersPage() {
                      <RotateCcw className="h-6 w-6 text-amber-600" />}
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">Are you sure?</h3>
+                    <h3 className="font-bold text-lg">{t("areYouSure")}</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Do you want to {getStatusLabel(confirmAction.status).toLowerCase()} this order?
+                      {t("wantToStatusOrder", { action: getStatusLabel(confirmAction.status).toLowerCase() })}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" className="flex-1" onClick={() => setConfirmAction(null)} disabled={updatingId !== null}>
-                      Cancel
+                      {t("cancel")}
                     </Button>
                     <Button
                       className={`flex-1 ${
@@ -452,7 +524,7 @@ export default function AdminOrdersPage() {
                       disabled={updatingId !== null}
                     >
                       {updatingId ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                      {updatingId ? "Updating..." : `Yes, ${getStatusLabel(confirmAction.status)}`}
+                      {updatingId ? t("updating") : t("yesStatus", { action: getStatusLabel(confirmAction.status) })}
                     </Button>
                   </div>
                 </CardContent>

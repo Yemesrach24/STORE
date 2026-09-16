@@ -2,6 +2,7 @@ import { type Metadata, type Viewport } from 'next'
 import { SessionProvider } from 'next-auth/react'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
+import { LanguageProvider } from '@/components/i18n/LanguageProvider'
 import './globals.css'
 
 const geistSans = Geist({
@@ -22,7 +23,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'TKD Store - Taekwondo Equipment',
+  title: 'K-FORCE ETHIOPIA - Taekwondo Equipment',
   description: 'Quality taekwondo equipment store. Browse and order martial arts gear.',
   icons: {
     icon: '/logo.png',
@@ -36,12 +37,14 @@ export default function RootLayout({
 }>) {
   return (
     <SessionProvider>
-      <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          {children}
-          <Toaster />
-        </body>
-      </html>
+      <LanguageProvider>
+        <html lang="en">
+          <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+            {children}
+            <Toaster />
+          </body>
+        </html>
+      </LanguageProvider>
     </SessionProvider>
   )
 }

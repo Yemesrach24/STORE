@@ -17,6 +17,8 @@ export interface IUser extends Document {
   whatsapp?: string;
   telegram?: string;
   instagram?: string;
+  // Customer club (filled in by guest/customer at order time)
+  club?: string;
   // Telegram integration
   telegramChatId?: string;
   // Shop / store info (for sellers)
@@ -25,6 +27,9 @@ export interface IUser extends Document {
   // Preferences
   timezone?: string;
   language?: string;
+  // Set once the user explicitly picks a language (distinguishes "chose en"
+  // from the default 'en', so the Telegram bot shows the picker only once).
+  languageChosenAt?: Date | null;
   currency?: string;
   theme?: 'light' | 'dark' | 'system';
   createdAt: Date;
@@ -110,6 +115,12 @@ const UserSchema: Schema = new Schema({
     trim: true,
     maxlength: [50, 'Instagram handle cannot exceed 50 characters'],
   },
+  // Customer club (filled in by guest/customer at order time)
+  club: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Club name cannot exceed 100 characters'],
+  },
   // Telegram integration
   telegramChatId: {
     type: String,
@@ -137,10 +148,14 @@ const UserSchema: Schema = new Schema({
     trim: true,
     default: 'en',
   },
+  languageChosenAt: {
+    type: Date,
+    default: null,
+  },
   currency: {
     type: String,
     trim: true,
-    default: 'USD',
+    default: 'ETB',
   },
   theme: {
     type: String,

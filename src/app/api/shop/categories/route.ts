@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
       interface TreeNode {
         _id: any;
         name: string;
+        nameAm?: string;
         description?: string;
+        descriptionAm?: string;
         imageUrl?: string;
         parentId: any;
         sortOrder: number;
@@ -36,7 +38,9 @@ export async function GET(request: NextRequest) {
           .map((cat: any): TreeNode => ({
             _id: cat._id,
             name: cat.name,
+            nameAm: cat.nameAm,
             description: cat.description,
+            descriptionAm: cat.descriptionAm,
             imageUrl: cat.imageUrl,
             parentId: cat.parentId,
             sortOrder: cat.sortOrder,

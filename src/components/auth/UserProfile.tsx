@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, User, Mail, Calendar } from 'lucide-react';
+import { useLanguage } from '@/components/i18n/LanguageProvider';
 import * as z from 'zod';
 
 const profileSchema = z.object({
@@ -33,6 +34,7 @@ interface DbUser {
 
 export default function UserProfile() {
   const { data: session } = useSession();
+  const { t, locale } = useLanguage();
   const [dbUser, setDbUser] = useState<DbUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -85,13 +87,13 @@ export default function UserProfile() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || 'Failed to update profile');
+        throw new Error(errorData?.error || t('failedUpdateProfile'));
       }
 
       setDbUser((prev) => prev ? { ...prev, ...data, name: `${data.firstName} ${data.lastName}` } : prev);
-      setSuccess('Profile updated successfully!');
+      setSuccess(t('profileUpdated'));
     } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+      setError(err.message || t('failedUpdateProfile'));
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +110,7 @@ export default function UserProfile() {
   }
 
   const user = dbUser;
-  const fullName = user?.name || session.user.name || 'User';
+  const fullName = user?.name || session.user.name || t('userLabel');
   const email = user?.email || session.user.email || '';
   const imageUrl = user?.imageUrl || session.user.image;
 
@@ -144,12 +146,12 @@ export default function UserProfile() {
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-gray-500" />
               <span className="text-sm text-gray-600">
-                Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
+                {t('joined')} {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(locale) : '—'}
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="secondary">
-                {user?.role || 'User'}
+                {user?.role || t('userLabel')}
               </Badge>
             </div>
           </div>
@@ -159,10 +161,8 @@ export default function UserProfile() {
       {/* Profile Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Edit Profile</CardTitle>
-          <CardDescription>
-            Update your personal information
-          </CardDescription>
+          <CardTitle>{t('editProfile')}</CardTitle>
+          <CardDescription>{t('updatePersonalInfo')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -180,7 +180,7 @@ export default function UserProfile() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">{t('firstName')}</Label>
                 <Input
                   id="firstName"
                   {...register('firstName')}
@@ -192,7 +192,7 @@ export default function UserProfile() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">{t('lastName')}</Label>
                 <Input
                   id="lastName"
                   {...register('lastName')}
@@ -211,10 +211,10 @@ export default function UserProfile() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
+                  {t('updating')}
                 </>
               ) : (
-                'Update Profile'
+                t('updateProfile')
               )}
             </Button>
           </form>

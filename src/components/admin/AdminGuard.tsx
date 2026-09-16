@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -19,13 +20,14 @@ interface AdminGuardProps {
  */
 export function AdminGuard({ children }: AdminGuardProps) {
   const { status } = useSession();
+  const { t } = useLanguage();
 
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t("loading")}</p>
         </div>
       </div>
     );
@@ -37,14 +39,12 @@ export function AdminGuard({ children }: AdminGuardProps) {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>
-              You need to be logged in to access this page.
-            </CardDescription>
+            <CardTitle>{t("authenticationRequired")}</CardTitle>
+            <CardDescription>{t("needToLogin")}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <Button asChild>
-              <Link href="/sign-in">Sign In</Link>
+              <Link href="/sign-in">{t("signIn")}</Link>
             </Button>
           </CardContent>
         </Card>

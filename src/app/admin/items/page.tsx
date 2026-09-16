@@ -12,32 +12,68 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Package, Plus, Edit, Trash2, Loader2, Search, Upload, X, Image as ImageIcon } from "lucide-react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { Package, Plus, Edit, Trash2, Loader2, Search, Upload, X, Image as ImageIcon, GripVertical } from "lucide-react";
 
+/* ---------- helpers ---------- */
+interface SizeRow {
+  name: string;
+  nameAm: string;
+  price: string; // optional — empty means use base price
+}
+
+interface SourceBlock {
+  enabled: boolean;
+  basePrice: string;
+  sizes: SizeRow[];
+}
+
+const emptySizeRow = (): SizeRow => ({ name: "", nameAm: "", price: "" });
+
+const emptySource = (): SourceBlock => ({
+  enabled: false,
+  basePrice: "",
+  sizes: [],
+});
+
+/* ---------- interfaces ---------- */
 interface Category {
   _id: string;
   name: string;
+  nameAm?: string;
   imageUrl?: string;
+}
+
+interface ServerSize {
+  name: string;
+  price?: number;
+}
+interface ServerSource {
+  enabled: boolean;
+  basePrice: number;
+  sizes: ServerSize[];
 }
 
 interface Item {
   _id: string;
   name: string;
+  nameAm?: string;
   description: string;
+  descriptionAm?: string;
   uniqueNumber: string;
   categoryId: { _id: string; name: string; imageUrl?: string } | string;
-  size?: string;
   color?: string;
-  price: number;
-  quantity: number;
+  local: ServerSource;
+  imported: ServerSource;
   supplier?: string;
+  supplierAm?: string;
   companyName?: string;
+  companyNameAm?: string;
   companyPhone?: string;
   companyWhatsapp?: string;
   companyTelegram?: string;
   companyInstagram?: string;
   companyEmail?: string;
-  stockStatus: "in_stock" | "low_stock" | "out_of_stock";
   imageUrl?: string;
   imageUrls?: string[];
   tags?: string[];
@@ -48,15 +84,19 @@ interface Item {
 
 interface ItemFormData {
   name: string;
+  nameAm: string;
   description: string;
+  descriptionAm: string;
   uniqueNumber: string;
   categoryId: string;
-  size: string;
   color: string;
-  price: string;
-  quantity: string;
+  colorAm: string;
+  local: SourceBlock;
+  imported: SourceBlock;
   supplier: string;
+  supplierAm: string;
   companyName: string;
+  companyNameAm: string;
   companyPhone: string;
   companyWhatsapp: string;
   companyTelegram: string;
@@ -65,21 +105,26 @@ interface ItemFormData {
   imageUrl: string;
   imageUrls: string[];
   tags: string;
+  tagsAm: string;
   location: string;
   autoGenerate: boolean;
 }
 
 const emptyForm: ItemFormData = {
   name: "",
+  nameAm: "",
   description: "",
+  descriptionAm: "",
   uniqueNumber: "",
   categoryId: "",
-  size: "",
   color: "",
-  price: "",
-  quantity: "",
+  colorAm: "",
+  local: emptySource(),
+  imported: emptySource(),
   supplier: "",
+  supplierAm: "",
   companyName: "",
+  companyNameAm: "",
   companyPhone: "",
   companyWhatsapp: "",
   companyTelegram: "",
@@ -88,11 +133,115 @@ const emptyForm: ItemFormData = {
   imageUrl: "",
   imageUrls: [],
   tags: "",
+  tagsAm: "",
   location: "",
   autoGenerate: true,
 };
 
+/* ---------- Source block sub-component ---------- */
+function SourceBlockEditor({
+  label,
+  block,
+  onChange,
+}: {
+  label: string;
+  block: SourceBlock;
+  onChange: (b: SourceBlock) => void;
+}) {
+  const { t } = useLanguage();
+
+  const updateSize = (idx: number, field: keyof SizeRow, value: string) => {
+    const sizes = block.sizes.map((s, i) => (i === idx ? { ...s, [field]: value } : s));
+    onChange({ ...block, sizes });
+  };
+
+  // Helper to resolve translation key or fallback
+  const tl = (enKey: string, amKey?: string) => {
+    try { return t(enKey as any); } catch { return enKey; }
+  };
+
+  const addSize = () => onChange({ ...block, sizes: [...block.sizes, emptySizeRow()] });
+  const removeSize = (idx: number) => onChange({ ...block, sizes: block.sizes.filter((_, i) => i !== idx) });
+
+  return (
+    <div className={`rounded-lg border p-4 space-y-3 transition-colors ${block.enabled ? "border-[var(--brand)] bg-[var(--brand)]/5" : "border-gray-200 bg-gray-50"}`}>
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={block.enabled}
+          onChange={(e) => onChange({ ...block, enabled: e.target.checked })}
+          className="h-4 w-4 rounded"
+        />
+        <Label className="font-semibold text-sm">{label}</Label>
+      </div>
+      {block.enabled && (
+        <>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">{t("basePrice")} *</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={block.basePrice}
+              onChange={(e) => onChange({ ...block, basePrice: e.target.value })}
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">{t("sizes")}</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addSize} className="h-7 text-xs">
+                <Plus className="h-3 w-3 mr-1" /> {t("addSize")}
+              </Button>
+            </div>
+            {block.sizes.length === 0 && (
+              <p className="text-xs text-muted-foreground italic">{t("noSizesHint")}</p>
+            )}
+            {block.sizes.map((sz, idx) => (
+              <div key={idx} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <GripVertical className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <Input
+                    value={sz.name}
+                    onChange={(e) => updateSize(idx, "name", e.target.value)}
+                    placeholder={t("sizeNamePlaceholder")}
+                    className="flex-1"
+                  />
+                  <Input
+                    value={sz.nameAm}
+                    onChange={(e) => updateSize(idx, "nameAm", e.target.value)}
+                    placeholder={t("sizeNameAmPlaceholder")}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={sz.price}
+                    onChange={(e) => updateSize(idx, "price", e.target.value)}
+                    placeholder={t("sizePricePlaceholder")}
+                    className="w-28"
+                  />
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeSize(idx)} className="text-red-500 hover:text-red-600 h-8 w-8 p-0">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {block.sizes.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">{t("sizePriceHint")}</p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Main page ---------- */
 export default function AdminItemsPage() {
+  const { t, ln } = useLanguage();
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,14 +259,9 @@ export default function AdminItemsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
-  useEffect(() => {
-    fetchItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, categoryFilter]);
+  useEffect(() => { fetchItems(); }, [currentPage, categoryFilter]);
 
   const fetchCategories = async () => {
     try {
@@ -133,13 +277,9 @@ export default function AdminItemsPage() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: "15",
-      });
+      const params = new URLSearchParams({ page: currentPage.toString(), limit: "15" });
       if (searchTerm) params.set("search", searchTerm);
       if (categoryFilter !== "all") params.set("categoryId", categoryFilter);
-
       const response = await fetch(`/api/items?${params}`);
       if (!response.ok) throw new Error("Failed to fetch items");
       const data = await response.json();
@@ -152,9 +292,15 @@ export default function AdminItemsPage() {
     }
   };
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-    fetchItems();
+  const handleSearch = () => { setCurrentPage(1); fetchItems(); };
+
+  const serverSourceToForm = (s?: ServerSource): SourceBlock => {
+    if (!s || !s.enabled) return emptySource();
+    return {
+      enabled: true,
+      basePrice: String(s.basePrice ?? ""),
+      sizes: (s.sizes || []).map((sz) => ({ name: sz.name, nameAm: (sz as any).nameAm || "", price: sz.price != null ? String(sz.price) : "" })),
+    };
   };
 
   const openModal = (item?: Item) => {
@@ -164,15 +310,19 @@ export default function AdminItemsPage() {
       const allImages = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls : (item.imageUrl ? [item.imageUrl] : []);
       setForm({
         name: item.name,
+        nameAm: (item as any).nameAm || "",
         description: item.description,
+        descriptionAm: (item as any).descriptionAm || "",
         uniqueNumber: item.uniqueNumber,
         categoryId: catId,
-        size: item.size || "",
         color: item.color || "",
-        price: item.price.toString(),
-        quantity: item.quantity.toString(),
+        colorAm: (item as any).colorAm || "",
+        local: serverSourceToForm(item.local),
+        imported: serverSourceToForm(item.imported),
         supplier: item.supplier || "",
+        supplierAm: item.supplierAm || "",
         companyName: item.companyName || "",
+        companyNameAm: item.companyNameAm || "",
         companyPhone: item.companyPhone || "",
         companyWhatsapp: item.companyWhatsapp || "",
         companyTelegram: item.companyTelegram || "",
@@ -181,6 +331,7 @@ export default function AdminItemsPage() {
         imageUrl: item.imageUrl || "",
         imageUrls: allImages,
         tags: item.tags?.join(", ") || "",
+        tagsAm: (item as any).tagsAm?.join(", ") || "",
         location: item.location || "",
         autoGenerate: false,
       });
@@ -194,36 +345,24 @@ export default function AdminItemsPage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", "items");
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.error || "Upload failed");
+        throw new Error(err.error || t("uploadFailed"));
       }
-
       const result = await response.json();
       const newUrl = result.url;
-
       setForm((prev) => {
         const newUrls = [...prev.imageUrls, newUrl];
-        return {
-          ...prev,
-          imageUrls: newUrls,
-          imageUrl: newUrls[0] || "",
-        };
+        return { ...prev, imageUrls: newUrls, imageUrl: newUrls[0] || "" };
       });
     } catch (err: unknown) {
-      setUploadError(err instanceof Error ? err.message : "Failed to upload image");
+      setUploadError(err instanceof Error ? err.message : t("uploadFailedConfirm"));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -233,11 +372,7 @@ export default function AdminItemsPage() {
   const removeImage = (index: number) => {
     setForm((prev) => {
       const newUrls = prev.imageUrls.filter((_, i) => i !== index);
-      return {
-        ...prev,
-        imageUrls: newUrls,
-        imageUrl: newUrls[0] || "",
-      };
+      return { ...prev, imageUrls: newUrls, imageUrl: newUrls[0] || "" };
     });
   };
 
@@ -247,23 +382,43 @@ export default function AdminItemsPage() {
     setError(null);
 
     try {
-      const body: Record<string, string | number | string[] | boolean> = {
+      const body: Record<string, any> = {
         name: form.name,
         description: form.description,
         categoryId: form.categoryId,
-        price: parseFloat(form.price),
-        quantity: parseInt(form.quantity),
       };
 
-      if (!form.autoGenerate || editingItem) {
-        body.uniqueNumber = form.uniqueNumber;
-      }
-
-      if (form.size) body.size = form.size;
+      if (form.nameAm) body.nameAm = form.nameAm;
+      if (form.descriptionAm) body.descriptionAm = form.descriptionAm;
+      if (!form.autoGenerate || editingItem) body.uniqueNumber = form.uniqueNumber;
       if (form.color) body.color = form.color;
+      if (form.colorAm) body.colorAm = form.colorAm;
+
+      // Local / Imported source blocks
+      body.local = {
+        enabled: form.local.enabled,
+        basePrice: form.local.enabled ? parseFloat(form.local.basePrice) || 0 : 0,
+        sizes: form.local.sizes.filter((s) => s.name.trim()).map((s) => ({
+          name: s.name.trim(),
+          nameAm: s.nameAm.trim() || undefined,
+          price: s.price !== "" ? parseFloat(s.price) || undefined : undefined,
+        })),
+      };
+      body.imported = {
+        enabled: form.imported.enabled,
+        basePrice: form.imported.enabled ? parseFloat(form.imported.basePrice) || 0 : 0,
+        sizes: form.imported.sizes.filter((s) => s.name.trim()).map((s) => ({
+          name: s.name.trim(),
+          nameAm: s.nameAm.trim() || undefined,
+          price: s.price !== "" ? parseFloat(s.price) || undefined : undefined,
+        })),
+      };
+
       if (form.supplier) body.supplier = form.supplier;
+      if (form.supplierAm) body.supplierAm = form.supplierAm;
       if (form.location) body.location = form.location;
       if (form.companyName) body.companyName = form.companyName;
+      if (form.companyNameAm) body.companyNameAm = form.companyNameAm;
       if (form.companyPhone) body.companyPhone = form.companyPhone;
       if (form.companyWhatsapp) body.companyWhatsapp = form.companyWhatsapp;
       if (form.companyTelegram) body.companyTelegram = form.companyTelegram;
@@ -275,6 +430,9 @@ export default function AdminItemsPage() {
       }
       if (form.tags) {
         body.tags = form.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
+      }
+      if (form.tagsAm) {
+        body.tagsAm = form.tagsAm.split(",").map((t: string) => t.trim()).filter(Boolean);
       }
 
       const url = editingItem ? `/api/items/${editingItem._id}` : "/api/items";
@@ -311,28 +469,25 @@ export default function AdminItemsPage() {
     }
   };
 
-  const getStockBadge = (status: string, quantity: number) => {
-    switch (status) {
-      case "in_stock":
-        return <Badge className="bg-green-100 text-green-800">In Stock ({quantity})</Badge>;
-      case "low_stock":
-        return <Badge className="bg-yellow-100 text-yellow-800">Low Stock ({quantity})</Badge>;
-      case "out_of_stock":
-        return <Badge variant="destructive">Out of Stock</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
+  const getPriceDisplay = (item: Item) => {
+    const parts: string[] = [];
+    if (item.local?.enabled) parts.push(`Local: Br ${item.local.basePrice.toLocaleString()}`);
+    if (item.imported?.enabled) parts.push(`Imported: Br ${item.imported.basePrice.toLocaleString()}`);
+    return parts.length > 0 ? parts.join(" | ") : `Br ${(item as any).price?.toLocaleString() || "0"}`;
   };
 
-  const getCategoryName = (categoryId: string | { _id: string; name: string } | undefined) => {
-    if (typeof categoryId === "object" && categoryId?.name) return categoryId.name;
+  const getCategoryName = (categoryId: string | { _id: string; name: string; nameAm?: string } | undefined) => {
+    if (typeof categoryId === "object" && categoryId?.name) return ln(categoryId.name, categoryId.nameAm);
     const cat = categories.find((c) => c._id === categoryId);
-    return cat?.name || "Unknown";
+    return cat ? ln(cat.name, cat.nameAm) : t("unknown");
   };
 
-  const updateForm = (key: keyof ItemFormData, value: string | boolean | string[]) => {
+  const updateForm = (key: keyof ItemFormData, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  const updateLocal = (block: SourceBlock) => setForm((prev) => ({ ...prev, local: block }));
+  const updateImported = (block: SourceBlock) => setForm((prev) => ({ ...prev, imported: block }));
 
   return (
     <AdminGuard>
@@ -341,36 +496,26 @@ export default function AdminItemsPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Items</h1>
-              <p className="text-muted-foreground">
-                Manage your product catalog. Add, edit, and remove items.
-              </p>
+              <h1 className="text-3xl font-bold tracking-tight">{t("itemsTitle")}</h1>
+              <p className="text-muted-foreground">{t("itemsSubtitle")}</p>
             </div>
             <Button onClick={() => openModal()}>
-              <Plus className="mr-2 h-4 w-4" /> Add Item
+              <Plus className="mr-2 h-4 w-4" /> {t("addItem")}
             </Button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">Total Items</p>
+                <p className="text-sm text-muted-foreground">{t("totalItems")}</p>
                 <p className="text-2xl font-bold">{items.length}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">Categories</p>
+                <p className="text-sm text-muted-foreground">{t("categories")}</p>
                 <p className="text-2xl font-bold">{categories.length}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">Out of Stock</p>
-                <p className="text-2xl font-bold text-[var(--brand)]">
-                  {items.filter((i) => i.stockStatus === "out_of_stock").length}
-                </p>
               </CardContent>
             </Card>
           </div>
@@ -382,7 +527,7 @@ export default function AdminItemsPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search items..."
+                    placeholder={t("searchItemsPlaceholder")}
                     className="pl-10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -392,19 +537,14 @@ export default function AdminItemsPage() {
                 <select
                   className="p-2 border rounded text-sm min-w-[180px]"
                   value={categoryFilter}
-                  onChange={(e) => {
-                    setCategoryFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
                 >
-                  <option value="all">All Categories</option>
+                  <option value="all">{t("allCategories")}</option>
                   {categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </option>
+                    <option key={cat._id} value={cat._id}>{ln(cat.name, cat.nameAm)}</option>
                   ))}
                 </select>
-                <Button onClick={handleSearch}>Search</Button>
+                <Button onClick={handleSearch}>{t("search")}</Button>
               </div>
             </CardContent>
           </Card>
@@ -419,30 +559,27 @@ export default function AdminItemsPage() {
               ) : error ? (
                 <div className="text-center py-12">
                   <p className="text-destructive mb-4">{error}</p>
-                  <Button onClick={fetchItems}>Try Again</Button>
+                  <Button onClick={fetchItems}>{t("tryAgain")}</Button>
                 </div>
               ) : items.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-semibold">No items yet</p>
-                  <p className="text-muted-foreground mb-4">
-                    Create your first product to get started.
-                  </p>
+                  <p className="text-lg font-semibold">{t("noItemsYet")}</p>
+                  <p className="text-muted-foreground mb-4">{t("createFirstProduct")}</p>
                   <Button onClick={() => openModal()}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Item
+                    <Plus className="mr-2 h-4 w-4" /> {t("addItem")}
                   </Button>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead>{t("itemColumn")}</TableHead>
+                      <TableHead>{t("categoryColumn")}</TableHead>
+                      <TableHead>{t("priceColumn")}</TableHead>
+                      <TableHead>{t("companyColumn")}</TableHead>
+                      <TableHead>{t("idColumn")}</TableHead>
+                      <TableHead>{t("actionsColumn")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -451,26 +588,18 @@ export default function AdminItemsPage() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             {(item.imageUrls && item.imageUrls.length > 0) ? (
-                              <img
-                                src={item.imageUrls[0]}
-                                alt=""
-                                className="w-10 h-10 rounded object-cover"
-                              />
+                              <img src={item.imageUrls[0]} alt="" className="w-10 h-10 rounded object-cover" />
                             ) : item.imageUrl ? (
-                              <img
-                                src={item.imageUrl}
-                                alt=""
-                                className="w-10 h-10 rounded object-cover"
-                              />
+                              <img src={item.imageUrl} alt="" className="w-10 h-10 rounded object-cover" />
                             ) : (
                               <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
                                 <Package className="h-5 w-5 text-muted-foreground" />
                               </div>
                             )}
                             <div>
-                              <p className="font-medium">{item.name}</p>
+                              <p className="font-medium">{ln(item.name, item.nameAm)}</p>
                               <p className="text-sm text-muted-foreground line-clamp-1">
-                                {item.description}
+                                {ln(item.description, item.descriptionAm)}
                               </p>
                             </div>
                           </div>
@@ -478,31 +607,15 @@ export default function AdminItemsPage() {
                         <TableCell>
                           <Badge variant="outline">{getCategoryName(item.categoryId)}</Badge>
                         </TableCell>
-                        <TableCell className="font-medium">
-                          Br {(item.price ?? 0).toLocaleString()}
-                        </TableCell>
-                        <TableCell>{item.companyName || "-"}</TableCell>
-                        <TableCell>
-                          {getStockBadge(item.stockStatus, item.quantity)}
-                        </TableCell>
-                        <TableCell className="text-sm font-mono">
-                          {item.uniqueNumber || item._id.slice(-8)}
-                        </TableCell>
+                        <TableCell className="font-medium text-sm">{getPriceDisplay(item)}</TableCell>
+                        <TableCell>{ln(item.companyName, item.companyNameAm) || "-"}</TableCell>
+                        <TableCell className="text-sm font-mono">{item.uniqueNumber || item._id.slice(-8)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openModal(item)}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => openModal(item)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => setDeleteConfirmId(item._id)}
-                            >
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => setDeleteConfirmId(item._id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -518,20 +631,19 @@ export default function AdminItemsPage() {
           {/* Delete confirmation */}
           <ConfirmDialog
             open={!!deleteConfirmId}
-            title="Delete Item"
-            message="Are you sure you want to delete this item? This cannot be undone."
-            confirmLabel="Delete"
+            title={t("deleteItem")}
+            message={t("deleteItemConfirm")}
+            confirmLabel={t("delete")}
             variant="danger"
             onConfirm={() => deleteConfirmId && handleDelete(deleteConfirmId)}
             onCancel={() => setDeleteConfirmId(null)}
           />
 
-          {/* Upload error */}
           <ConfirmDialog
             open={!!uploadError}
-            title="Upload Failed"
-            message={uploadError || "Failed to upload image"}
-            confirmLabel="OK"
+            title={t("uploadFailed")}
+            message={uploadError || t("uploadFailedConfirm")}
+            confirmLabel={t("ok")}
             variant="info"
             onConfirm={() => setUploadError(null)}
             onCancel={() => setUploadError(null)}
@@ -540,54 +652,51 @@ export default function AdminItemsPage() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-              >
-                Previous
+              <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
+                {t("previous")}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
+                {t("pageOf", { current: currentPage, total: totalPages })}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-              >
-                Next
+              <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
+                {t("next")}
               </Button>
             </div>
           )}
 
           {/* Add/Edit Modal */}
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? "Edit Item" : "Add New Item"}
-                </DialogTitle>
+                <DialogTitle>{editingItem ? t("editItem") : t("addNewItem")}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Basic Information */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase">
-                    Basic Information
+                    {t("basicInformation")}
                   </h3>
                   <div className="space-y-2">
-                    <Label htmlFor="name">Item Name *</Label>
+                    <Label htmlFor="name">{t("itemNameEnglish")} *</Label>
                     <Input
                       id="name"
                       value={form.name}
                       onChange={(e) => updateForm("name", e.target.value)}
-                      placeholder="e.g., Single Pad, Double Pad"
+                      placeholder={t("itemNamePlaceholder")}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="categoryId">Category *</Label>
+                    <Label htmlFor="nameAm">{t("itemNameAmharic")}</Label>
+                    <Input
+                      id="nameAm"
+                      value={form.nameAm}
+                      onChange={(e) => updateForm("nameAm", e.target.value)}
+                      placeholder={t("itemNameAmPlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="categoryId">{t("category")} *</Label>
                     <select
                       id="categoryId"
                       className="w-full p-2 border rounded text-sm"
@@ -595,17 +704,15 @@ export default function AdminItemsPage() {
                       onChange={(e) => updateForm("categoryId", e.target.value)}
                       required
                     >
-                      <option value="">Select category</option>
+                      <option value="">{t("selectCategory")}</option>
                       {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.name}
-                        </option>
+                        <option key={cat._id} value={cat._id}>{ln(cat.name, cat.nameAm)}</option>
                       ))}
                     </select>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="uniqueNumber">Unique Number</Label>
+                      <Label htmlFor="uniqueNumber">{t("uniqueNumber")}</Label>
                       <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                         <input
                           type="checkbox"
@@ -613,150 +720,145 @@ export default function AdminItemsPage() {
                           onChange={(e) => updateForm("autoGenerate", e.target.checked)}
                           className="rounded"
                         />
-                        Auto-generate
+                        {t("autoGenerate")}
                       </label>
                     </div>
                     <Input
                       id="uniqueNumber"
                       value={form.uniqueNumber}
                       onChange={(e) => updateForm("uniqueNumber", e.target.value)}
-                      placeholder="e.g., TKD-001 or leave blank for auto"
+                      placeholder={t("uniqueNumberPlaceholder")}
                       disabled={form.autoGenerate && !editingItem}
                     />
                     {form.autoGenerate && !editingItem && (
-                      <p className="text-xs text-muted-foreground">
-                        A unique number will be generated automatically if left blank.
-                      </p>
+                      <p className="text-xs text-muted-foreground">{t("autoGenerateHint")}</p>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="size">Size (optional)</Label>
-                      <Input
-                        id="size"
-                        value={form.size}
-                        onChange={(e) => updateForm("size", e.target.value)}
-                        placeholder="e.g., M, L, XL"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="color">Color (optional)</Label>
+                      <Label htmlFor="color">{t("colorOptional")}</Label>
                       <Input
                         id="color"
                         value={form.color}
                         onChange={(e) => updateForm("color", e.target.value)}
-                        placeholder="e.g., Black, White"
+                        placeholder={t("colorPlaceholder")}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="colorAm">{t("colorAmOptional")}</Label>
+                      <Input
+                        id="colorAm"
+                        value={form.colorAm}
+                        onChange={(e) => updateForm("colorAm", e.target.value)}
+                        placeholder={t("colorAmPlaceholder")}
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description *</Label>
+                    <Label htmlFor="description">{t("descriptionEnglish")} *</Label>
                     <Textarea
                       id="description"
                       value={form.description}
                       onChange={(e) => updateForm("description", e.target.value)}
-                      placeholder="Describe the product..."
+                      placeholder={t("descriptionPlaceholder")}
                       rows={3}
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="descriptionAm">{t("descriptionAmharic")}</Label>
+                    <Textarea
+                      id="descriptionAm"
+                      value={form.descriptionAm}
+                      onChange={(e) => updateForm("descriptionAm", e.target.value)}
+                      placeholder={t("descriptionAmPlaceholder")}
+                      rows={3}
+                    />
+                  </div>
                 </div>
 
-                {/* Pricing & Stock */}
+                {/* Local & Imported Pricing */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase">
-                    Pricing & Stock
+                    {t("pricingBySource")}
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Sale Price *</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={form.price}
-                        onChange={(e) => updateForm("price", e.target.value)}
-                        placeholder="0.00"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="quantity">Current Quantity *</Label>
-                      <Input
-                        id="quantity"
-                        type="number"
-                        min="0"
-                        value={form.quantity}
-                        onChange={(e) => updateForm("quantity", e.target.value)}
-                        placeholder="0"
-                        required
-                      />
-                    </div>
+                  <p className="text-xs text-muted-foreground">{t("pricingBySourceHint")}</p>
+                  <div className="space-y-3">
+                    <SourceBlockEditor label={t("sourceLocal")} block={form.local} onChange={updateLocal} />
+                    <SourceBlockEditor label={t("sourceImported")} block={form.imported} onChange={updateImported} />
                   </div>
                 </div>
 
                 {/* Company / Contact Information */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase">
-                    Company & Contact Information
+                    {t("companyContactInfo")}
                   </h3>
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name</Label>
+                    <Label htmlFor="companyName">{t("companyName")}</Label>
                     <Input
                       id="companyName"
                       value={form.companyName}
                       onChange={(e) => updateForm("companyName", e.target.value)}
-                      placeholder="e.g., TKD Supplies Ethiopia"
+                      placeholder={t("companyNamePlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyNameAm">{t("companyNameAm")}</Label>
+                    <Input
+                      id="companyNameAm"
+                      value={form.companyNameAm}
+                      onChange={(e) => updateForm("companyNameAm", e.target.value)}
+                      placeholder={t("companyNameAmPlaceholder")}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="companyPhone">Phone</Label>
+                      <Label htmlFor="companyPhone">{t("phone")}</Label>
                       <Input
                         id="companyPhone"
                         value={form.companyPhone}
                         onChange={(e) => updateForm("companyPhone", e.target.value)}
-                        placeholder="e.g., +251911234567"
+                        placeholder={t("companyPhonePlaceholder")}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="companyEmail">Email</Label>
+                      <Label htmlFor="companyEmail">{t("email")}</Label>
                       <Input
                         id="companyEmail"
                         value={form.companyEmail}
                         onChange={(e) => updateForm("companyEmail", e.target.value)}
-                        placeholder="e.g., info@company.com"
+                        placeholder={t("companyEmailPlaceholder")}
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="companyWhatsapp">WhatsApp</Label>
+                      <Label htmlFor="companyWhatsapp">{t("whatsapp")}</Label>
                       <Input
                         id="companyWhatsapp"
                         value={form.companyWhatsapp}
                         onChange={(e) => updateForm("companyWhatsapp", e.target.value)}
-                        placeholder="e.g., +251911234567"
+                        placeholder={t("companyPhonePlaceholder")}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="companyTelegram">Telegram</Label>
+                      <Label htmlFor="companyTelegram">{t("telegram")}</Label>
                       <Input
                         id="companyTelegram"
                         value={form.companyTelegram}
                         onChange={(e) => updateForm("companyTelegram", e.target.value)}
-                        placeholder="e.g., @company"
+                        placeholder={t("companyTelegramPlaceholder")}
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="companyInstagram">Instagram</Label>
+                    <Label htmlFor="companyInstagram">{t("instagram")}</Label>
                     <Input
                       id="companyInstagram"
                       value={form.companyInstagram}
                       onChange={(e) => updateForm("companyInstagram", e.target.value)}
-                      placeholder="e.g., @company"
+                      placeholder={t("companyTelegramPlaceholder")}
                     />
                   </div>
                 </div>
@@ -764,33 +866,51 @@ export default function AdminItemsPage() {
                 {/* Additional Information */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase">
-                    Additional Information
+                    {t("additionalInformation")}
                   </h3>
                   <div className="space-y-2">
-                    <Label htmlFor="supplier">Supplier</Label>
+                    <Label htmlFor="supplier">{t("supplier")}</Label>
                     <Input
                       id="supplier"
                       value={form.supplier}
                       onChange={(e) => updateForm("supplier", e.target.value)}
-                      placeholder="Producer / supplier name"
+                      placeholder={t("supplierPlaceholder")}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="tags">Tags (comma separated)</Label>
+                    <Label htmlFor="supplierAm">{t("supplierAm")}</Label>
+                    <Input
+                      id="supplierAm"
+                      value={form.supplierAm}
+                      onChange={(e) => updateForm("supplierAm", e.target.value)}
+                      placeholder={t("supplierAmPlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">{t("tagsComma")}</Label>
                     <Input
                       id="tags"
                       value={form.tags}
                       onChange={(e) => updateForm("tags", e.target.value)}
-                      placeholder="e.g., protective, training, beginner"
+                      placeholder={t("tagsPlaceholder")}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location">Location (optional)</Label>
+                    <Label htmlFor="tagsAm">{t("tagsAm")}</Label>
+                    <Input
+                      id="tagsAm"
+                      value={form.tagsAm}
+                      onChange={(e) => updateForm("tagsAm", e.target.value)}
+                      placeholder={t("tagsAmPlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">{t("locationOptional")}</Label>
                     <Input
                       id="location"
                       value={form.location}
                       onChange={(e) => updateForm("location", e.target.value)}
-                      placeholder="e.g., Warehouse A, Shelf 3"
+                      placeholder={t("locationPlaceholder")}
                     />
                   </div>
                 </div>
@@ -798,7 +918,7 @@ export default function AdminItemsPage() {
                 {/* Images Upload - Up to 3 */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase">
-                    Images (up to 3)
+                    {t("imagesUpTo3")}
                   </h3>
                   <div className="grid grid-cols-3 gap-3">
                     {form.imageUrls.map((url, idx) => (
@@ -816,7 +936,7 @@ export default function AdminItemsPage() {
                           <X className="h-3 w-3" />
                         </button>
                         {idx === 0 && (
-                          <Badge className="absolute bottom-1 left-1 text-[10px]" variant="default">Main</Badge>
+                          <Badge className="absolute bottom-1 left-1 text-[10px]" variant="default">{t("main")}</Badge>
                         )}
                       </div>
                     ))}
@@ -843,39 +963,28 @@ export default function AdminItemsPage() {
                             <Upload className="h-6 w-6 mb-1" />
                           )}
                           <span className="text-xs text-muted-foreground">
-                            {isUploading ? "Uploading..." : "Add Image"}
+                            {isUploading ? t("uploading") : t("addImage")}
                           </span>
                         </Button>
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    JPEG, PNG, WebP or GIF. Max 5MB each. First image is the main image.
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t("imagesHint")}</p>
                 </div>
 
                 {/* Error */}
                 {error && (
-                  <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
-                    {error}
-                  </p>
+                  <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</p>
                 )}
 
                 {/* Actions */}
                 <div className="flex justify-end gap-2 pt-2 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsModalOpen(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
+                  <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
+                    {t("cancel")}
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    {editingItem ? "Update Item" : "Create Item"}
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {editingItem ? t("updateItem") : t("createItem")}
                   </Button>
                 </div>
               </form>

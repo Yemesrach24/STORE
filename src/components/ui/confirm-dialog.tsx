@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Info, CheckCircle, X } from "lucide-react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -19,13 +20,14 @@ export function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   variant = "warning",
   loading = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useLanguage();
   if (!open) return null;
 
   const iconMap = {
@@ -68,7 +70,7 @@ export function ConfirmDialog({
         </div>
         <div className="flex gap-2 justify-end pt-2">
           <Button variant="outline" size="sm" onClick={onCancel} disabled={loading}>
-            {cancelLabel}
+            {cancelLabel ?? t("cancel")}
           </Button>
           <Button
             variant={btnVariant as any}
@@ -77,7 +79,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? "Processing..." : confirmLabel}
+            {loading ? t("processing") : (confirmLabel ?? t("confirm"))}
           </Button>
         </div>
       </div>

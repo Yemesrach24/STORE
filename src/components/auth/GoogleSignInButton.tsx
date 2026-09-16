@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 function GoogleIcon() {
   return (
@@ -30,12 +31,14 @@ function GoogleIcon() {
 
 export function GoogleSignInButton({
   callbackUrl = "/shop",
-  label = "Continue with Google",
+  label,
 }: {
   callbackUrl?: string;
   label?: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useLanguage();
+  const buttonLabel = label ?? t("continueWithGoogle");
 
   return (
     <Button
@@ -53,7 +56,7 @@ export function GoogleSignInButton({
       ) : (
         <GoogleIcon />
       )}
-      {isLoading ? "Redirecting to Google..." : label}
+      {isLoading ? t("redirectingToGoogle") : buttonLabel}
     </Button>
   );
 }

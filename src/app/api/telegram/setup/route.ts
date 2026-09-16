@@ -67,10 +67,11 @@ export async function GET() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         commands: [
-          { command: 'start', description: 'Welcome message with store info' },
-          { command: 'shop', description: 'Browse our taekwondo store' },
-          { command: 'about', description: 'Learn about TKD Store' },
-          { command: 'help', description: 'Get help and instructions' },
+          { command: 'start', description: 'Welcome message with store info / መግቢያ' },
+          { command: 'shop', description: 'Browse our taekwondo store / ሱቅ' },
+          { command: 'about', description: 'Learn about TKD Store / ስለ እኛ' },
+          { command: 'help', description: 'Get help and instructions / እርዳታ' },
+          { command: 'language', description: 'Change language / ቋንቋ ይቀይሩ' },
         ],
       }),
     });
@@ -116,7 +117,7 @@ export async function GET() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: webhookUrl,
-          allowed_updates: ['message'],
+          allowed_updates: ['message', 'callback_query'],
         }),
       });
       webhookResult = await setRes.json();

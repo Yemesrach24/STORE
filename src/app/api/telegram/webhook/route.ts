@@ -17,10 +17,36 @@ interface TelegramUpdate {
     };
     text?: string;
   };
+  callback_query?: {
+    id: string;
+    data?: string;
+    message?: { chat: { id: number; first_name?: string } };
+  };
 }
 
-function getWelcomeMessage(firstName?: string): string {
+// ---------- Message builders (per language) ----------
+
+function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
   const name = firstName ? ` <b>${firstName}</b>` : '';
+  if (lang === 'am') {
+    return [
+      `🥋 *እንኳን ወደ TKD መደብር በደህና መጡ!*`,
+      ``,
+      `ሰላም${name}! ጥራት ያለው *የቴኳንዶ መሣሪያ* የሚያገኙበት ቦታ.`,
+      ``,
+      `*የምናቀርበው:*`,
+      `• መከላከያ ፓድና ጋሻዎች`,
+      `• ዶቦክ (ዩኒፎርም)`,
+      `• የስፓሪንግ መሣሪያዎች`,
+      `• የልምምድ ተጨማሪዎች`,
+      `• ቀበቶና ተጨማሪዎች`,
+      ``,
+      `🛒 *መደብራችንን ይጎብኙ:*`,
+      `[ወደ TKD መደብር](${STORE_URL})`,
+      ``,
+      `/shop ይጻፉ ለማሰስ ወይም /about ለበለጠ መረጃ።`,
+    ].join('\n');
+  }
   return [
     `🥋 *Welcome to TKD Store!*`,
     ``,
@@ -42,7 +68,19 @@ function getWelcomeMessage(firstName?: string): string {
   ].join('\n');
 }
 
-function getShopMessage(): string {
+function getShopMessage(lang: 'en' | 'am'): string {
+  if (lang === 'am') {
+    return [
+      `🥊 *TKD መደብር — የቴኳንዶ መሣሪያዎች*`,
+      ``,
+      `ሙሉ የማሻሻያ መሣሪያዎቻችንን ይመልከቱ:`,
+      `[ወደ TKD መደብር](${STORE_URL})`,
+      ``,
+      `✅ ጥራት የተረጋገጠ`,
+      `✅ ሰፊ ምርጫ`,
+      `✅ በመላው ኢትዮጵያ ፈጣን አቅርቦት`,
+    ].join('\n');
+  }
   return [
     `🥊 *TKD Store — Taekwondo Equipment*`,
     ``,
@@ -55,19 +93,33 @@ function getShopMessage(): string {
   ].join('\n');
 }
 
-function getAboutMessage(): string {
+function getAboutMessage(lang: 'en' | 'am'): string {
+  if (lang === 'am') {
+    return [
+      `ℹ️ *ስለ TKD መደብር*`,
+      ``,
+      `TKD መደብር የኢትዮጵያ *የቴኳንዶ እና ማሻሻያ መሣሪያዎች* ልዩ የመስመር ላይ ሱቅ ነው።`,
+      ``,
+      `*የምናቀርበው:*`,
+      `• መከላከያ፣ ሄልሜት፣ የደረት መከላከያ`,
+      `• የስፓሪንግ መሣሪያ፣ ጓንት፣ ቡትስ`,
+      `• የልምምድ ዶቦክ እና ቀበቶ`,
+      ``,
+      `*እንዴት ማዘዝ እንደሚቻል:*`,
+      `1. በድረ-ገጻችን ምርቶችን ይመልከቱ`,
+      `2. ዕቃ ይምረጡና ያዙ`,
+      `3. ሻጩን በስልክ/ዋትስአፕ/ቴሌግራም ያግኙ`,
+      `4. ክፍያና አቅርቦትን በቀጥታ ያስተባብሩ`,
+      ``,
+      `🌐 *ድረ-ገጽ:* [${STORE_URL_BASE}](${STORE_URL})`,
+    ].join('\n');
+  }
   return [
     `ℹ️ *About TKD Store*`,
     ``,
     `TKD Store is Ethiopia's specialized online shop for *taekwondo and martial arts equipment*.`,
     ``,
     `We provide high-quality gear for practitioners of all levels — from white belt beginners to black belt masters.`,
-    ``,
-    `*Our Products:*`,
-    `• Protective gear: pads, helmets, chest protectors`,
-    `• Sparring equipment: gloves, boots, shin guards`,
-    `• Training doboks (uniforms) and belts`,
-    `• Training accessories and bags`,
     ``,
     `*How to order:*`,
     `1. Browse products on our website`,
@@ -79,7 +131,21 @@ function getAboutMessage(): string {
   ].join('\n');
 }
 
-function getHelpMessage(): string {
+function getHelpMessage(lang: 'en' | 'am'): string {
+  if (lang === 'am') {
+    return [
+      `❓ *እርዳታ — TKD መደብር*`,
+      ``,
+      `*የሚገኙ ትዕዛዞች:*`,
+      `/start — የመግቢያ መልዕክት`,
+      `/shop — መደብራችንን ይመልከቱ`,
+      `/about — ስለ መደብራችን`,
+      `/help — ይህን እርዳታ ያሳዩ`,
+      `/language — ቋንቋ ይቀይሩ`,
+      ``,
+      `🌐 [${STORE_URL_BASE}](${STORE_URL})`,
+    ].join('\n');
+  }
   return [
     `❓ *Help — TKD Store*`,
     ``,
@@ -88,48 +154,159 @@ function getHelpMessage(): string {
     `/shop — Browse our store`,
     `/about — Learn about TKD Store`,
     `/help — Show this help message`,
-    ``,
-    `*How to order:*`,
-    `1. Visit our website to browse products`,
-    `2. Select your items and place an order`,
-    `3. After approval, contact the seller`,
-    `4. Arrange payment & delivery through direct contact`,
+    `/language — Change language`,
     ``,
     `🌐 Website: [${STORE_URL_BASE}](${STORE_URL})`,
   ].join('\n');
 }
 
-async function handleMessage(update: TelegramUpdate) {
-  if (!update.message) return;
+// ---------- Language persistence ----------
 
-  const chatId = update.message.chat.id.toString();
-  const text = update.message.text?.trim().toLowerCase() || '';
+async function getUserLang(chatId: number): Promise<'en' | 'am' | null> {
+  try {
+    await dbConnect();
+    const u: any = await User.findOne({ telegramChatId: String(chatId) })
+      .select('language languageChosenAt')
+      .lean();
+    // No record yet, or the user never explicitly picked a language → treat as
+    // a first-time interaction so the picker is shown.
+    if (!u || !u.languageChosenAt) return null;
+    return u.language === 'am' ? 'am' : 'en';
+  } catch {
+    return null;
+  }
+}
+
+async function saveUserLang(chatId: number, lang: 'en' | 'am') {
+  try {
+    await dbConnect();
+    const id = String(chatId);
+    await User.findOneAndUpdate(
+      { telegramChatId: id },
+      {
+        $set: { language: lang, languageChosenAt: new Date() },
+        $setOnInsert: {
+          telegramChatId: id,
+          authId: `telegram-${id}`,
+          name: 'Telegram User',
+          email: `telegram-${id}@telegram.local`,
+          firstName: 'Telegram',
+          lastName: 'User',
+          role: 'CUSTOMER',
+          isActive: true,
+        },
+      },
+      { upsert: true }
+    );
+  } catch (e) {
+    console.error('Failed to save telegram language:', e);
+  }
+}
+
+// ---------- Telegram API helpers ----------
+
+function languageKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🇬🇧 English', callback_data: 'lang:en' },
+        { text: '🇪🇹 አማርኛ', callback_data: 'lang:am' },
+      ],
+    ],
+  };
+}
+
+async function sendLangPrompt(chatId: number, firstName?: string) {
+  const name = firstName ? ` <b>${firstName}</b>` : '';
+  const text = [
+    `🌐 <b>Choose your language / ቋንቋ ይምረጡ</b>`,
+    ``,
+    `Hi${name}! Please choose a language.`,
+    `ሰላም${name}! እባክዎ ቋንቋ ይምረጡ።`,
+  ].join('\n');
+  await sendTelegramMessage(chatId, text, 'HTML', languageKeyboard());
+}
+
+async function answerCallback(callbackId: string, text: string) {
+  try {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackId, text }),
+    });
+  } catch (e) {
+    // non-critical
+  }
+}
+
+// ---------- Handlers ----------
+
+async function handleMessage(update: TelegramUpdate) {
+  if (!update.message?.text || !update.message.chat) return;
+  const chatId = update.message.chat.id;
+  const text = update.message.text.trim().toLowerCase();
   const firstName = update.message.chat.first_name;
+  const chatIdStr = String(chatId);
+
+  // Language change command always available
+  if (text === '/language' || text === '/ቋንቋ') {
+    await sendLangPrompt(chatId, firstName);
+    return;
+  }
+
+  // On first /start, show language choice before anything else
+  if (text === '/start') {
+    const known = await getUserLang(chatId);
+    if (!known) {
+      // Prompt language choice on first interaction
+      await sendLangPrompt(chatId, firstName);
+      return;
+    }
+    await sendTelegramMessage(chatId, getWelcomeMessage(known, firstName), 'Markdown');
+    return;
+  }
 
   if (!text.startsWith('/')) return;
 
-  let reply: string;
+  const lang = (await getUserLang(chatId)) ?? 'en';
 
-  if (text === '/start' || text === '/website') {
-    reply = text === '/start' ? getWelcomeMessage(firstName) : getShopMessage();
-  } else if (text === '/shop') {
-    reply = getShopMessage();
+  let reply: string;
+  if (text === '/shop') {
+    reply = getShopMessage(lang);
   } else if (text === '/about') {
-    reply = getAboutMessage();
+    reply = getAboutMessage(lang);
   } else if (text === '/help') {
-    reply = getHelpMessage();
+    reply = getHelpMessage(lang);
   } else {
-    reply = getWelcomeMessage(firstName);
+    reply = getWelcomeMessage(lang, firstName);
   }
 
   await sendTelegramMessage(chatId, reply, 'Markdown');
+}
+
+async function handleCallback(update: TelegramUpdate) {
+  const cq = update.callback_query;
+  if (!cq?.data || !cq.message?.chat) return;
+  const chatId = cq.message.chat.id;
+  const data = cq.data;
+
+  if (data === 'lang:en' || data === 'lang:am') {
+    const lang = data === 'lang:am' ? 'am' : 'en';
+    await saveUserLang(chatId, lang);
+    await answerCallback(cq.id, lang === 'am' ? 'ቋንቋ ወደ አማርኛ ተቀይሯል' : 'Language set to English');
+    await sendTelegramMessage(chatId, getWelcomeMessage(lang, cq.message.chat.first_name), 'Markdown');
+  }
 }
 
 // POST - Telegram webhook endpoint (used in production with HTTPS)
 export async function POST(request: NextRequest) {
   try {
     const update: TelegramUpdate = await request.json();
-    await handleMessage(update);
+    if (update.callback_query) {
+      await handleCallback(update);
+    } else if (update.message) {
+      await handleMessage(update);
+    }
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Telegram webhook error:', error);
@@ -171,20 +348,13 @@ export async function GET() {
     const processed: { from: string; message: string; chatId: number }[] = [];
 
     for (const update of data.result) {
-      if (update.message?.text) {
+      if (update.callback_query) {
+        await handleCallback(update);
+      } else if (update.message?.text) {
         const chatName = update.message.chat.first_name || 'Unknown';
         const text = update.message.text;
-        processed.push({
-          from: chatName,
-          message: text,
-          chatId: update.message.chat.id,
-        });
-
-        try {
-          await handleMessage(update);
-        } catch (err) {
-          console.error('Failed to handle message:', err);
-        }
+        processed.push({ from: chatName, message: text, chatId: update.message.chat.id });
+        await handleMessage(update);
       }
 
       // Acknowledge the update so we don't re-process it

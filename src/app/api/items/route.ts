@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       if (categoryId) query.categoryId = categoryId;
 
       const [items, total] = await Promise.all([
-        Item.find(query).populate('categoryId', 'name imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        Item.find(query).populate('categoryId', 'name nameAm description descriptionAm imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
         Item.countDocuments(query),
       ]);
 
@@ -36,10 +36,22 @@ export async function GET(request: NextRequest) {
     // Admin: get ALL items (any admin can see all items)
     const query: any = { isActive: true };
     if (categoryId) query.categoryId = categoryId;
-    if (search) query.$text = { $search: search };
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [
+        { name: { $regex: escaped, $options: 'i' } },
+        { nameAm: { $regex: escaped, $options: 'i' } },
+        { description: { $regex: escaped, $options: 'i' } },
+        { descriptionAm: { $regex: escaped, $options: 'i' } },
+        { color: { $regex: escaped, $options: 'i' } },
+        { colorAm: { $regex: escaped, $options: 'i' } },
+        { tags: { $regex: escaped, $options: 'i' } },
+        { tagsAm: { $regex: escaped, $options: 'i' } },
+      ];
+    }
 
     const [items, total] = await Promise.all([
-      Item.find(query).populate('categoryId', 'name imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Item.find(query).populate('categoryId', 'name nameAm description descriptionAm imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Item.countDocuments(query),
     ]);
 
@@ -60,10 +72,17 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
-    const { name, description, uniqueNumber, categoryId, size, color, price, quantity, supplier, imageUrl, imageUrls, tags, location, companyName, companyPhone, companyWhatsapp, companyTelegram, companyInstagram, companyEmail } = body;
+    const { name, nameAm, description, descriptionAm, uniqueNumber, categoryId, color, colorAm, supplier, supplierAm, imageUrl, imageUrls, tags, tagsAm, location, companyName, companyNameAm, companyPhone, companyWhatsapp, companyTelegram, companyInstagram, companyEmail, local, imported } = body;
 
-    if (!name || !description || !categoryId || price === undefined || quantity === undefined) {
+    if (!name || !description || !categoryId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // At least one of local or imported must be enabled
+    const localEnabled = local?.enabled === true;
+    const importedEnabled = imported?.enabled === true;
+    if (!localEnabled && !importedEnabled) {
+      return NextResponse.json({ error: 'At least one of Local or Imported must be enabled' }, { status: 400 });
     }
 
     // Verify category exists
@@ -77,19 +96,40 @@ export async function POST(request: NextRequest) {
 
     const item = new Item({
       name,
+      nameAm: nameAm || undefined,
       description,
+      descriptionAm: descriptionAm || undefined,
       uniqueNumber: finalUniqueNumber,
       categoryId,
-      size,
-      color,
-      price,
-      quantity,
-      supplier,
+      color: color || undefined,
+      colorAm: colorAm || undefined,
+      local: {
+        enabled: localEnabled,
+        basePrice: localEnabled ? (local.basePrice ?? 0) : 0,
+        sizes: (localEnabled && Array.isArray(local.sizes) ? local.sizes : []).map((s: any) => ({
+          name: s.name,
+          nameAm: s.nameAm || undefined,
+          price: s.price != null && s.price !== '' ? Number(s.price) : undefined,
+        })),
+      },
+      imported: {
+        enabled: importedEnabled,
+        basePrice: importedEnabled ? (imported.basePrice ?? 0) : 0,
+        sizes: (importedEnabled && Array.isArray(imported.sizes) ? imported.sizes : []).map((s: any) => ({
+          name: s.name,
+          nameAm: s.nameAm || undefined,
+          price: s.price != null && s.price !== '' ? Number(s.price) : undefined,
+        })),
+      },
+      supplier: supplier || undefined,
+      supplierAm: supplierAm || undefined,
       imageUrl,
       imageUrls: imageUrls || (imageUrl ? [imageUrl] : []),
       tags,
+      tagsAm: tagsAm || undefined,
       location,
       companyName,
+      companyNameAm: companyNameAm || undefined,
       companyPhone,
       companyWhatsapp,
       companyTelegram,
@@ -99,12 +139,16 @@ export async function POST(request: NextRequest) {
     });
 
     await item.save();
-    await item.populate('categoryId', 'name imageUrl');
+    await item.populate('categoryId', 'name nameAm description descriptionAm imageUrl');
     return NextResponse.json(item, { status: 201 });
   } catch (error: any) {
     console.error('Error creating item:', error);
     if (error.code === 11000) {
       return NextResponse.json({ error: 'Item with this unique number already exists' }, { status: 400 });
+    }
+    if (error.name === 'ValidationError') {
+      const message = Object.values(error.errors || {}).map((e: any) => e.message).join(', ');
+      return NextResponse.json({ error: message || 'Validation failed' }, { status: 400 });
     }
     return NextResponse.json({ error: 'Failed to create item' }, { status: 500 });
   }

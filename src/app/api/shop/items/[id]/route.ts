@@ -12,7 +12,7 @@ export async function GET(
     const { id } = await params;
 
     const item = await Item.findOne({ _id: id, isActive: true })
-      .populate('categoryId', 'name imageUrl description')
+      .populate('categoryId', 'name nameAm imageUrl description descriptionAm')
       .lean();
 
     if (!item) {

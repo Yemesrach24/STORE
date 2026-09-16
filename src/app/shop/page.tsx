@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import {
   Search, Loader2, ChevronRight, User, LogOut, Menu, X,
 } from "lucide-react";
@@ -16,7 +18,9 @@ import {
 interface Category {
   _id: string;
   name: string;
+  nameAm?: string;
   description?: string;
+  descriptionAm?: string;
   imageUrl?: string;
   itemCount?: number;
 }
@@ -24,22 +28,24 @@ interface Category {
 interface Item {
   _id: string;
   name: string;
+  nameAm?: string;
   description: string;
+  descriptionAm?: string;
   uniqueNumber: string;
-  price: number;
-  quantity: number;
   imageUrl?: string;
   imageUrls?: string[];
-  stockStatus: string;
-  categoryId: { _id: string; name: string; imageUrl?: string };
-  size?: string;
+  categoryId: { _id: string; name: string; nameAm?: string; imageUrl?: string };
   color?: string;
+  local?: { enabled: boolean; basePrice: number };
+  imported?: { enabled: boolean; basePrice: number };
   tags?: string[];
   supplier?: string;
+  supplierAm?: string;
 }
 
 export default function ShopPage() {
   const { data: session, status } = useSession();
+  const { t, ln } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,35 +120,36 @@ export default function ShopPage() {
         <div className="px-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
             <Link href="/shop" className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="TKD Store" className="w-10 h-10 rounded-full object-contain" />
+              <img src="/logo.png" alt="K-FORCE ETHIOPIA" className="w-10 h-10 rounded-full object-contain" />
               <div className="flex flex-col">
-                <span className="text-lg font-bold text-gray-900 tracking-tight leading-none">TKD Store</span>
-                <span className="text-[10px] sm:text-[11px] text-gray-400 tracking-widest uppercase">Taekwondo Equipment</span>
+                <span className="text-lg font-bold text-gray-900 tracking-tight leading-none">K-FORCE ETHIOPIA</span>
+                <span className="text-[10px] sm:text-[11px] text-gray-400 tracking-widest uppercase">{t("shopTagline")}</span>
               </div>
             </Link>
 
             <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm">
-              <Link href="/shop" className="font-medium text-gray-900">Home</Link>
-              <a href="#equipment" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">Categories</a>
-              <a href="#products" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">All Products</a>
+              <Link href="/shop" className="font-medium text-gray-900">{t("home")}</Link>
+              <a href="#equipment" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">{t("categories")}</a>
+              <a href="#products" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">{t("allProducts")}</a>
               {status === "authenticated" && (
-                <Link href="/shop/orders" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">My Orders</Link>
+                <Link href="/shop/orders" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">{t("myOrders")}</Link>
               )}
               {status === "authenticated" && (session?.user as any)?.role && ["SUPER_ADMIN", "ADMIN"].includes((session?.user as any)?.role) && (
                 <Link href="/dashboard" className="font-medium text-[var(--brand)] hover:text-[var(--brand-dark)] transition-colors">
-                  Dashboard →
+                  {t("dashboard")} →
                 </Link>
               )}
             </nav>
 
             <div className="flex items-center gap-2">
+              <LanguageSwitcher className="hidden sm:flex" />
               {status === "loading" ? (
                 <div className="w-20 h-8 bg-gray-100 rounded-md animate-pulse" />
               ) : session ? (
                 <>
                   <Link href="/profile" className="hidden sm:block">
                     <Button variant="ghost" size="sm" className="text-gray-700 gap-1.5">
-                      <User className="h-4 w-4" /> Profile
+                      <User className="h-4 w-4" /> {t("profile")}
                     </Button>
                   </Link>
                   <Button
@@ -157,7 +164,7 @@ export default function ShopPage() {
                     variant="ghost"
                     size="sm"
                     className="md:hidden text-gray-700 -mr-1"
-                    aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                    aria-label={mobileMenuOpen ? t("close") : t("menu")}
                     aria-expanded={mobileMenuOpen}
                     onClick={() => setMobileMenuOpen((v) => !v)}
                   >
@@ -168,7 +175,7 @@ export default function ShopPage() {
                 <>
                   <Link href="/sign-in">
                     <Button size="sm" className="bg-[var(--brand)] hover:bg-[var(--brand-dark)] text-white font-medium px-4 sm:px-5">
-                      Sign In
+                      {t("signIn")}
                     </Button>
                   </Link>
                   <Button
@@ -206,30 +213,35 @@ export default function ShopPage() {
             )}
           >
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700">Menu</span>
+              <span className="text-sm font-semibold text-gray-700">{t("menu")}</span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2 text-gray-400 hover:text-gray-700 rounded-md"
-                aria-label="Close menu"
+                aria-label={t("close")}
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="px-2 py-2">
-              <Link href="/shop" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-900 hover:bg-gray-50">Home</Link>
-              <a href="#equipment" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">Categories</a>
-              <a href="#products" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">All Products</a>
+              <Link href="/shop" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-900 hover:bg-gray-50">{t("home")}</Link>
+              <a href="#equipment" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">{t("categories")}</a>
+              <a href="#products" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">{t("allProducts")}</a>
               {status === "authenticated" && (
                 <>
-                  <Link href="/shop/orders" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">My Orders</Link>
-                  <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">Profile</Link>
+                  <Link href="/shop/orders" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">{t("myOrders")}</Link>
+                  <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">{t("profile")}</Link>
                 </>
               )}
               {status === "authenticated" && (session?.user as any)?.role && ["SUPER_ADMIN", "ADMIN"].includes((session?.user as any)?.role) && (
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-semibold text-[var(--brand)] hover:bg-gray-50">
-                  Dashboard →
+                  {t("dashboard")} →
                 </Link>
               )}
+              {/* Language switcher inside mobile menu */}
+              <div className="px-3 py-3 mt-1 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-500">{t("language")}</span>
+                <LanguageSwitcher />
+              </div>
             </div>
           </nav>
         </div>
@@ -242,7 +254,7 @@ export default function ShopPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search taekwondo gear..."
+                placeholder={t("searchPlaceholder")}
                 className="pl-10 h-11 bg-white border-gray-200 rounded-lg"
                 suppressHydrationWarning
                 value={searchTerm}
@@ -251,7 +263,7 @@ export default function ShopPage() {
               />
             </div>
             <Button onClick={handleSearch} className="h-11 px-6 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium" suppressHydrationWarning>
-              Search
+              {t("search")}
             </Button>
           </div>
         </div>
@@ -261,15 +273,15 @@ export default function ShopPage() {
           <div id="equipment" className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Equipment Categories</h2>
-                <p className="text-sm text-gray-500 mt-1">Browse by category to find exactly what you need</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{t("categoriesTitle")}</h2>
+                <p className="text-sm text-gray-500 mt-1">{t("browseByCategory")}</p>
               </div>
               {selectedCategory && (
                 <button
                   onClick={() => setSelectedCategory(null)}
                   className="text-sm text-[var(--brand)] hover:text-[var(--brand-dark)] font-medium transition-colors"
                 >
-                  ← View All
+                  ← {t("viewAll")}
                 </button>
               )}
             </div>
@@ -287,12 +299,12 @@ export default function ShopPage() {
                 <div className="aspect-[4/3] bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center overflow-hidden">
                   <div className="text-center group-hover:scale-105 transition-transform">
                     <img src="/logo.png" alt="All" className="w-16 h-16 mx-auto mb-2 object-contain" />
-                    <p className="text-xs font-semibold text-gray-700">{items.length} items</p>
+                    <p className="text-xs font-semibold text-gray-700">{items.length} {t("items")}</p>
                   </div>
                 </div>
                 <div className="p-3">
-                  <p className="font-bold text-sm text-gray-900">All Equipment</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Browse everything</p>
+                  <p className="font-bold text-sm text-gray-900">{t("allEquipment")}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t("browseEverything")}</p>
                 </div>
               </button>
 
@@ -319,14 +331,14 @@ export default function ShopPage() {
                         <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-100 flex items-center justify-center">
                           <span className="text-lg font-bold text-gray-400">{cat.name.charAt(0)}</span>
                         </div>
-                        <p className="text-xs text-gray-400">{cat.itemCount || 0} items</p>
+                        <p className="text-xs text-gray-400">{cat.itemCount || 0} {t("items")}</p>
                       </div>
                     )}
                   </div>
                   <div className="p-3">
-                    <p className="font-bold text-sm text-gray-900">{cat.name}</p>
+                    <p className="font-bold text-sm text-gray-900">{ln(cat.name, cat.nameAm)}</p>
                     {cat.description && (
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">{cat.description}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">{ln(cat.description, cat.descriptionAm)}</p>
                     )}
                   </div>
                 </button>
@@ -341,10 +353,13 @@ export default function ShopPage() {
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                 {selectedCategory
-                  ? categories.find((c) => c._id === selectedCategory)?.name || "Products"
-                  : "All Products"}
+                  ? (() => {
+                      const cat = categories.find((c) => c._id === selectedCategory);
+                      return ln(cat?.name, cat?.nameAm) || t("allProductsTitle");
+                    })()
+                  : t("allProductsTitle")}
               </h2>
-              <p className="text-sm text-gray-500 mt-1">{items.length} products available</p>
+              <p className="text-sm text-gray-500 mt-1">{items.length} {t("productsAvailable")}</p>
             </div>
           </div>
 
@@ -357,8 +372,8 @@ export default function ShopPage() {
               <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
                 <Search className="h-7 w-7 text-gray-300" />
               </div>
-              <p className="font-medium text-gray-700 mb-1">No products found</p>
-              <p className="text-sm text-gray-500">Try a different search or category.</p>
+              <p className="font-medium text-gray-700 mb-1">{t("noProducts")}</p>
+              <p className="text-sm text-gray-500">{t("tryDifferentSearch")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
@@ -382,18 +397,18 @@ export default function ShopPage() {
                       </div>
                       <CardContent className="p-3 md:p-4">
                         <p className="text-xs text-[var(--brand)] font-semibold uppercase tracking-wide mb-1">
-                          {item.categoryId?.name ?? "Uncategorized"}
+                          {item.categoryId ? ln(item.categoryId.name, item.categoryId.nameAm) : t("uncategorized")}
                         </p>
                         <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 mb-1">
-                          {item.name}
+                          {ln(item.name, item.nameAm)}
                         </h3>
-                        {item.supplier && (
+                        {(item.supplier || item.supplierAm) && (
                           <p className="text-xs text-gray-400 mb-1">
-                            supplier: {item.supplier}
+                            {t("supplier")}: {ln(item.supplier, item.supplierAm)}
                           </p>
                         )}
                         <p className="text-xs text-gray-500 line-clamp-2 mb-3 min-h-[2rem]">
-                          {item.description}
+                          {ln(item.description, item.descriptionAm)}
                         </p>
                         {item.tags && item.tags.length > 0 && (
                           <div className="flex gap-1 flex-wrap mb-3">
@@ -406,10 +421,12 @@ export default function ShopPage() {
                         )}
                         <div className="flex items-end justify-between pt-2 border-t border-gray-100">
                           <span className="text-lg font-bold text-gray-900">
-                            Br {(item.price ?? 0).toLocaleString()}
+                            {item.local?.enabled && item.imported?.enabled
+                              ? `Br ${(item.local?.basePrice ?? 0).toLocaleString()} / ${(item.imported?.basePrice ?? 0).toLocaleString()}`
+                              : `Br ${(item.local?.basePrice ?? item.imported?.basePrice ?? 0).toLocaleString()}`}
                           </span>
                           <span className="text-xs text-[var(--brand)] font-medium flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
-                            View <ChevronRight className="h-3.5 w-3.5" />
+                            {t("view")} <ChevronRight className="h-3.5 w-3.5" />
                           </span>
                         </div>
                       </CardContent>
@@ -428,45 +445,45 @@ export default function ShopPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2 mb-3">
-                <img src="/logo.png" alt="TKD Store" className="w-8 h-8 rounded-full object-contain" />
-                <span className="font-bold text-gray-900">TKD Store</span>
+                <img src="/logo.png" alt="K-FORCE ETHIOPIA" className="w-8 h-8 rounded-full object-contain" />
+                <span className="font-bold text-gray-900">K-FORCE ETHIOPIA</span>
               </div>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Premium taekwondo & martial arts equipment for practitioners of all levels in Ethiopia.
+                {t("shopTagline")}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 text-sm mb-3">Shop</h4>
+              <h4 className="font-semibold text-gray-900 text-sm mb-3">{t("shopFooter")}</h4>
               <ul className="space-y-2">
-                <li><Link href="/shop" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">All Products</Link></li>
-                <li><a href="#equipment" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Categories</a></li>
-                {session && <li><Link href="/shop/orders" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">My Orders</Link></li>}
+                <li><Link href="/shop" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("allProducts")}</Link></li>
+                <li><a href="#equipment" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("categories")}</a></li>
+                {session && <li><Link href="/shop/orders" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("myOrders")}</Link></li>}
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 text-sm mb-3">Support</h4>
+              <h4 className="font-semibold text-gray-900 text-sm mb-3">{t("supportFooter")}</h4>
               <ul className="space-y-2">
-                <li><span className="text-sm text-gray-500">Telegram: @tkd_equp_bot</span></li>
-                <li><span className="text-sm text-gray-500">Email: info@tkdstore.et</span></li>
-                <li><span className="text-sm text-gray-500">Addis Ababa, Ethiopia</span></li>
+                <li><span className="text-sm text-gray-500">{t("telegram")}: @tkd_equp_bot</span></li>
+                <li><span className="text-sm text-gray-500">{t("email")}: info@kforceethiopia.com</span></li>
+                <li><span className="text-sm text-gray-500">{t("addisAbaba")}</span></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 text-sm mb-3">Account</h4>
+              <h4 className="font-semibold text-gray-900 text-sm mb-3">{t("accountFooter")}</h4>
               <ul className="space-y-2">
                 {session ? (
                   <>
-                    <li><Link href="/profile" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Profile</Link></li>
-                    <li><Link href="/shop/orders" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">My Orders</Link></li>
+                    <li><Link href="/profile" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("profile")}</Link></li>
+                    <li><Link href="/shop/orders" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("myOrders")}</Link></li>
                   </>
                 ) : (
-                  <li><Link href="/sign-in" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Sign In</Link></li>
+                  <li><Link href="/sign-in" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("signIn")}</Link></li>
                 )}
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-100 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-xs text-gray-400">© 2026 TKD Store. All rights reserved.</p>
+            <p className="text-xs text-gray-400">© 2026 {t("allRightsReserved")}</p>
           </div>
         </div>
       </footer>
@@ -474,9 +491,9 @@ export default function ShopPage() {
       {/* Sign-out confirmation dialog */}
       <ConfirmDialog
         open={showSignOutConfirm}
-        title="Sign Out"
-        message="Are you sure you want to sign out?"
-        confirmLabel="Sign Out"
+        title={t("signOutConfirmTitle")}
+        message={t("signOutConfirmMessage")}
+        confirmLabel={t("signOut")}
         variant="warning"
         onConfirm={() => {
           import("next-auth/react").then(({ signOut }) =>

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, Plus, Search, Filter, Shield } from "lucide-react";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 
 interface User {
   _id: string;
@@ -26,6 +27,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
+  const { t } = useLanguage();
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role;
   const isSuperAdmin = userRole === "SUPER_ADMIN";
@@ -59,22 +61,23 @@ export default function AdminUsersPage() {
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
         ...(roleFilter !== "all" && { role: roleFilter }),
+        ...(searchTerm && { search: searchTerm }),
       });
 
       const response = await fetch(`/api/admin/users?${params}`);
       if (response.status === 403) {
-        setError("Only Super Admin can manage users. You don't have permission.");
+        setError(t("onlySuperAdminUsers"));
         setLoading(false);
         return;
       }
-      if (!response.ok) throw new Error("Failed to fetch users");
+      if (!response.ok) throw new Error(t("failedToLoadUsers"));
 
       const data = await response.json();
       setUsers(data.users);
       setTotalPages(data.pagination?.pages || 1);
       setTotalUsers(data.pagination?.total || 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load users");
+      setError(err instanceof Error ? err.message : t("failedToLoadUsers"));
     } finally {
       setLoading(false);
     }
@@ -91,7 +94,7 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to deactivate this user?")) return;
+    if (!confirm(t("deactivateUserConfirm"))) return;
     try {
       const response = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to deactivate user");
@@ -114,11 +117,11 @@ export default function AdminUsersPage() {
             <Card className="w-full max-w-md">
               <CardHeader className="text-center">
                 <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <CardTitle>Access Restricted</CardTitle>
+                <CardTitle>{t("accessRestricted")}</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-muted-foreground">
-                  Only Super Admin can manage users. You don&apos;t have permission to view this page.
+                  {t("onlySuperAdminUsers")}
                 </p>
               </CardContent>
             </Card>
@@ -134,15 +137,15 @@ export default function AdminUsersPage() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t("userManagementTitle")}</h1>
               <p className="text-muted-foreground">
-                Manage user accounts, roles, and permissions.
+                {t("userManagementSubtitle")}
               </p>
             </div>
             <div className="flex gap-2">
               <Button onClick={handleCreateUser}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add User
+                {t("addUser")}
               </Button>
             </div>
           </div>
@@ -150,13 +153,13 @@ export default function AdminUsersPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">Total Users</p>
+                <p className="text-sm text-muted-foreground">{t("totalUsers2")}</p>
                 <p className="text-2xl font-bold">{totalUsers}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">Admins</p>
+                <p className="text-sm text-muted-foreground">{t("admins2")}</p>
                 <p className="text-2xl font-bold text-[var(--brand)]">
                   {users.filter(u => ['SUPER_ADMIN', 'ADMIN'].includes(u.role)).length}
                 </p>
@@ -164,7 +167,7 @@ export default function AdminUsersPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">Active</p>
+                <p className="text-sm text-muted-foreground">{t("active2")}</p>
                 <p className="text-2xl font-bold text-green-600">
                   {users.filter(u => u.isActive).length}
                 </p>
@@ -175,22 +178,35 @@ export default function AdminUsersPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" /> Filters
+                <Filter className="h-5 w-5" /> {t("filters")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Role</label>
+                  <label className="text-sm font-medium">{t("searchUsers")}</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={t("searchUsers")}
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { setCurrentPage(1); fetchUsers(); } }}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t("roleFilter")}</label>
                   <Select value={roleFilter} onValueChange={setRoleFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All roles" />
+                      <SelectValue placeholder={t("allRoles")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Roles</SelectItem>
-                      <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="CUSTOMER">Customer</SelectItem>
+                      <SelectItem value="all">{t("allRoles")}</SelectItem>
+                      <SelectItem value="SUPER_ADMIN">{t("superAdmin")}</SelectItem>
+                      <SelectItem value="ADMIN">{t("admin")}</SelectItem>
+                      <SelectItem value="CUSTOMER">{t("customer")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -7,9 +7,9 @@ export { default as Transaction } from './Transaction';
 
 // Export interfaces and types
 export type { IUser, UserRole } from './User';
-export type { IItem } from './Item';
+export type { IItem, IItemSource, IItemSize } from './Item';
 export type { ICategory } from './Category';
-export type { IOrder, OrderStatus } from './Order';
+export type { IOrder, IOrderLineItem, OrderStatus } from './Order';
 export type { ITransaction } from './Transaction';
 
 // Re-export mongoose for convenience

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/loading";
+import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { Package, ShoppingBag, FolderTree, Clock } from "lucide-react";
 import Link from "next/link";
 
@@ -15,6 +16,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const { status: authStatus } = useSession();
+  const { t } = useLanguage();
   const isSignedIn = authStatus === "authenticated";
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -60,10 +62,8 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here&apos;s your store overview.
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
+          <p className="text-muted-foreground">{t("welcomeBack")}</p>
         </div>
 
         {/* Stats Cards — all using brand color */}
@@ -76,7 +76,7 @@ export default function DashboardPage() {
                     <Clock className="h-5 w-5 text-[var(--brand)]" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Pending Orders</p>
+                    <p className="text-sm text-muted-foreground">{t("pendingOrders")}</p>
                     <p className="text-2xl font-bold">{pendingOrders}</p>
                   </div>
                 </div>
@@ -91,7 +91,7 @@ export default function DashboardPage() {
                     <ShoppingBag className="h-5 w-5 text-[var(--brand)]" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Orders</p>
+                    <p className="text-sm text-muted-foreground">{t("totalOrders")}</p>
                     <p className="text-2xl font-bold">{totalOrders}</p>
                   </div>
                 </div>
@@ -106,7 +106,7 @@ export default function DashboardPage() {
                     <Package className="h-5 w-5 text-[var(--brand)]" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Items</p>
+                    <p className="text-sm text-muted-foreground">{t("totalItems")}</p>
                     <p className="text-2xl font-bold">{stats?.totalItems || 0}</p>
                   </div>
                 </div>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                     <FolderTree className="h-5 w-5 text-[var(--brand)]" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Categories</p>
+                    <p className="text-sm text-muted-foreground">{t("categories")}</p>
                     <p className="text-2xl font-bold">{totalCategories}</p>
                   </div>
                 </div>
@@ -136,8 +136,8 @@ export default function DashboardPage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-5 text-center">
                 <Package className="h-7 w-7 mx-auto mb-2 text-[var(--brand)]" />
-                <p className="font-semibold text-sm">Manage Items</p>
-                <p className="text-xs text-muted-foreground mt-1">Add, edit, remove items</p>
+                <p className="font-semibold text-sm">{t("manageItems")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("manageItemsDesc")}</p>
               </CardContent>
             </Card>
           </Link>
@@ -145,8 +145,8 @@ export default function DashboardPage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-5 text-center">
                 <FolderTree className="h-7 w-7 mx-auto mb-2 text-[var(--brand)]" />
-                <p className="font-semibold text-sm">Categories</p>
-                <p className="text-xs text-muted-foreground mt-1">Manage product categories</p>
+                <p className="font-semibold text-sm">{t("categories")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("categoriesDesc")}</p>
               </CardContent>
             </Card>
           </Link>
@@ -154,8 +154,8 @@ export default function DashboardPage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-5 text-center">
                 <ShoppingBag className="h-7 w-7 mx-auto mb-2 text-[var(--brand)]" />
-                <p className="font-semibold text-sm">Orders</p>
-                <p className="text-xs text-muted-foreground mt-1">Approve or decline orders</p>
+                <p className="font-semibold text-sm">{t("orders")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("ordersDesc")}</p>
               </CardContent>
             </Card>
           </Link>
