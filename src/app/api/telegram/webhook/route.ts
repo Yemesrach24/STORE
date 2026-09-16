@@ -30,7 +30,7 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
   const name = firstName ? ` <b>${firstName}</b>` : '';
   if (lang === 'am') {
     return [
-      `🥋 *እንኳን ወደ TKD መደብር በደህና መጡ!*`,
+      `🥋 *እንኳን ወደ K-FORCE ETHIOPIA በደህና መጡ!*`,
       ``,
       `ሰላም${name}! ጥራት ያለው *የቴኳንዶ መሣሪያ* የሚያገኙበት ቦታ.`,
       ``,
@@ -42,13 +42,13 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
       `• ቀበቶና ተጨማሪዎች`,
       ``,
       `🛒 *መደብራችንን ይጎብኙ:*`,
-      `[ወደ TKD መደብር](${STORE_URL})`,
+      `[ወደ K-FORCE ETHIOPIA](${STORE_URL})`,
       ``,
       `/shop ይጻፉ ለማሰስ ወይም /about ለበለጠ መረጃ።`,
     ].join('\n');
   }
   return [
-    `🥋 *Welcome to TKD Store!*`,
+    `🥋 *Welcome to K-FORCE ETHIOPIA!*`,
     ``,
     `Hi${name}! We are your one-stop shop for premium *taekwondo equipment*.`,
     ``,
@@ -60,8 +60,8 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
     `• Belts & Accessories`,
     ``,
     `🛒 *Browse our store:*`,
-    `[Visit TKD Store](${STORE_URL})`,
-    ``,
+    `[Visit K-FORCE ETHIOPIA](${STORE_URL})`,
+      ``,
     `Quality gear for every practitioner — from beginners to black belts! 💪`,
     ``,
     `Type /shop to browse, or /about to learn more about us.`,
@@ -71,10 +71,10 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
 function getShopMessage(lang: 'en' | 'am'): string {
   if (lang === 'am') {
     return [
-      `🥊 *TKD መደብር — የቴኳንዶ መሣሪያዎች*`,
+      `🥊 *K-FORCE ETHIOPIA — የቴኳንዶ መሣሪያዎች*`,
       ``,
       `ሙሉ የማሻሻያ መሣሪያዎቻችንን ይመልከቱ:`,
-      `[ወደ TKD መደብር](${STORE_URL})`,
+      `[ወደ K-FORCE ETHIOPIA](${STORE_URL})`,
       ``,
       `✅ ጥራት የተረጋገጠ`,
       `✅ ሰፊ ምርጫ`,
@@ -82,10 +82,10 @@ function getShopMessage(lang: 'en' | 'am'): string {
     ].join('\n');
   }
   return [
-    `🥊 *TKD Store — Taekwondo Equipment*`,
+    `🥊 *K-FORCE ETHIOPIA — Taekwondo Equipment*`,
     ``,
     `Browse our full catalog of martial arts gear:`,
-    `[Visit TKD Store](${STORE_URL})`,
+    `[Visit K-FORCE ETHIOPIA](${STORE_URL})`,
     ``,
     `✅ Quality guaranteed`,
     `✅ Wide selection`,
@@ -93,12 +93,11 @@ function getShopMessage(lang: 'en' | 'am'): string {
   ].join('\n');
 }
 
-function getAboutMessage(lang: 'en' | 'am'): string {
-  if (lang === 'am') {
+function getAboutMessage(lang: 'en' | 'am'): string {  if (lang === 'am') {
     return [
-      `ℹ️ *ስለ TKD መደብር*`,
+      `ℹ️ *ስለ K-FORCE ETHIOPIA*`,
       ``,
-      `TKD መደብር የኢትዮጵያ *የቴኳንዶ እና ማሻሻያ መሣሪያዎች* ልዩ የመስመር ላይ ሱቅ ነው።`,
+      `K-FORCE ETHIOPIA የኢትዮጵያ *የቴኳንዶ እና ማሻሻያ መሣሪያዎች* ልዩ የመስመር ላይ ሱቅ ነው።`,
       ``,
       `*የምናቀርበው:*`,
       `• መከላከያ፣ ሄልሜት፣ የደረት መከላከያ`,
@@ -115,26 +114,26 @@ function getAboutMessage(lang: 'en' | 'am'): string {
     ].join('\n');
   }
   return [
-    `ℹ️ *About TKD Store*`,
+    `ℹ️ *About K-FORCE ETHIOPIA*`,
     ``,
-    `TKD Store is Ethiopia's specialized online shop for *taekwondo and martial arts equipment*.`,
+    `K-FORCE ETHIOPIA is Ethiopia's specialized online shop for *taekwondo and martial arts equipment*.`,
     ``,
     `We provide high-quality gear for practitioners of all levels — from white belt beginners to black belt masters.`,
     ``,
     `*How to order:*`,
-    `1. Browse products on our website`,
-    `2. Select items and place an order`,
-    `3. Contact the seller via phone, WhatsApp, or Telegram`,
-    `4. Arrange payment and delivery directly`,
-    ``,
-    `🌐 *Website:* [${STORE_URL_BASE}](${STORE_URL})`,
+      `1. Browse products on our website`,
+      `2. Select items and place an order`,
+      `3. Contact the seller via phone, WhatsApp, or Telegram`,
+      `4. Arrange payment and delivery directly`,
+      ``,
+      `🌐 *Website:* [${STORE_URL_BASE}](${STORE_URL})`,
   ].join('\n');
 }
 
 function getHelpMessage(lang: 'en' | 'am'): string {
   if (lang === 'am') {
     return [
-      `❓ *እርዳታ — TKD መደብር*`,
+      `❓ *እርዳታ — K-FORCE ETHIOPIA*`,
       ``,
       `*የሚገኙ ትዕዛዞች:*`,
       `/start — የመግቢያ መልዕክት`,
@@ -292,8 +291,10 @@ async function handleCallback(update: TelegramUpdate) {
 
   if (data === 'lang:en' || data === 'lang:am') {
     const lang = data === 'lang:am' ? 'am' : 'en';
-    await saveUserLang(chatId, lang);
+    // Answer callback FIRST to acknowledge the button press within Telegram's 5s limit
     await answerCallback(cq.id, lang === 'am' ? 'ቋንቋ ወደ አማርኛ ተቀይሯል' : 'Language set to English');
+    // Then save language and send welcome message
+    await saveUserLang(chatId, lang);
     await sendTelegramMessage(chatId, getWelcomeMessage(lang, cq.message.chat.first_name), 'Markdown');
   }
 }
