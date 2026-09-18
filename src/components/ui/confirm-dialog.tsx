@@ -12,6 +12,8 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   variant?: "danger" | "warning" | "info" | "success";
   loading?: boolean;
+  /** When true, hides the Cancel button and shows only the primary action — for alert()-style single-acknowledgement dialogs. */
+  hideCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -24,6 +26,7 @@ export function ConfirmDialog({
   cancelLabel,
   variant = "warning",
   loading = false,
+  hideCancel = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -69,9 +72,11 @@ export function ConfirmDialog({
           </button>
         </div>
         <div className="flex gap-2 justify-end pt-2">
-          <Button variant="outline" size="sm" onClick={onCancel} disabled={loading}>
-            {cancelLabel ?? t("cancel")}
-          </Button>
+          {!hideCancel && (
+            <Button variant="outline" size="sm" onClick={onCancel} disabled={loading}>
+              {cancelLabel ?? t("cancel")}
+            </Button>
+          )}
           <Button
             variant={btnVariant as any}
             size="sm"

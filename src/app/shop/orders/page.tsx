@@ -67,6 +67,25 @@ export default function ShopOrdersPage() {
     }
   }, [status, router]);
 
+  // Keep order statuses fresh: refetch when the tab regains focus/visibility,
+  // and on a slow poll while it's open, so admin status changes show up
+  // without requiring a manual reload.
+  useEffect(() => {
+    if (status === "loading") return;
+    const onFocus = () => fetchOrders();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchOrders();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    const interval = setInterval(fetchOrders, 30000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+      clearInterval(interval);
+    };
+  }, [status]);
+
   const fetchOrders = async () => {
     try {
       const response = await fetch("/api/orders?limit=50");

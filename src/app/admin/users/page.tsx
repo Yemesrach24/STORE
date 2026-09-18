@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Users, Plus, Search, Filter, Shield } from "lucide-react";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 
@@ -38,6 +39,8 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [deactivateUserId, setDeactivateUserId] = useState<string | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -93,14 +96,22 @@ export default function AdminUsersPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm(t("deactivateUserConfirm"))) return;
+  const handleDeleteUser = (userId: string) => {
+    setDeactivateUserId(userId);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deactivateUserId) return;
+    setDeactivating(true);
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+      const response = await fetch(`/api/admin/users/${deactivateUserId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to deactivate user");
       fetchUsers();
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setDeactivating(false);
+      setDeactivateUserId(null);
     }
   };
 
@@ -234,6 +245,17 @@ export default function AdminUsersPage() {
               setIsModalOpen(false);
               fetchUsers();
             }}
+          />
+
+          <ConfirmDialog
+            open={!!deactivateUserId}
+            title={t("notice")}
+            message={t("deactivateUserConfirm")}
+            confirmLabel={t("confirm")}
+            variant="danger"
+            loading={deactivating}
+            onConfirm={confirmDeleteUser}
+            onCancel={() => setDeactivateUserId(null)}
           />
         </div>
       </DashboardLayout>

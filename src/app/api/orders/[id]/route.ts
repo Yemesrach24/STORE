@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth-helpers';
 import dbConnect from '@/lib/mongodb';
-import { Order, User, Item } from '@/models';
+import { Order, User } from '@/models';
 
 // GET /api/orders/[id] - Get single order
 export async function GET(
@@ -72,37 +72,6 @@ export async function PUT(
     const existingOrder = await Order.findById(id);
     if (!existingOrder) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-
-    // Stock management:
-    // - APPROVE: decrement stock (stock was NOT decremented on order creation)
-    // - DECLINE from non-DECLINED: restore stock
-    // - DECLINE from APPROVED: restore stock
-    // - PENDING from APPROVED: restore stock (revert approval)
-    if (status === 'APPROVED' && existingOrder.status !== 'APPROVED') {
-      // Approving: decrement stock
-      const updated = await Item.findOneAndUpdate(
-        { _id: existingOrder.itemId, quantity: { $gte: existingOrder.quantity } },
-        { $inc: { quantity: -existingOrder.quantity } },
-        { new: true }
-      ).catch((e: any) => { console.error('Stock decrement failed:', e); return null; });
-      if (!updated) {
-        return NextResponse.json({ error: 'Insufficient stock to approve this order' }, { status: 400 });
-      }
-    } else if (status === 'DECLINED' && existingOrder.status !== 'DECLINED') {
-      // Declining: restore stock only if it was previously APPROVED
-      if (existingOrder.status === 'APPROVED') {
-        await Item.findByIdAndUpdate(
-          existingOrder.itemId,
-          { $inc: { quantity: existingOrder.quantity } }
-        ).catch((e: any) => console.error('Stock restore failed:', e));
-      }
-    } else if (status === 'PENDING' && existingOrder.status === 'APPROVED') {
-      // Reverting from APPROVED to PENDING: restore stock
-      await Item.findByIdAndUpdate(
-        existingOrder.itemId,
-        { $inc: { quantity: existingOrder.quantity } }
-      ).catch((e: any) => console.error('Stock restore failed:', e));
     }
 
     // Build update fields
