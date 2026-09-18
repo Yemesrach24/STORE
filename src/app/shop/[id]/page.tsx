@@ -77,6 +77,7 @@ export default function ItemDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showOrderConfirm, setShowOrderConfirm] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   // Source selection state — which sources the customer is ordering from
   const [selectedLocal, setSelectedLocal] = useState(false);
@@ -170,7 +171,7 @@ export default function ItemDetailPage() {
 
     const lineItems = buildLineItems();
     if (lineItems.length === 0) {
-      alert(t("selectAtLeastOne"));
+      setAlertMessage(t("selectAtLeastOne"));
       return;
     }
 
@@ -191,12 +192,12 @@ export default function ItemDetailPage() {
       });
       if (!response.ok) {
         const err = await response.json();
-        alert(err.error || t("placeOrderFailed"));
+        setAlertMessage(err.error || t("placeOrderFailed"));
         return;
       }
       setOrderSuccess(true);
     } catch {
-      alert(t("placeOrderFailedRetry"));
+      setAlertMessage(t("placeOrderFailedRetry"));
     } finally {
       setOrdering(false);
     }
@@ -517,7 +518,7 @@ export default function ItemDetailPage() {
               <Button
                 onClick={() => {
                   const lineItems = buildLineItems();
-                  if (lineItems.length === 0) { alert(t("selectAtLeastOne")); return; }
+                  if (lineItems.length === 0) { setAlertMessage(t("selectAtLeastOne")); return; }
                   if (validateForm()) setShowOrderConfirm(true);
                 }}
                 disabled={ordering}
@@ -609,6 +610,18 @@ export default function ItemDetailPage() {
         variant="success"
         onConfirm={handleOrder}
         onCancel={() => setShowOrderConfirm(false)}
+      />
+
+      {/* Alert dialog (replaces window.alert) */}
+      <ConfirmDialog
+        open={!!alertMessage}
+        title={t("notice")}
+        message={alertMessage || ""}
+        confirmLabel={t("ok")}
+        variant="warning"
+        hideCancel
+        onConfirm={() => setAlertMessage(null)}
+        onCancel={() => setAlertMessage(null)}
       />
     </div>
   );

@@ -423,7 +423,11 @@ export default function ShopPage() {
                           <span className="text-lg font-bold text-gray-900">
                             {item.local?.enabled && item.imported?.enabled
                               ? `Br ${(item.local?.basePrice ?? 0).toLocaleString()} / ${(item.imported?.basePrice ?? 0).toLocaleString()}`
-                              : `Br ${(item.local?.basePrice ?? item.imported?.basePrice ?? 0).toLocaleString()}`}
+                              : item.local?.enabled
+                              ? `Br ${item.local.basePrice.toLocaleString()}`
+                              : item.imported?.enabled
+                              ? `Br ${item.imported.basePrice.toLocaleString()}`
+                              : `Br 0`}
                           </span>
                           <span className="text-xs text-[var(--brand)] font-medium flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
                             {t("view")} <ChevronRight className="h-3.5 w-3.5" />
