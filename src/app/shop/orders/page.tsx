@@ -56,42 +56,55 @@ export default function ShopOrdersPage() {
   const [editMessage, setEditMessage] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [counts, setCounts] = useState({ total: 0, PENDING: 0, APPROVED: 0, DECLINED: 0 });
 
   useEffect(() => {
-    if (status === "authenticated") {
-      fetchOrders();
-    } else if (status === "unauthenticated") {
-      // Guests may still view their orders via the guest_id cookie.
-      // Only redirect to sign-in if there's no guest identity at all.
-      fetchOrders();
-    }
-  }, [status, router]);
+    if (status === "loading") return;
+    // Guests may still view their orders via the guest_id cookie, so fetch
+    // for unauthenticated visitors too.
+    fetchOrders();
+    fetchCounts();
+  }, [status, activeTab, currentPage]);
+
+  // Switching tabs restarts paging from the first page.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   // Keep order statuses fresh: refetch when the tab regains focus/visibility,
   // and on a slow poll while it's open, so admin status changes show up
   // without requiring a manual reload.
   useEffect(() => {
     if (status === "loading") return;
-    const onFocus = () => fetchOrders();
+    const refresh = () => {
+      fetchOrders();
+      fetchCounts();
+    };
+    const onFocus = () => refresh();
     const onVisibility = () => {
-      if (document.visibilityState === "visible") fetchOrders();
+      if (document.visibilityState === "visible") refresh();
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
-    const interval = setInterval(fetchOrders, 30000);
+    const interval = setInterval(refresh, 30000);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
       clearInterval(interval);
     };
-  }, [status]);
+  }, [status, activeTab, currentPage]);
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch("/api/orders?limit=50");
+      const params = new URLSearchParams({ page: currentPage.toString(), limit: "10" });
+      if (activeTab !== "all") params.set("status", activeTab.toUpperCase());
+      const response = await fetch(`/api/orders?${params}`);
       if (response.ok) {
         const data = await response.json();
         setOrders(data.orders || []);
+        setTotalPages(data.pagination?.pages || 1);
       } else if (response.status === 401) {
         // No session and no guest identity — guest has no order history.
         setOrders([]);
@@ -101,6 +114,18 @@ export default function ShopOrdersPage() {
       console.error("Failed to fetch orders:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCounts = async () => {
+    try {
+      const response = await fetch("/api/orders?counts=1");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.counts) setCounts(data.counts);
+      }
+    } catch (error) {
+      console.error("Failed to fetch order counts:", error);
     }
   };
 
@@ -174,12 +199,13 @@ export default function ShopOrdersPage() {
     );
   };
 
-  const filteredOrders = activeTab === "all" ? orders : orders.filter(o => o.status === activeTab.toUpperCase());
-  const counts = {
-    all: orders.length,
-    pending: orders.filter(o => o.status === "PENDING").length,
-    approved: orders.filter(o => o.status === "APPROVED").length,
-    declined: orders.filter(o => o.status === "DECLINED").length,
+  // The API already filters by status, so the current page is the list to show.
+  const filteredOrders = orders;
+  const tabCounts = {
+    all: counts.total,
+    pending: counts.PENDING,
+    approved: counts.APPROVED,
+    declined: counts.DECLINED,
   };
 
   if (status === "loading" || loading) {
@@ -218,11 +244,11 @@ export default function ShopOrdersPage() {
               onClick={() => setActiveTab(tab)}
               className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[var(--brand)] text-white"
                   : "text-gray-500 hover:text-gray-900"
               }`}
             >
-              {tab === "all" ? t("all") : tab === "pending" ? t("pending") : tab === "approved" ? t("approved") : t("declined")} ({counts[tab]})
+              {tab === "all" ? t("all") : tab === "pending" ? t("pending") : tab === "approved" ? t("approved") : t("declined")} ({tabCounts[tab]})
             </button>
           ))}
         </div>
@@ -435,6 +461,30 @@ export default function ShopOrdersPage() {
           </div>
         )}
 
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              {t("previous")}
+            </Button>
+            <span className="text-sm text-gray-500">
+              {t("pageOf", { current: currentPage, total: totalPages })}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              {t("next")}
+            </Button>
+          </div>
+        )}
+
         {/* Edit Modal */}
         {editingOrder && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setEditingOrder(null)}>
@@ -459,7 +509,7 @@ export default function ShopOrdersPage() {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => setEditingOrder(null)}>{t("cancel")}</Button>
-                <Button size="sm" className="bg-gray-900 hover:bg-gray-800" onClick={saveEdit}>{t("save")}</Button>
+                <Button size="sm" className="bg-[var(--brand)] hover:bg-[var(--brand-dark)]" onClick={saveEdit}>{t("save")}</Button>
               </div>
             </div>
           </div>

@@ -66,12 +66,14 @@ export async function GET() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        // /language is listed first so it stays visible without scrolling in
+        // the Telegram mobile command menu, which shows only the top entries.
         commands: [
+          { command: 'language', description: 'Change language / ቋንቋ ይቀይሩ' },
           { command: 'start', description: 'Welcome message with store info / መግቢያ' },
           { command: 'shop', description: 'Browse our taekwondo store / ሱቅ' },
           { command: 'about', description: 'Learn about TKD Store / ስለ እኛ' },
           { command: 'help', description: 'Get help and instructions / እርዳታ' },
-          { command: 'language', description: 'Change language / ቋንቋ ይቀይሩ' },
         ],
       }),
     });

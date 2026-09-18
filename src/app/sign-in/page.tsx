@@ -41,7 +41,7 @@ export default function SignInPage() {
                 </div>
               </div>
               <Link href="/shop">
-                <button className="w-full h-10 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+                <button className="w-full h-10 px-4 py-2 bg-[var(--brand)] text-white rounded-lg text-sm font-medium hover:bg-[var(--brand-dark)] transition-colors">
                   {t("goToShop")}
                 </button>
               </Link>

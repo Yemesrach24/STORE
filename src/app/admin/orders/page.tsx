@@ -76,20 +76,28 @@ export default function AdminOrdersPage() {
   const [confirmAction, setConfirmAction] = useState<{ orderId: string; status: "APPROVED" | "DECLINED" | "PENDING" } | null>(null);
   const [editingLineItems, setEditingLineItems] = useState<LineItem[]>([]);
   const [isEditingQty, setIsEditingQty] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchOrders();
     fetchAllCounts();
+  }, [statusFilter, currentPage]);
+
+  // A filter change restarts paging from the first page.
+  useEffect(() => {
+    setCurrentPage(1);
   }, [statusFilter]);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ limit: "100" });
+      const params = new URLSearchParams({ page: currentPage.toString(), limit: "20" });
       if (statusFilter !== "all") params.set("status", statusFilter);
       const response = await fetch(`/api/orders?${params}`);
       const data = await response.json();
       setOrders(data.orders || []);
+      setTotalPages(data.pagination?.pages || 1);
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -99,24 +107,9 @@ export default function AdminOrdersPage() {
 
   const fetchAllCounts = async () => {
     try {
-      const [allRes, pendingRes, approvedRes, declinedRes] = await Promise.all([
-        fetch("/api/orders?limit=1"),
-        fetch("/api/orders?status=PENDING&limit=1"),
-        fetch("/api/orders?status=APPROVED&limit=1"),
-        fetch("/api/orders?status=DECLINED&limit=1"),
-      ]);
-      const [all, pending, approved, declined] = await Promise.all([
-        allRes.json(),
-        pendingRes.json(),
-        approvedRes.json(),
-        declinedRes.json(),
-      ]);
-      setAllCounts({
-        total: all.pagination?.total || 0,
-        PENDING: pending.pagination?.total || 0,
-        APPROVED: approved.pagination?.total || 0,
-        DECLINED: declined.pagination?.total || 0,
-      });
+      const res = await fetch("/api/orders?counts=1");
+      const data = await res.json();
+      if (data.counts) setAllCounts(data.counts);
     } catch (error) {
       console.error("Error fetching counts:", error);
     }
@@ -374,6 +367,30 @@ export default function AdminOrdersPage() {
                     </Table>
                   </div>
                 </>
+              )}
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 py-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                  >
+                    {t("previous")}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {t("pageOf", { current: currentPage, total: totalPages })}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                  >
+                    {t("next")}
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>

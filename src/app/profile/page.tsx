@@ -153,7 +153,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="pt-2">
-              <Button onClick={handleSave} disabled={saving} className="bg-gray-900 hover:bg-gray-800 font-medium gap-2">
+              <Button onClick={handleSave} disabled={saving} className="bg-[var(--brand)] hover:bg-[var(--brand-dark)] font-medium gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {saved ? t("saved") : t("saveChanges")}
               </Button>

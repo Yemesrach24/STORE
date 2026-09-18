@@ -182,6 +182,30 @@ export function UserManagementTable({
             </TableBody>
           </Table>
         )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(currentPage - 1)}
+            >
+              {t("previous")}
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {t("pageOf", { current: currentPage, total: totalPages })}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => onPageChange(currentPage + 1)}
+            >
+              {t("next")}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
