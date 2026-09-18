@@ -42,7 +42,7 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
       `• ቀበቶና ተጨማሪዎች`,
       ``,
       `🛒 <b>መደብራችንን ይጎብኙ:</b>`,
-      `[ወደ K-FORCE ETHIOPIA](${STORE_URL})`,
+      `<a href="${STORE_URL}">ወደ K-FORCE ETHIOPIA</a>`,
       ``,
       `/shop ይጻፉ ለማሰስ ወይም /about ለበለጠ መረጃ።`,
     ].join('\n');
@@ -60,7 +60,7 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
     `• Belts & Accessories`,
     ``,
     `🛒 <b>Browse our store:</b>`,
-    `[Visit K-FORCE ETHIOPIA](${STORE_URL})`,
+    `<a href="${STORE_URL}">Visit K-FORCE ETHIOPIA</a>`,
     ``,
     `Quality gear for every practitioner — from beginners to black belts! 💪`,
     ``,
@@ -74,7 +74,7 @@ function getShopMessage(lang: 'en' | 'am'): string {
       `🥊 <b>K-FORCE ETHIOPIA — የቴኳንዶ መሣሪያዎች</b>`,
       ``,
       `ሙሉ የማሻሻያ መሣሪያዎቻችንን ይመልከቱ:`,
-      `[ወደ K-FORCE ETHIOPIA](${STORE_URL})`,
+      `<a href="${STORE_URL}">ወደ K-FORCE ETHIOPIA</a>`,
       ``,
       `✅ ጥራት የተረጋገጠ`,
       `✅ ሰፊ ምርጫ`,
@@ -85,7 +85,7 @@ function getShopMessage(lang: 'en' | 'am'): string {
     `🥊 <b>K-FORCE ETHIOPIA — Taekwondo Equipment</b>`,
     ``,
     `Browse our full catalog of martial arts gear:`,
-    `[Visit K-FORCE ETHIOPIA](${STORE_URL})`,
+    `<a href="${STORE_URL}">Visit K-FORCE ETHIOPIA</a>`,
     ``,
     `✅ Quality guaranteed`,
     `✅ Wide selection`,
@@ -111,7 +111,7 @@ function getAboutMessage(lang: 'en' | 'am'): string {
       `3. ሻጩን በስልክ/ዋትስአፕ/ቴሌግራም ያግኙ`,
       `4. ክፍያና አቅርቦትን በቀጥታ ያስተባብሩ`,
       ``,
-      `🌐 <b>ድረ-ገጽ:</b> [${STORE_URL_BASE}](${STORE_URL})`,
+      `🌐 <b>ድረ-ገጽ:</b> <a href="${STORE_URL}">${STORE_URL_BASE}</a>`,
     ].join('\n');
   }
   return [
@@ -127,7 +127,7 @@ function getAboutMessage(lang: 'en' | 'am'): string {
       `3. Contact the seller via phone, WhatsApp, or Telegram`,
       `4. Arrange payment and delivery directly`,
       ``,
-      `🌐 <b>Website:</b> [${STORE_URL_BASE}](${STORE_URL})`,
+      `🌐 <b>Website:</b> <a href="${STORE_URL}">${STORE_URL_BASE}</a>`,
   ].join('\n');
 }
 
@@ -143,7 +143,7 @@ function getHelpMessage(lang: 'en' | 'am'): string {
       `/help — ይህን እርዳታ ያሳዩ`,
       `/language — ቋንቋ ይቀይሩ`,
       ``,
-      `🌐 [${STORE_URL_BASE}](${STORE_URL})`,
+      `🌐 <a href="${STORE_URL}">${STORE_URL_BASE}</a>`,
     ].join('\n');
   }
   return [
@@ -156,7 +156,7 @@ function getHelpMessage(lang: 'en' | 'am'): string {
     `/help — Show this help message`,
     `/language — Change language`,
     ``,
-    `🌐 Website: [${STORE_URL_BASE}](${STORE_URL})`,
+    `🌐 Website: <a href="${STORE_URL}">${STORE_URL_BASE}</a>`,
   ].join('\n');
 }
 
