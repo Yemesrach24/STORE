@@ -68,14 +68,15 @@ export function Sidebar({ className }: SidebarProps) {
         <SheetContent side="left" className="w-64 p-0 border-0">
           <SheetTitle className="sr-only">{t("navigationMenu")}</SheetTitle>
           <div className="flex h-full flex-col bg-gray-950">
-            <div className="flex h-14 items-center border-b border-gray-800 px-4">
-              <Link href="/" className="flex items-center space-x-2">
+            <div className="flex h-14 items-center gap-2 border-b border-gray-800 px-4">
+              <Link href="/" className="flex items-center space-x-2 min-w-0">
                 <TKDLogo />
-                <div className="flex flex-col">
-                  <span className="font-bold text-white text-sm leading-tight">K-FORCE ETHIOPIA</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-bold text-white text-sm leading-tight truncate">K-FORCE ETHIOPIA</span>
                   <span className="text-[10px] text-gray-500 tracking-widest uppercase">{t("adminPanel")}</span>
                 </div>
               </Link>
+              <LanguageSwitcher dark className="ml-auto shrink-0" />
             </div>
             <ScrollArea className="flex-1">
               <div className="p-3">
@@ -125,8 +126,7 @@ export function Sidebar({ className }: SidebarProps) {
                 </nav>
               </div>
             </ScrollArea>
-            <div className="border-t border-gray-800 p-4 space-y-3">
-              <LanguageSwitcher dark className="w-full justify-center" />
+            <div className="border-t border-gray-800 p-4">
               <SignOutButton />
             </div>
           </div>
@@ -136,14 +136,15 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Desktop sidebar */}
       <div className={cn("hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:z-50", className)}>
         <div className="flex h-full flex-col bg-gray-950 border-r border-gray-800">
-          <div className="flex h-14 items-center border-b border-gray-800 px-4">
-            <Link href="/" className="flex items-center space-x-2">
+          <div className="flex h-14 items-center gap-2 border-b border-gray-800 px-4">
+            <Link href="/" className="flex items-center space-x-2 min-w-0">
               <TKDLogo />
-              <div className="flex flex-col">
-                <span className="font-bold text-white text-sm leading-tight">K-FORCE ETHIOPIA</span>
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-white text-sm leading-tight truncate">K-FORCE ETHIOPIA</span>
                 <span className="text-[10px] text-gray-500 tracking-widest uppercase">{t("adminPanel")}</span>
               </div>
             </Link>
+            <LanguageSwitcher dark className="ml-auto shrink-0" />
           </div>
           <ScrollArea className="flex-1">
             <div className="p-3">
@@ -191,8 +192,7 @@ export function Sidebar({ className }: SidebarProps) {
               </nav>
             </div>
           </ScrollArea>
-          <div className="border-t border-gray-800 p-4 space-y-3">
-            <LanguageSwitcher dark className="w-full justify-center" />
+          <div className="border-t border-gray-800 p-4">
             <SignOutButton />
           </div>
         </div>

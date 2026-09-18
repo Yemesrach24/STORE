@@ -124,26 +124,21 @@ export async function checkConnectionHealth(): Promise<{
 
 // Main connection function
 async function dbConnect(): Promise<typeof mongoose> {
-  // Check if we already have a connection
+  // Reuse the cached connection. readyState is a local check — the previous
+  // implementation issued an admin ping here, which cost a full round-trip to
+  // Atlas on every single request before any real query could run.
+  // 1 = connected, 2 = connecting.
   if (cached.conn) {
-    // Verify the connection is still alive
-    try {
-      const db = cached.conn.connection.db;
-      if (db) {
-        await db.admin().ping();
-        console.log('MongoDB: Using existing connection');
-        return cached.conn;
-      }
-    } catch (error) {
-      console.log('MongoDB: Existing connection is dead, creating new connection');
-      cached.conn = null;
-      cached.promise = null;
+    const state = cached.conn.connection.readyState;
+    if (state === 1 || state === 2) {
+      return cached.conn;
     }
+    cached.conn = null;
+    cached.promise = null;
   }
 
   // Check if we're already connecting
   if (cached.promise) {
-    console.log('MongoDB: Connection already in progress, waiting...');
     try {
       cached.conn = await cached.promise;
       return cached.conn;

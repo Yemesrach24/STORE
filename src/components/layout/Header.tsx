@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useSidebar } from "./sidebar-context";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { Bell, Search, User, LogOut, Menu, X } from "lucide-react";
 
@@ -59,8 +58,8 @@ export function Header({ onSearch, className }: HeaderProps) {
           {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-md">
+        {/* Search — anchored left */}
+        <form onSubmit={handleSearch} className="flex-1 max-w-md md:ml-2">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -72,9 +71,8 @@ export function Header({ onSearch, className }: HeaderProps) {
           </div>
         </form>
 
-        {/* Right side */}
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher className="hidden sm:flex" />
+        {/* Right side — pushed to the right edge */}
+        <div className="flex items-center gap-2 ml-auto">
           {/* Notifications */}
           <Link href="/admin/orders">
             <Button variant="ghost" size="sm" className="relative" aria-label={t("notifications")}>

@@ -27,6 +27,20 @@ export async function getAuthUser(): Promise<AuthUser | null> {
   }
   if (!session?.user?.id) return null;
 
+  // The session callback already resolved this user from the database. When it
+  // produced a dbUserId and an active role, reuse it instead of running the
+  // same lookup a second time on every request.
+  const sessionUser = session.user as any;
+  if (sessionUser.dbUserId && sessionUser.role) {
+    return {
+      userId: session.user.id,
+      dbUserId: sessionUser.dbUserId,
+      role: sessionUser.role,
+      name: sessionUser.name || '',
+      email: sessionUser.email || '',
+    };
+  }
+
   try {
     await dbConnect();
   } catch (err) {

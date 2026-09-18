@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { getAuthUser } from '@/lib/auth-helpers';
 import dbConnect from '@/lib/mongodb';
 import { Order, Item, Category, User } from '@/models';
@@ -26,8 +27,10 @@ export async function GET(request: NextRequest) {
 
     if (user) {
       // Signed-in customer: only their own orders.
+      // Cast to ObjectId so the same filter works in find() and aggregate()
+      // ($match does not auto-cast the way find() does).
       if (user.role === 'CUSTOMER') {
-        query.buyerId = user.dbUserId;
+        query.buyerId = new mongoose.Types.ObjectId(user.dbUserId);
       }
       // Admin/SUPER_ADMIN sees all orders (no filter)
     } else {
@@ -41,6 +44,21 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Order history not found. Please sign in.' }, { status: 401 });
       }
       query.buyerId = guestUser._id;
+    }
+
+    // Status counts for the whole (buyer-scoped) set, in one aggregation.
+    // Replaces four separate list requests from the admin orders page.
+    if (searchParams.get('counts')) {
+      const grouped = await Order.aggregate([
+        { $match: query },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]);
+      const counts = { total: 0, PENDING: 0, APPROVED: 0, DECLINED: 0 };
+      for (const g of grouped) {
+        if (g._id in counts) counts[g._id as keyof typeof counts] = g.count;
+        counts.total += g.count;
+      }
+      return NextResponse.json({ counts });
     }
 
     if (status) {

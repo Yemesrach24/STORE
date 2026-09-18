@@ -262,7 +262,7 @@ export default function ShopPage() {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
-            <Button onClick={handleSearch} className="h-11 px-6 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium" suppressHydrationWarning>
+            <Button onClick={handleSearch} className="h-11 px-6 bg-[var(--brand)] hover:bg-[var(--brand-dark)] rounded-lg font-medium" suppressHydrationWarning>
               {t("search")}
             </Button>
           </div>
@@ -270,8 +270,8 @@ export default function ShopPage() {
 
         {/* Categories */}
         {categories.length > 0 && (
-          <div id="equipment" className="mb-12">
-            <div className="flex items-center justify-between mb-6">
+          <div id="equipment" className="mb-8">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{t("categoriesTitle")}</h2>
                 <p className="text-sm text-gray-500 mt-1">{t("browseByCategory")}</p>
@@ -286,7 +286,7 @@ export default function ShopPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
               {/* All Equipment Card */}
               <button
                 onClick={() => setSelectedCategory(null)}
@@ -296,15 +296,14 @@ export default function ShopPage() {
                     : "border-gray-200 hover:border-gray-400"
                 }`}
               >
-                <div className="aspect-[4/3] bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center overflow-hidden">
+                <div className="aspect-[3/2] bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center overflow-hidden">
                   <div className="text-center group-hover:scale-105 transition-transform">
-                    <img src="/logo.png" alt="All" className="w-16 h-16 mx-auto mb-2 object-contain" />
-                    <p className="text-xs font-semibold text-gray-700">{items.length} {t("items")}</p>
+                    <img src="/logo.png" alt="All" className="w-9 h-9 mx-auto mb-1 object-contain" />
+                    <p className="text-[11px] font-semibold text-gray-700">{items.length} {t("items")}</p>
                   </div>
                 </div>
-                <div className="p-3">
-                  <p className="font-bold text-sm text-gray-900">{t("allEquipment")}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{t("browseEverything")}</p>
+                <div className="p-2">
+                  <p className="font-bold text-xs text-gray-900 truncate">{t("allEquipment")}</p>
                 </div>
               </button>
 
@@ -319,7 +318,7 @@ export default function ShopPage() {
                       : "border-gray-200 hover:border-gray-400"
                   }`}
                 >
-                  <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
+                  <div className="aspect-[3/2] bg-gray-50 flex items-center justify-center overflow-hidden">
                     {cat.imageUrl ? (
                       <img
                         src={cat.imageUrl}
@@ -327,19 +326,16 @@ export default function ShopPage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="text-center p-4">
-                        <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-100 flex items-center justify-center">
-                          <span className="text-lg font-bold text-gray-400">{cat.name.charAt(0)}</span>
+                      <div className="text-center p-2">
+                        <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-100 flex items-center justify-center">
+                          <span className="text-sm font-bold text-gray-400">{cat.name.charAt(0)}</span>
                         </div>
-                        <p className="text-xs text-gray-400">{cat.itemCount || 0} {t("items")}</p>
+                        <p className="text-[11px] text-gray-400">{cat.itemCount || 0} {t("items")}</p>
                       </div>
                     )}
                   </div>
-                  <div className="p-3">
-                    <p className="font-bold text-sm text-gray-900">{ln(cat.name, cat.nameAm)}</p>
-                    {cat.description && (
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">{ln(cat.description, cat.descriptionAm)}</p>
-                    )}
+                  <div className="p-2">
+                    <p className="font-bold text-xs text-gray-900 truncate">{ln(cat.name, cat.nameAm)}</p>
                   </div>
                 </button>
               ))}

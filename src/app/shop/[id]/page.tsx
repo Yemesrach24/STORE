@@ -303,7 +303,7 @@ export default function ItemDetailPage() {
 
           <div className="flex gap-3 justify-center">
             <Link href="/shop/orders">
-              <Button className="bg-gray-900 hover:bg-gray-800">{t("viewMyOrders")}</Button>
+              <Button className="bg-[var(--brand)] hover:bg-[var(--brand-dark)]">{t("viewMyOrders")}</Button>
             </Link>
             <Link href="/shop">
               <Button variant="outline">{t("continueShopping")}</Button>
