@@ -10,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { formatPrice, parsePriceToNumber } from "@/lib/price";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { ShopHeader } from "@/components/shop/ShopHeader";
 import {
   ArrowLeft, Loader2, ShoppingBag, Phone, MessageCircle, Send, Mail,
   Package, Copy, Check, ChevronLeft, ChevronRight, Minus, Plus,
@@ -19,11 +21,11 @@ import {
 /* ---------- Types ---------- */
 interface ItemSize {
   name: string;
-  price?: number;
+  price?: number | string;
 }
 interface ItemSource {
   enabled: boolean;
-  basePrice: number;
+  basePrice: number | string;
   sizes: ItemSize[];
 }
 
@@ -121,11 +123,11 @@ export default function ItemDetailPage() {
     return Object.keys(errors).length === 0;
   };
 
-  /** Get the price for a size in a source block */
+  /** Get the numeric price for a size in a source block (free text like "300-700" -> first number) */
   const sizePrice = (source: ItemSource, sizeName: string): number => {
     const sz = source.sizes.find((s) => s.name === sizeName);
-    if (sz && sz.price != null) return sz.price;
-    return source.basePrice;
+    if (sz && sz.price != null && sz.price !== "") return parsePriceToNumber(sz.price);
+    return parsePriceToNumber(source.basePrice);
   };
 
   /** Build line items for order from current selections */
@@ -138,7 +140,7 @@ export default function ItemDetailPage() {
         // No sizes — order from base price
         const key = "local-";
         const qty = sizeQuantities[key] || 0;
-        if (qty > 0) lineItems.push({ source: "local", quantity: qty, unitPrice: item.local.basePrice });
+        if (qty > 0) lineItems.push({ source: "local", quantity: qty, unitPrice: parsePriceToNumber(item.local.basePrice) });
       } else {
         for (const sz of item.local.sizes) {
           const key = `local-${sz.name}`;
@@ -151,7 +153,7 @@ export default function ItemDetailPage() {
       if (item.imported.sizes.length === 0) {
         const key = "imported-";
         const qty = sizeQuantities[key] || 0;
-        if (qty > 0) lineItems.push({ source: "imported", quantity: qty, unitPrice: item.imported.basePrice });
+        if (qty > 0) lineItems.push({ source: "imported", quantity: qty, unitPrice: parsePriceToNumber(item.imported.basePrice) });
       } else {
         for (const sz of item.imported.sizes) {
           const key = `imported-${sz.name}`;
@@ -238,17 +240,21 @@ export default function ItemDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      <div className="min-h-screen bg-[#FAF7F1]">
+        <ShopHeader />
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
       </div>
     );
   }
 
   if (!item || error) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[#FAF7F1]">
+        <ShopHeader />
         <div className="px-3 sm:px-4 lg:px-6 py-16 text-center">
-          <Package className="h-14 w-14 text-gray-300 mx-auto mb-3" />
+          <Package className="h-14 w-14 text-stone-300 mx-auto mb-3" />
           <p className="text-gray-600 mb-4">{t("productNotFound")}</p>
           <Link href="/shop">
             <Button variant="outline" className="gap-2">
@@ -262,7 +268,8 @@ export default function ItemDetailPage() {
 
   if (orderSuccess) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[#FAF7F1]">
+        <ShopHeader />
         <div className="px-3 sm:px-4 lg:px-6 py-16 text-center">
           <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <Check className="h-8 w-8 text-green-600" />
@@ -273,8 +280,10 @@ export default function ItemDetailPage() {
           </p>
 
           {(item.companyPhone || item.companyWhatsapp) && (
-            <div className="max-w-sm mx-auto bg-gray-50 rounded-xl p-4 mb-6 text-left border border-gray-200">
-              <p className="text-sm font-semibold text-gray-900 mb-2">{ln(item.companyName, item.companyNameAm) || "TKD Store"}</p>
+            <div className="max-w-sm mx-auto bg-white rounded-2xl p-4 mb-6 text-left border border-stone-200 shadow-sm">
+              {ln(item.companyName, item.companyNameAm) ? (
+                <p className="text-sm font-semibold text-stone-900 mb-2">{ln(item.companyName, item.companyNameAm)}</p>
+              ) : null}
               <p className="text-xs text-gray-500 mb-3">{t("contactSellerDirectly")}</p>
               <div className="space-y-2">
                 {item.companyPhone && (
@@ -303,10 +312,10 @@ export default function ItemDetailPage() {
 
           <div className="flex gap-3 justify-center">
             <Link href="/shop/orders">
-              <Button className="bg-[var(--brand)] hover:bg-[var(--brand-dark)]">{t("viewMyOrders")}</Button>
+              <Button className="bg-white text-stone-900 border border-stone-300 hover:bg-[#0E2B1E] hover:text-white hover:border-[#0E2B1E] font-semibold transition-colors">{t("viewMyOrders")}</Button>
             </Link>
             <Link href="/shop">
-              <Button variant="outline">{t("continueShopping")}</Button>
+              <Button className="bg-white text-stone-900 border border-stone-300 hover:bg-[#0E2B1E] hover:text-white hover:border-[#0E2B1E] font-semibold transition-colors">{t("continueShopping")}</Button>
             </Link>
           </div>
         </div>
@@ -318,45 +327,54 @@ export default function ItemDetailPage() {
   const hasBothSources = item.local.enabled && item.imported.enabled;
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Top bar */}
-      <div className="border-b border-gray-100 sticky top-0 bg-white z-40">
-        <div className="px-3 sm:px-4 lg:px-6 h-14 flex items-center">
-          <Link href="/shop" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900">
-            <ArrowLeft className="h-4 w-4" /> {t("backToShop")}
-          </Link>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#F4F3EF]">
+      <ShopHeader />
 
-      <div className="px-3 sm:px-4 lg:px-6 py-6 md:py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Left: Sticky Image */}
-          <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
+      <div className="px-3 sm:px-4 lg:px-6 py-5 md:py-8 w-full">
+        {/* Photo + info with clear space between on desktop — photo fixed, info scrolls */}
+        <div className="bg-white lg:bg-transparent rounded-3xl lg:rounded-none border border-stone-200/80 lg:border-0 shadow-xl shadow-stone-900/5 lg:shadow-none overflow-hidden lg:overflow-visible">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-6 lg:h-[calc(100vh-9rem)] lg:min-h-[560px] lg:max-h-[800px]">
+          {/* Left: fixed photo — best size, never scrolls on desktop */}
+          <div className="relative bg-gradient-to-br from-[#0E2B1E] via-[#143826] to-[#C75E0E]/80 p-4 sm:p-6 flex flex-col lg:overflow-hidden lg:rounded-3xl lg:border lg:border-stone-200/80 lg:shadow-xl lg:shadow-stone-900/5">
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,white,transparent_60%)]" />
             {images.length > 0 ? (
-              <>
-                <div className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
-                  <img src={images[currentImageIndex]} alt={item.name} className="w-full h-full object-contain" />
+              <div className="relative flex flex-col h-full">
+                <div className="relative rounded-2xl overflow-hidden bg-white shadow-lg aspect-square lg:aspect-auto lg:flex-1 lg:min-h-0">
+                  <img src={images[currentImageIndex]} alt={item.name} className="w-full h-full object-cover" />
+                  {images.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentImageIndex((i) => (i > 0 ? i - 1 : images.length - 1))}
+                        aria-label="Previous image"
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 shadow flex items-center justify-center hover:bg-white transition-colors"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIndex((i) => (i < images.length - 1 ? i + 1 : 0))}
+                        aria-label="Next image"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/95 shadow flex items-center justify-center hover:bg-white transition-colors"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                  <span className="absolute bottom-2.5 right-2.5 text-[11px] font-semibold bg-black/60 text-white px-2 py-0.5 rounded-full">
+                    {currentImageIndex + 1} / {images.length}
+                  </span>
                 </div>
                 {images.length > 1 && (
-                  <div className="flex items-center justify-center gap-3">
-                    <Button variant="outline" size="sm" onClick={() => setCurrentImageIndex((i) => (i > 0 ? i - 1 : images.length - 1))} className="rounded-full h-8 w-8 p-0">
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex gap-2">
-                      {images.map((img, idx) => (
-                        <button key={idx} onClick={() => setCurrentImageIndex(idx)} className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-colors ${idx === currentImageIndex ? "border-[var(--brand)]" : "border-gray-200 hover:border-gray-400"}`}>
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setCurrentImageIndex((i) => (i < images.length - 1 ? i + 1 : 0))} className="rounded-full h-8 w-8 p-0">
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                  <div className="relative flex gap-2 mt-3 justify-center">
+                    {images.map((img, idx) => (
+                      <button key={idx} onClick={() => setCurrentImageIndex(idx)} className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${idx === currentImageIndex ? "border-white shadow-md scale-105" : "border-white/30 opacity-70 hover:opacity-100"}`}>
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
                   </div>
                 )}
-              </>
+              </div>
             ) : (
-              <div className="aspect-square rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+              <div className="relative rounded-2xl bg-white/95 flex-1 flex items-center justify-center min-h-[280px]">
                 <div className="text-center">
                   <img src="/logo.png" alt="No image" className="w-20 h-20 mx-auto object-contain opacity-30" />
                   <p className="text-sm text-gray-400 mt-3">{t("noImage")}</p>
@@ -365,8 +383,9 @@ export default function ItemDetailPage() {
             )}
           </div>
 
-          {/* Right: Product info + order form */}
-          <div className="space-y-4">
+          {/* Right: scrollable info column on desktop */}
+          <div className="lg:overflow-y-auto lg:overscroll-contain bg-white lg:rounded-3xl lg:border lg:border-stone-200/80 lg:shadow-xl lg:shadow-stone-900/5 lg:overflow-hidden">
+          <div className="p-4 sm:p-6 space-y-4">
             {/* Title & Price */}
             <div>
               <p className="text-xs text-[var(--brand)] font-semibold uppercase tracking-wider mb-1">
@@ -377,32 +396,32 @@ export default function ItemDetailPage() {
               {/* Price display: show both if both enabled */}
               <div className="flex flex-wrap gap-3">
                 {item.local.enabled && (
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-gray-900">Br {item.local.basePrice.toLocaleString()}</span>
+                  <div className="flex items-baseline gap-1.5 bg-[var(--brand)]/5 border border-[var(--brand)]/15 rounded-full px-3 py-1">
+                    <span className="text-xl font-bold text-stone-900">{formatPrice(item.local.basePrice)}</span>
                     <span className="text-xs font-medium text-green-600">{t("sourceLocal")}</span>
                   </div>
                 )}
                 {item.imported.enabled && (
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-gray-900">Br {item.imported.basePrice.toLocaleString()}</span>
+                  <div className="flex items-baseline gap-1.5 bg-blue-50 border border-blue-100 rounded-full px-3 py-1">
+                    <span className="text-xl font-bold text-stone-900">{formatPrice(item.imported.basePrice)}</span>
                     <span className="text-xs font-medium text-blue-600">{t("sourceImported")}</span>
                   </div>
                 )}
               </div>
 
               {item.color && (
-                <p className="text-sm text-gray-500 mt-1">{t("color")}: {item.color}</p>
+                <p className="text-sm text-stone-500 mt-2">{t("color")}: {item.color}</p>
               )}
               {(item.supplier || item.supplierAm) && (
-                <p className="text-sm text-gray-500 mt-1">{t("bySupplier")} {ln(item.supplier, item.supplierAm)}</p>
+                <p className="text-sm text-stone-500 mt-1">{ln(item.supplier, item.supplierAm)}</p>
               )}
             </div>
 
-            {/* Description */}
+            {/* Description — shown exactly as entered (line breaks preserved) */}
             {localizedDescription() && (
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{t("description")}</p>
-                <p className="text-sm text-gray-600 leading-relaxed">{localizedDescription()}</p>
+              <div className="bg-white rounded-2xl border border-stone-200/70 p-4">
+                <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-1">{t("description")}</p>
+                <p className="text-sm text-stone-600 leading-relaxed whitespace-pre-line">{localizedDescription()}</p>
               </div>
             )}
 
@@ -416,21 +435,21 @@ export default function ItemDetailPage() {
             )}
 
             {/* ORDERING SECTION */}
-            <div className="rounded-xl border border-gray-200 p-4 space-y-4">
-              <p className="text-sm font-semibold text-gray-900">{t("placeOrder")}</p>
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 space-y-4 shadow-sm">
+              <p className="text-sm font-semibold text-stone-900">{t("placeOrder")}</p>
 
               {/* Source selection — show checkboxes if both enabled, auto-select if only one */}
               {hasBothSources && (
                 <div className="space-y-2">
-                  <Label className="text-xs text-gray-500 uppercase">{t("selectSource")}</Label>
-                  <div className="flex gap-4">
+                  <Label className="text-xs text-stone-500 uppercase">{t("selectSource")}</Label>
+                  <div className="flex gap-4 flex-wrap">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={selectedLocal} onChange={(e) => setSelectedLocal(e.target.checked)} className="h-4 w-4 rounded" />
-                      <span className="text-sm font-medium">{t("sourceLocal")} — Br {item.local.basePrice.toLocaleString()}</span>
+                      <input type="checkbox" checked={selectedLocal} onChange={(e) => setSelectedLocal(e.target.checked)} className="h-4 w-4 rounded accent-[var(--brand)]" />
+                      <span className="text-sm font-medium">{t("sourceLocal")} — {formatPrice(item.local.basePrice)}</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={selectedImported} onChange={(e) => setSelectedImported(e.target.checked)} className="h-4 w-4 rounded" />
-                      <span className="text-sm font-medium">{t("sourceImported")} — Br {item.imported.basePrice.toLocaleString()}</span>
+                      <input type="checkbox" checked={selectedImported} onChange={(e) => setSelectedImported(e.target.checked)} className="h-4 w-4 rounded accent-[var(--brand)]" />
+                      <span className="text-sm font-medium">{t("sourceImported")} — {formatPrice(item.imported.basePrice)}</span>
                     </label>
                   </div>
                 </div>
@@ -530,10 +549,12 @@ export default function ItemDetailPage() {
               <p className="text-xs text-gray-400 text-center">{t("contactSellerToArrange")}</p>
             </div>
 
-            {/* Contact info */}
+            {/* Contact info — company name shown only when entered */}
             {(item.companyPhone || item.companyWhatsapp || item.companyTelegram || item.companyInstagram || item.companyEmail) && (
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm font-semibold text-gray-900 mb-3">{ln(item.companyName, item.companyNameAm) || "TKD Store"}</p>
+              <div className="bg-white rounded-2xl border border-stone-200/70 p-4 shadow-sm">
+                {ln(item.companyName, item.companyNameAm) ? (
+                  <p className="text-sm font-semibold text-stone-900 mb-3">{ln(item.companyName, item.companyNameAm)}</p>
+                ) : null}
                 <div className="space-y-2">
                   {item.companyPhone && (
                     <div className="flex items-center gap-2">
@@ -594,6 +615,8 @@ export default function ItemDetailPage() {
               </div>
             )}
           </div>
+          </div>
+        </div>
         </div>
       </div>
 
@@ -648,10 +671,10 @@ function SourceSizeSelector({
     const key = `${sourceKey}-`;
     const qty = sizeQuantities[key] || 0;
     return (
-      <div className="rounded-lg border border-gray-200 p-3 space-y-2">
-        <p className="text-sm font-medium text-gray-700">{label}</p>
+      <div className="rounded-xl border border-stone-200 bg-[#FAF7F1] p-3 space-y-2">
+        <p className="text-sm font-medium text-stone-700">{label}</p>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">Br {source.basePrice.toLocaleString()}</span>
+          <span className="text-sm text-stone-500">{formatPrice(source.basePrice)}</span>
           <div className="flex items-center gap-3">
             <button onClick={() => toggleSizeQty(key, -1)} className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors">
               <Minus className="h-3 w-3" />
@@ -667,17 +690,17 @@ function SourceSizeSelector({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 p-3 space-y-2">
-      <p className="text-sm font-medium text-gray-700">{label}</p>
+    <div className="rounded-xl border border-stone-200 bg-[#FAF7F1] p-3 space-y-2">
+      <p className="text-sm font-medium text-stone-700">{label}</p>
       {source.sizes.map((sz) => {
         const key = `${sourceKey}-${sz.name}`;
         const qty = sizeQuantities[key] || 0;
-        const price = sz.price != null ? sz.price : source.basePrice;
+        const price = sz.price != null && sz.price !== "" ? sz.price : source.basePrice;
         return (
-          <div key={sz.name} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
+          <div key={sz.name} className="flex items-center justify-between py-1.5 border-b border-stone-200/60 last:border-0">
             <div>
-              <span className="text-sm font-medium text-gray-900">{sz.name}</span>
-              <span className="text-sm text-gray-500 ml-2">Br {price.toLocaleString()}</span>
+              <span className="text-sm font-medium text-stone-900">{sz.name}</span>
+              <span className="text-sm text-stone-500 ml-2">{formatPrice(price)}</span>
             </div>
             <div className="flex items-center gap-3">
               <button onClick={() => toggleSizeQty(key, -1)} className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors">

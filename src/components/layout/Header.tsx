@@ -17,6 +17,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useSidebar } from "./sidebar-context";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useRouter } from "next/navigation";
 import { Bell, Search, User, LogOut, Menu, X } from "lucide-react";
 
 interface HeaderProps {
@@ -39,9 +41,18 @@ export function Header({ onSearch, className }: HeaderProps) {
       .catch(() => {});
   }, []);
 
+  const router = useRouter();
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch?.(searchQuery);
+    const q = searchQuery.trim();
+    if (onSearch) {
+      onSearch(q);
+      return;
+    }
+    // Default: dashboard search jumps to the items manager with the query
+    // applied, so the header search always does something useful.
+    if (q) router.push(`/admin/items?search=${encodeURIComponent(q)}`);
+    else router.push("/admin/items");
   };
 
   return (
@@ -87,6 +98,9 @@ export function Header({ onSearch, className }: HeaderProps) {
               )}
             </Button>
           </Link>
+
+          {/* Language — right after notifications */}
+          <LanguageSwitcher />
 
           {/* User menu */}
           <DropdownMenu>

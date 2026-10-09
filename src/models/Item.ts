@@ -3,12 +3,15 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IItemSize {
   name: string;
   nameAm?: string;
-  price?: number; // optional — falls back to source base price if omitted
+  // Flexible price: a number, a numeric string, or free text like "300-700".
+  // Falls back to the source base price when omitted.
+  price?: number | string;
 }
 
 export interface IItemSource {
   enabled: boolean;
-  basePrice: number;
+  // Flexible price: number, numeric string, or free text like "300-700" / "up to 300".
+  basePrice: number | string;
   sizes: IItemSize[];
 }
 
@@ -58,7 +61,19 @@ const ItemSizeSchema = new Schema<IItemSize>(
   {
     name: { type: String, required: true, trim: true },
     nameAm: { type: String, trim: true },
-    price: { type: Number, min: [0, 'Price cannot be negative'] },
+    // Flexible: plain number, numeric string, or free text ("300-700", "up to 300")
+    price: {
+      type: Schema.Types.Mixed,
+      validate: {
+        validator: (v: unknown) => {
+          if (v == null || v === '') return true;
+          if (typeof v === 'number') return Number.isFinite(v) && v >= 0;
+          if (typeof v === 'string') return v.trim().length > 0 && v.trim().length <= 50;
+          return false;
+        },
+        message: 'Price must be a positive number or short text (e.g. 300-700)',
+      },
+    },
   },
   { _id: false }
 );
@@ -66,7 +81,21 @@ const ItemSizeSchema = new Schema<IItemSize>(
 const ItemSourceSchema = new Schema<IItemSource>(
   {
     enabled: { type: Boolean, default: false },
-    basePrice: { type: Number, required: true, min: [0, 'Price cannot be negative'] },
+    // Flexible: plain number, numeric string, or free text ("300-700", "up to 300")
+    basePrice: {
+      type: Schema.Types.Mixed,
+      required: true,
+      default: 0,
+      validate: {
+        validator: (v: unknown) => {
+          if (v == null || v === '') return true;
+          if (typeof v === 'number') return Number.isFinite(v) && v >= 0;
+          if (typeof v === 'string') return v.trim().length > 0 && v.trim().length <= 50;
+          return false;
+        },
+        message: 'Price must be a positive number or short text (e.g. 300-700)',
+      },
+    },
     sizes: { type: [ItemSizeSchema], default: [] },
   },
   { _id: false }

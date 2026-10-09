@@ -140,11 +140,7 @@ export async function DELETE(
       ? { _id: id }
       : { authId: id };
     
-    const user = await User.findOneAndUpdate(
-      query,
-      { isActive: false },
-      { new: true }
-    );
+    const user = await User.findOneAndDelete(query);
     
     if (!user) {
       return NextResponse.json(

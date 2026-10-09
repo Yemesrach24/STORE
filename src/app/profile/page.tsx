@@ -7,8 +7,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
-import { Loader2, ArrowLeft, User, Save, Phone, MapPin, ShoppingBag } from "lucide-react";
+import { ShopHeader } from "@/components/shop/ShopHeader";
+import { Loader2, User, Save, Phone, MapPin, ShoppingBag } from "lucide-react";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -75,27 +75,10 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="px-3 sm:px-4 lg:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/shop" className="text-gray-500 hover:text-gray-900 transition-colors">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-lg font-semibold text-gray-900">{t("myProfile")}</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <LanguageSwitcher />
-            <Link href="/shop">
-              <Button variant="outline" size="sm" className="font-medium gap-1.5">
-                <ShoppingBag className="h-4 w-4" /> {t("shop")}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <ShopHeader />
 
-      <div className="px-3 sm:px-4 lg:px-6 py-8">
+      <div className="px-3 sm:px-4 lg:px-6 py-8 w-full">
+        <h1 className="text-lg font-semibold text-gray-900 mb-4">{t("myProfile")}</h1>
         {/* Profile Card */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
           <div className="p-6 flex items-center gap-4 border-b border-gray-100">

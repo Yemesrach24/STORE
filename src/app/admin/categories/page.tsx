@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
-import { Folder, Plus, Edit, Trash2, Loader2, Upload, X, Image as ImageIcon } from "lucide-react";
+import { Folder, Plus, Edit, Trash2, Loader2, Upload, X, Image as ImageIcon, Search } from "lucide-react";
 
 interface Category {
   _id: string;
@@ -45,6 +45,7 @@ export default function AdminCategoriesPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => { fetchCategories(); }, []);
 
@@ -158,6 +159,20 @@ export default function AdminCategoriesPage() {
     }
   };
 
+  const filterCategories = (cats: Category[], q: string): Category[] => {
+    const term = q.trim().toLowerCase();
+    if (!term) return cats;
+    const out: Category[] = [];
+    for (const cat of cats) {
+      const children = cat.children ? filterCategories(cat.children, q) : [];
+      const hay = `${cat.name || ""} ${cat.nameAm || ""} ${cat.description || ""} ${cat.descriptionAm || ""}`.toLowerCase();
+      if (hay.includes(term) || children.length > 0) {
+        out.push({ ...cat, children });
+      }
+    }
+    return out;
+  };
+
   const renderCategoryTree = (cats: Category[], depth = 0): React.ReactNode => {
     return cats.map((cat) => (
       <div key={cat._id}>
@@ -206,7 +221,18 @@ export default function AdminCategoriesPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>{t("categoryTree")}</CardTitle>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <CardTitle>{t("categoryTree")}</CardTitle>
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t("searchItems")}
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               {loading ? (
@@ -221,7 +247,7 @@ export default function AdminCategoriesPage() {
                   <Button onClick={() => openModal()}><Plus className="mr-2 h-4 w-4" /> {t("addCategory")}</Button>
                 </div>
               ) : (
-                <div>{renderCategoryTree(categories)}</div>
+                <div>{renderCategoryTree(filterCategories(categories, searchTerm))}</div>
               )}
             </CardContent>
           </Card>
@@ -294,6 +320,19 @@ export default function AdminCategoriesPage() {
                         {isUploading ? t("uploading") : t("uploadImage")}
                       </Button>
                       <p className="text-xs text-muted-foreground mt-1">{t("imageRequirements")}</p>
+                      {uploadError && (
+                        <div className="flex items-start justify-between gap-2 text-sm text-red-700 bg-red-50 border border-red-200 p-2 rounded mt-2">
+                          <span>{uploadError}</span>
+                          <button
+                            type="button"
+                            aria-label={t("close")}
+                            onClick={() => setUploadError(null)}
+                            className="text-red-400 hover:text-red-700 p-0.5 rounded shrink-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -341,6 +380,7 @@ export default function AdminCategoriesPage() {
             message={uploadError || t("uploadFailedConfirm")}
             confirmLabel={t("ok")}
             variant="info"
+            hideCancel
             onConfirm={() => setUploadError(null)}
             onCancel={() => setUploadError(null)}
           />

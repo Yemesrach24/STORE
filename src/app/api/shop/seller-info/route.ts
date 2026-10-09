@@ -19,7 +19,7 @@ export async function GET() {
         whatsapp: null,
         telegram: null,
         instagram: null,
-        shopName: 'TKD Store',
+        shopName: 'K-FORCE ETHIOPIA',
         shopDescription: 'Taekwondo Equipment Store',
       });
     }
@@ -29,7 +29,7 @@ export async function GET() {
       whatsapp: seller.whatsapp || null,
       telegram: seller.telegram || null,
       instagram: seller.instagram || null,
-      shopName: seller.shopName || 'TKD Store',
+      shopName: seller.shopName || 'K-FORCE ETHIOPIA',
       shopDescription: seller.shopDescription || 'Taekwondo Equipment Store',
     });
   } catch (error: unknown) {

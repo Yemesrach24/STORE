@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Info, CheckCircle, X } from "lucide-react";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
@@ -31,6 +32,17 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const { t } = useLanguage();
+
+  // Close on Escape so the dialog can never get stuck open.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onCancel]);
+
   if (!open) return null;
 
   const iconMap = {
@@ -58,6 +70,9 @@ export function ConfirmDialog({
       <div
         className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl space-y-4"
         onClick={(e) => e.stopPropagation()}
+        role="alertdialog"
+        aria-modal="true"
+        aria-label={title}
       >
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-full ${bgMap[variant]}`}>
@@ -67,7 +82,15 @@ export function ConfirmDialog({
             <h3 className="font-bold text-lg text-gray-900">{title}</h3>
             <p className="text-sm text-gray-500 mt-1">{message}</p>
           </div>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+          <button
+            type="button"
+            aria-label={t("close")}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel();
+            }}
+            className="text-gray-400 hover:text-gray-600 p-1 -m-1 rounded-md hover:bg-gray-100 transition-colors shrink-0"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>

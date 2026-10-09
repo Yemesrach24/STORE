@@ -44,10 +44,10 @@
 }
 
 :root {
-  /* Brand color - change this single value to rebrand the entire site */
-  --brand: #8B1A1A;
-  --brand-light: #A52A2A;
-  --brand-dark: #6B1414;
+  /* Brand — Warrior orange + Deep dojo green (matches new storefront design) */
+  --brand: #C75E0E;
+  --brand-light: #E07B2A;
+  --brand-dark: #0E2B1E;
 
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -56,7 +56,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #8B1A1A;
+  --primary: #C75E0E;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -90,7 +90,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #A52A2A;
+  --primary: #E07B2A;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -123,5 +123,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Hide scrollbars for horizontal carousels while keeping scroll */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }

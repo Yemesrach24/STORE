@@ -49,7 +49,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/admin/users/[id] - Deactivate user (SUPER_ADMIN only)
+// DELETE /api/admin/users/[id] - Permanently delete user (SUPER_ADMIN only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -61,7 +61,7 @@ export async function DELETE(
     const { id } = await params;
 
     if (id === user.dbUserId) {
-      return NextResponse.json({ error: 'Cannot deactivate yourself' }, { status: 400 });
+      return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
     }
 
     const target = await User.findById(id);
@@ -69,15 +69,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Only SUPER_ADMIN can deactivate other SUPER_ADMINs
+    // Only SUPER_ADMIN can delete other SUPER_ADMINs
     if (target.role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Only SUPER_ADMIN can deactivate other admins' }, { status: 403 });
+      return NextResponse.json({ error: 'Only SUPER_ADMIN can delete other admins' }, { status: 403 });
     }
 
-    target.isActive = false;
-    await target.save();
+    // Hard delete from the database
+    await User.findByIdAndDelete(id);
 
-    return NextResponse.json({ message: 'User deactivated successfully' });
+    return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -85,7 +85,7 @@ export async function DELETE(
     if (error.message === 'FORBIDDEN') {
       return NextResponse.json({ error: 'Only SUPER_ADMIN can manage users' }, { status: 403 });
     }
-    console.error('Error deactivating user:', error);
-    return NextResponse.json({ error: 'Failed to deactivate user' }, { status: 500 });
+    console.error('Error deleting user:', error);
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { getAuthUser } from '@/lib/auth-helpers';
 import dbConnect from '@/lib/mongodb';
 import { Order, Item, Category, User } from '@/models';
+import { parsePriceToNumber } from '@/lib/price';
 
 // GET /api/orders - List orders
 // Admin: sees all orders; Customer: sees only their orders.
@@ -22,6 +23,9 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
+    // Shop "My Orders" always passes mine=1 so admins also see only their own
+    // orders there. Dashboard (/admin/orders) omits it to see everyone's.
+    const mineOnly = searchParams.get('mine') === '1' || searchParams.get('scope') === 'mine';
 
     const query: any = {};
 
@@ -29,10 +33,14 @@ export async function GET(request: NextRequest) {
       // Signed-in customer: only their own orders.
       // Cast to ObjectId so the same filter works in find() and aggregate()
       // ($match does not auto-cast the way find() does).
-      if (user.role === 'CUSTOMER') {
-        query.buyerId = new mongoose.Types.ObjectId(user.dbUserId);
+      if (user.role === 'CUSTOMER' || mineOnly) {
+        try {
+          query.buyerId = new mongoose.Types.ObjectId(user.dbUserId);
+        } catch {
+          query.buyerId = user.dbUserId;
+        }
       }
-      // Admin/SUPER_ADMIN sees all orders (no filter)
+      // Admin/SUPER_ADMIN without mine=1 sees all orders (dashboard)
     } else {
       // Guest: resolve their record via the `guest_id` cookie (phone-keyed).
       const guestId = request.cookies.get('guest_id')?.value;
@@ -146,11 +154,12 @@ export async function POST(request: NextRequest) {
     for (const li of lineItems) {
       const src = li.source as 'local' | 'imported';
       const sourceData = item[src];
-      let unitPrice = sourceData.basePrice;
+      // Prices may be numbers or free text ("300-700") — store best-effort numeric value
+      let unitPrice = parsePriceToNumber(sourceData.basePrice);
       if (li.size) {
         const sz = sourceData.sizes.find((s: any) => s.name === li.size);
         if (sz) {
-          unitPrice = sz.price != null ? sz.price : sourceData.basePrice;
+          unitPrice = parsePriceToNumber(sz.price != null && sz.price !== '' ? sz.price : sourceData.basePrice);
         }
       } else if (sourceData.sizes.length > 0) {
         // Item has sizes but client didn't specify one — error

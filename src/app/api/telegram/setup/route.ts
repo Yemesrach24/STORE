@@ -72,7 +72,7 @@ export async function GET() {
           { command: 'language', description: 'Change language / ቋንቋ ይቀይሩ' },
           { command: 'start', description: 'Welcome message with store info / መግቢያ' },
           { command: 'shop', description: 'Browse our taekwondo store / ሱቅ' },
-          { command: 'about', description: 'Learn about TKD Store / ስለ እኛ' },
+          { command: 'about', description: 'Learn about K-FORCE ETHIOPIA / ስለ እኛ' },
           { command: 'help', description: 'Get help and instructions / እርዳታ' },
         ],
       }),
@@ -84,7 +84,7 @@ export async function GET() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        description: '🥋 TKD Store - Premium taekwondo equipment. Browse, order, and connect with sellers directly.',
+        description: '🥋 K-FORCE ETHIOPIA - Premium taekwondo equipment. Browse, order, and connect with sellers directly.',
       }),
     });
 

@@ -185,7 +185,7 @@ export default async function NewProduct() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="location">Storage Location *</Label>
-                      <Input id="location" placeholder="e.g., Warehouse A, Shelf B1" required />
+                      <Input id="location" placeholder="Addis Ababa" required />
                     </div>
                     
                     <div className="space-y-2">

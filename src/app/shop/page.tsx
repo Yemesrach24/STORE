@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/price";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { ShopHeader } from "@/components/shop/ShopHeader";
 import {
-  Search, Loader2, ChevronRight, User, LogOut, Menu, X,
+  Search, Loader2, ChevronRight,
+  ShieldCheck, Zap, Medal, Target,
 } from "lucide-react";
 
 interface Category {
@@ -36,48 +36,132 @@ interface Item {
   imageUrls?: string[];
   categoryId: { _id: string; name: string; nameAm?: string; imageUrl?: string };
   color?: string;
-  local?: { enabled: boolean; basePrice: number };
-  imported?: { enabled: boolean; basePrice: number };
+  local?: { enabled: boolean; basePrice: number | string };
+  imported?: { enabled: boolean; basePrice: number | string };
   tags?: string[];
   supplier?: string;
   supplierAm?: string;
 }
 
 export default function ShopPage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { t, ln } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [promoIndex, setPromoIndex] = useState(0);
+  const [mottoIndex, setMottoIndex] = useState(0);
+  const promoRef = useRef<HTMLDivElement>(null);
+  const mottoRef = useRef<HTMLDivElement>(null);
+  const firstRender = useRef(true);
+
+  const PROMO_CARDS = [
+    {
+      src: "/photo%201.jpeg",
+      eyebrow: t("promo1Eyebrow"),
+      title: t("promo1Title"),
+      desc: t("promo1Desc"),
+    },
+    {
+      src: "/photo%202.jpeg",
+      eyebrow: t("promo2Eyebrow"),
+      title: t("promo2Title"),
+      desc: t("promo2Desc"),
+    },
+  ];
+
+  const MOTTOS = [
+    { icon: Target, title: t("motto1Title"), desc: t("motto1Desc") },
+    { icon: Zap, title: t("motto2Title"), desc: t("motto2Desc") },
+    { icon: Medal, title: t("motto3Title"), desc: t("motto3Desc") },
+    { icon: ShieldCheck, title: t("motto4Title"), desc: t("motto4Desc") },
+  ];
 
   useEffect(() => {
     Promise.all([fetchCategories(), fetchItems()]);
+    // scroll to hash when arriving from other pages (e.g. /shop#categories)
+    if (typeof window !== "undefined" && window.location.hash) {
+      const id = window.location.hash.replace("#", "");
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 400);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
-  // Close mobile menu on Escape and lock body scroll while open
+  // Live debounced search — every keystroke filters after a short pause
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileMenuOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
     }
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
-    };
-  }, [mobileMenuOpen]);
+    const timer = setTimeout(() => {
+      fetchItems();
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
+  // One-direction auto-slide: always moves forward (left), loops to start.
+  // Pauses while the user is touching/dragging the carousel.
+  const promoIndexRef = useRef(0);
+  const mottoIndexRef = useRef(0);
+  const promoPaused = useRef(false);
+  const mottoPaused = useRef(false);
+
+  const scrollPromoTo = (i: number) => {
+    const el = promoRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-promo-card]");
+    const w = card?.offsetWidth ?? el.clientWidth;
+    el.scrollTo({ left: i * (w + 16), behavior: "smooth" });
+  };
+
+  const scrollMottoTo = (i: number) => {
+    const el = mottoRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-motto-card]");
+    const w = card?.offsetWidth ?? el.clientWidth;
+    el.scrollTo({ left: i * (w + 12), behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    promoIndexRef.current = promoIndex;
+  }, [promoIndex]);
+  useEffect(() => {
+    mottoIndexRef.current = mottoIndex;
+  }, [mottoIndex]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (promoPaused.current) return;
+      const next = (promoIndexRef.current + 1) % PROMO_CARDS.length;
+      promoIndexRef.current = next;
+      setPromoIndex(next);
+      scrollPromoTo(next);
+    }, 4500);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [PROMO_CARDS.length]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (mottoPaused.current) return;
+      const next = (mottoIndexRef.current + 1) % MOTTOS.length;
+      mottoIndexRef.current = next;
+      setMottoIndex(next);
+      scrollMottoTo(next);
+    }, 3500);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [MOTTOS.length]);
 
   const fetchCategories = async () => {
     try {
@@ -94,7 +178,7 @@ export default function ShopPage() {
     try {
       const params = new URLSearchParams({ limit: "50" });
       if (selectedCategory) params.set("categoryId", selectedCategory);
-      if (searchTerm) params.set("search", searchTerm);
+      if (searchTerm.trim()) params.set("search", searchTerm.trim());
       const response = await fetch(`/api/shop/items?${params}`);
       const data = await response.json();
       setItems(data.items || []);
@@ -113,395 +197,412 @@ export default function ShopPage() {
     return null;
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="px-3 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/shop" className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="K-FORCE ETHIOPIA" className="w-10 h-10 rounded-full object-contain" />
-              <div className="flex flex-col">
-                <span className="text-lg font-bold text-gray-900 tracking-tight leading-none">K-FORCE ETHIOPIA</span>
-                <span className="text-[10px] sm:text-[11px] text-gray-400 tracking-widest uppercase">{t("shopTagline")}</span>
-              </div>
-            </Link>
+  const getPriceLabel = (item: Item) => {
+    const parts: string[] = [];
+    if (item.local?.enabled) parts.push(formatPrice(item.local.basePrice));
+    if (item.imported?.enabled) parts.push(formatPrice(item.imported.basePrice));
+    return parts.length > 0 ? parts.join(" / ") : formatPrice(0);
+  };
 
-            <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm">
-              <Link href="/shop" className="font-medium text-gray-900">{t("home")}</Link>
-              <a href="#equipment" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">{t("categories")}</a>
-              <a href="#products" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">{t("allProducts")}</a>
-              {status === "authenticated" && (
-                <Link href="/shop/orders" className="font-medium text-gray-500 hover:text-gray-900 transition-colors">{t("myOrders")}</Link>
-              )}
-              {status === "authenticated" && (session?.user as any)?.role && ["SUPER_ADMIN", "ADMIN"].includes((session?.user as any)?.role) && (
-                <Link href="/dashboard" className="font-medium text-[var(--brand)] hover:text-[var(--brand-dark)] transition-colors">
-                  {t("dashboard")} →
-                </Link>
-              )}
-            </nav>
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
-            <div className="flex items-center gap-2">
-              <LanguageSwitcher className="hidden sm:flex" />
-              {status === "loading" ? (
-                <div className="w-20 h-8 bg-gray-100 rounded-md animate-pulse" />
-              ) : session ? (
-                <>
-                  <Link href="/profile" className="hidden sm:block">
-                    <Button variant="ghost" size="sm" className="text-gray-700 gap-1.5">
-                      <User className="h-4 w-4" /> {t("profile")}
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-400 hover:text-[var(--brand)] gap-1.5"
-                    onClick={() => setShowSignOutConfirm(true)}
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="md:hidden text-gray-700 -mr-1"
-                    aria-label={mobileMenuOpen ? t("close") : t("menu")}
-                    aria-expanded={mobileMenuOpen}
-                    onClick={() => setMobileMenuOpen((v) => !v)}
-                  >
-                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link href="/sign-in">
-                    <Button size="sm" className="bg-[var(--brand)] hover:bg-[var(--brand-dark)] text-white font-medium px-4 sm:px-5">
-                      {t("signIn")}
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="md:hidden text-gray-700 -mr-1"
-                    aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-                    aria-expanded={mobileMenuOpen}
-                    onClick={() => setMobileMenuOpen((v) => !v)}
-                  >
-                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                  </Button>
-                </>
-              )}
+  const handlePromoScroll = () => {
+    const el = promoRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    if (max <= 0) return;
+    const idx = Math.round((el.scrollLeft / max) * (PROMO_CARDS.length - 1));
+    setPromoIndex(idx);
+  };
+
+  const goToPromo = (i: number) => {
+    promoIndexRef.current = i;
+    setPromoIndex(i);
+    scrollPromoTo(i);
+  };
+
+  const handleMottoScroll = () => {
+    const el = mottoRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    if (max <= 0) return;
+    const idx = Math.round((el.scrollLeft / max) * (MOTTOS.length - 1));
+    setMottoIndex(idx);
+  };
+
+  const goToMotto = (i: number) => {
+    mottoIndexRef.current = i;
+    setMottoIndex(i);
+    scrollMottoTo(i);
+  };
+
+  const renderProductCard = (item: Item) => {
+    const imgSrc = getItemImage(item);
+    const catName = item.categoryId ? ln(item.categoryId.name, item.categoryId.nameAm) : t("uncategorized");
+    return (
+      <Card
+        key={item._id}
+        className="bg-white border border-stone-200/80 hover:shadow-lg hover:-translate-y-0.5 transition-all h-full overflow-hidden rounded-xl py-0 gap-0"
+      >
+        <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden group">
+          {imgSrc ? (
+            <img
+              src={imgSrc}
+              alt={item.name}
+              className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center p-4">
+              <img src="/logo.png" alt="No image" className="w-16 h-16 object-contain opacity-30" />
             </div>
-          </div>
-        </div>
-
-        {/* Mobile menu — overlay + slide-down panel */}
-        <div
-          className={cn(
-            "md:hidden fixed inset-0 z-40 transition-opacity duration-200",
-            mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           )}
-        >
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-          <nav
-            className={cn(
-              "relative bg-white shadow-xl border-b border-gray-200 transition-transform duration-200 ease-out",
-              mobileMenuOpen ? "translate-y-0" : "-translate-y-full"
-            )}
-          >
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700">{t("menu")}</span>
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-700 rounded-md"
-                aria-label={t("close")}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="px-2 py-2">
-              <Link href="/shop" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-900 hover:bg-gray-50">{t("home")}</Link>
-              <a href="#equipment" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">{t("categories")}</a>
-              <a href="#products" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">{t("allProducts")}</a>
-              {status === "authenticated" && (
-                <>
-                  <Link href="/shop/orders" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">{t("myOrders")}</Link>
-                  <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">{t("profile")}</Link>
-                </>
-              )}
-              {status === "authenticated" && (session?.user as any)?.role && ["SUPER_ADMIN", "ADMIN"].includes((session?.user as any)?.role) && (
-                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="flex items-center rounded-lg px-3 py-3 text-base font-semibold text-[var(--brand)] hover:bg-gray-50">
-                  {t("dashboard")} →
-                </Link>
-              )}
-              {/* Language switcher inside mobile menu */}
-              <div className="px-3 py-3 mt-1 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">{t("language")}</span>
-                <LanguageSwitcher />
-              </div>
-            </div>
-          </nav>
+          <span className="absolute top-2 left-2 text-[9px] font-bold px-2 py-1 rounded bg-[#0E2B1E] text-white uppercase tracking-wide">
+            {catName}
+          </span>
+          <span className="absolute top-2 right-2 text-[9px] font-bold px-2 py-1 rounded bg-[var(--brand)] text-white uppercase tracking-wide">
+            {t("newBadge")}
+          </span>
         </div>
-      </header>
+        <CardContent className="p-3">
+          {(item.supplier || item.supplierAm) && (
+            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider line-clamp-1 mb-0.5">
+              {ln(item.supplier, item.supplierAm)}
+            </p>
+          )}
+          <Link href={`/shop/${item._id}`}>
+            <h3 className="font-bold text-[13px] leading-snug text-stone-900 line-clamp-2 min-h-[2.4rem] hover:text-[var(--brand)] transition-colors">
+              {ln(item.name, item.nameAm)}
+            </h3>
+          </Link>
+          <div className="flex items-end justify-between pt-2 mt-2 border-t border-stone-100">
+            <div>
+              <p className="text-[9px] text-stone-400 uppercase tracking-wider font-semibold">{t("price")}</p>
+              <p className="text-[15px] font-extrabold text-stone-900 leading-tight">
+                {getPriceLabel(item)}
+              </p>
+            </div>
+            <Link
+              href={`/shop/${item._id}`}
+              className="text-[11px] font-bold px-3.5 py-1.5 rounded-full bg-orange-50 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors flex items-center gap-0.5"
+            >
+              {t("view")} <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
-      <div className="px-3 sm:px-4 lg:px-6 py-6">
-        {/* Search */}
-        <div className="max-w-xl mb-8">
-          <div className="flex gap-2">
+  const selectedCatName = selectedCategory
+    ? (() => {
+        const cat = categories.find((c) => c._id === selectedCategory);
+        return cat ? ln(cat.name, cat.nameAm) : t("allProductsTitle");
+      })()
+    : t("allProductsTitle");
+
+  return (
+    <div className="min-h-screen bg-[#F4F3EF] text-stone-900">
+      <ShopHeader onScrollTo={scrollTo} />
+
+      {/* ── Warrior strip — white text, no leading dot ── */}
+      <div className="bg-[#0E2B1E] text-white">
+        <p className="text-center text-[10px] sm:text-[11px] font-semibold tracking-[0.18em] uppercase py-2 px-3">
+          {t("warriorLine")}
+        </p>
+      </div>
+
+      {/* ── Search ── */}
+      <div className="bg-white border-b border-stone-200/70">
+        <div className="px-3 sm:px-4 lg:px-6 py-3">
+          <div className="flex gap-2 w-full">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
               <Input
-                placeholder={t("searchPlaceholder")}
-                className="pl-10 h-11 bg-white border-gray-200 rounded-lg"
+                placeholder={t("searchPlaceholderLong")}
+                className="pl-10 h-10 bg-stone-50 border-stone-200 rounded-md text-[13px]"
                 suppressHydrationWarning
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
-            <Button onClick={handleSearch} className="h-11 px-6 bg-[var(--brand)] hover:bg-[var(--brand-dark)] rounded-lg font-medium" suppressHydrationWarning>
-              {t("search")}
+            <Button onClick={handleSearch} className="h-10 px-5 bg-[#0E2B1E] hover:bg-[#1a4530] rounded-md font-bold text-xs tracking-wide" suppressHydrationWarning>
+              {t("search")} <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Categories */}
-        {categories.length > 0 && (
-          <div id="equipment" className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{t("categoriesTitle")}</h2>
-                <p className="text-sm text-gray-500 mt-1">{t("browseByCategory")}</p>
-              </div>
-              {selectedCategory && (
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className="text-sm text-[var(--brand)] hover:text-[var(--brand-dark)] font-medium transition-colors"
-                >
-                  ← {t("viewAll")}
-                </button>
-              )}
+      {/* Full-width content — edges close to the viewport */}
+      <div className="px-3 sm:px-4 lg:px-6 py-5 space-y-8 w-full">
+        {/* ── Equipment Categories ── */}
+        <section id="categories" className="scroll-mt-32">
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.16em] text-[var(--brand)] uppercase flex items-center gap-1">
+                <span className="text-xs">🏷️</span> {t("equipmentCategories")}
+              </p>
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight">{t("browseSpecializedGear")}</h2>
             </div>
+            <p className="hidden sm:block text-[11px] text-stone-400">{t("browseVerifiedInventory")}</p>
+          </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-              {/* All Equipment Card */}
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`text-left rounded-xl border-2 transition-all overflow-hidden bg-white group ${
-                  !selectedCategory
-                    ? "border-[var(--brand)] shadow-md"
-                    : "border-gray-200 hover:border-gray-400"
-                }`}
-              >
-                <div className="aspect-[3/2] bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center overflow-hidden">
-                  <div className="text-center group-hover:scale-105 transition-transform">
-                    <img src="/logo.png" alt="All" className="w-9 h-9 mx-auto mb-1 object-contain" />
-                    <p className="text-[11px] font-semibold text-gray-700">{items.length} {t("items")}</p>
-                  </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+            <button
+              onClick={() => { setSelectedCategory(null); scrollTo("products"); }}
+              className={cn(
+                "bg-white rounded-xl border text-left overflow-hidden hover:shadow-md transition-all group",
+                !selectedCategory ? "border-[var(--brand)] ring-1 ring-[var(--brand)]/30" : "border-stone-200/80"
+              )}
+            >
+              <div className="h-24 bg-amber-50/60 flex items-center justify-center overflow-hidden">
+                <img src="/logo.png" alt="All" className="w-16 h-16 object-contain group-hover:scale-105 transition-transform" />
+              </div>
+              <div className="p-2.5 flex items-center justify-between gap-1">
+                <div>
+                  <p className="text-xs font-bold">{t("allEquipment")}</p>
+                  <p className="text-[10px] text-stone-400">{t("fullMasterCatalog")}</p>
                 </div>
-                <div className="p-2">
-                  <p className="font-bold text-xs text-gray-900 truncate">{t("allEquipment")}</p>
+                <ChevronRight className="h-4 w-4 text-stone-300 shrink-0" />
+              </div>
+            </button>
+            {categories.slice(0, 5).map((cat) => (
+              <button
+                key={cat._id}
+                onClick={() => { setSelectedCategory(cat._id); scrollTo("products"); }}
+                className={cn(
+                  "bg-white rounded-xl border text-left overflow-hidden hover:shadow-md transition-all group",
+                  selectedCategory === cat._id ? "border-[var(--brand)] ring-1 ring-[var(--brand)]/30" : "border-stone-200/80"
+                )}
+              >
+                <div className="h-24 bg-stone-100 flex items-center justify-center overflow-hidden">
+                  {cat.imageUrl ? (
+                    <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <span className="text-xl font-bold text-stone-300">{cat.name.charAt(0)}</span>
+                  )}
+                </div>
+                <div className="p-2.5 flex items-center justify-between gap-1">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold truncate">{ln(cat.name, cat.nameAm)}</p>
+                    <p className="text-[10px] text-stone-400 truncate">{t("itemsCount", { count: cat.itemCount || 0 })}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-stone-300 shrink-0" />
                 </div>
               </button>
-
-              {/* Category Cards */}
-              {categories.map((cat) => (
+            ))}
+          </div>
+          {categories.length > 6 && (
+            <div className="flex gap-3 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+              {categories.slice(5).map((cat) => (
                 <button
                   key={cat._id}
-                  onClick={() => setSelectedCategory(cat._id)}
-                  className={`text-left rounded-xl border-2 transition-all overflow-hidden bg-white group ${
-                    selectedCategory === cat._id
-                      ? "border-[var(--brand)] shadow-md"
-                      : "border-gray-200 hover:border-gray-400"
-                  }`}
+                  onClick={() => { setSelectedCategory(cat._id); scrollTo("products"); }}
+                  className={cn(
+                    "shrink-0 flex items-center gap-2 bg-white rounded-full border pl-1 pr-3 py-1 hover:shadow transition-all",
+                    selectedCategory === cat._id ? "border-[var(--brand)]" : "border-stone-200"
+                  )}
                 >
-                  <div className="aspect-[3/2] bg-gray-50 flex items-center justify-center overflow-hidden">
+                  <span className="h-8 w-8 rounded-full overflow-hidden bg-stone-100 flex items-center justify-center">
                     {cat.imageUrl ? (
-                      <img
-                        src={cat.imageUrl}
-                        alt={cat.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                      <img src={cat.imageUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="text-center p-2">
-                        <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-100 flex items-center justify-center">
-                          <span className="text-sm font-bold text-gray-400">{cat.name.charAt(0)}</span>
-                        </div>
-                        <p className="text-[11px] text-gray-400">{cat.itemCount || 0} {t("items")}</p>
-                      </div>
+                      <span className="text-xs font-bold text-stone-400">{cat.name.charAt(0)}</span>
                     )}
-                  </div>
-                  <div className="p-2">
-                    <p className="font-bold text-xs text-gray-900 truncate">{ln(cat.name, cat.nameAm)}</p>
-                  </div>
+                  </span>
+                  <span className="text-xs font-semibold max-w-[8rem] truncate">{ln(cat.name, cat.nameAm)}</span>
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </section>
 
-        {/* Products */}
-        <div id="products">
-          <div className="flex items-center justify-between mb-6">
+        {/* ── All Products — title only ── */}
+        <section id="products" className="scroll-mt-32">
+          <div className="flex items-end justify-between mb-1">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                {selectedCategory
-                  ? (() => {
-                      const cat = categories.find((c) => c._id === selectedCategory);
-                      return ln(cat?.name, cat?.nameAm) || t("allProductsTitle");
-                    })()
-                  : t("allProductsTitle")}
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">{items.length} {t("productsAvailable")}</p>
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight">{selectedCatName}</h2>
             </div>
           </div>
+          {selectedCategory && (
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="mt-2 text-xs font-semibold text-[var(--brand)] hover:underline"
+            >
+              ✕ Clear filter — show all products
+            </button>
+          )}
 
           {loading ? (
             <div className="flex justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              <Loader2 className="h-6 w-6 animate-spin text-stone-400" />
             </div>
           ) : items.length === 0 ? (
-            <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
-              <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-                <Search className="h-7 w-7 text-gray-300" />
+            <div className="text-center py-16 bg-white rounded-2xl border border-stone-200 mt-3">
+              <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-stone-100 flex items-center justify-center">
+                <Search className="h-7 w-7 text-stone-300" />
               </div>
-              <p className="font-medium text-gray-700 mb-1">{t("noProducts")}</p>
-              <p className="text-sm text-gray-500">{t("tryDifferentSearch")}</p>
+              <p className="font-medium text-stone-700 mb-1">{t("noProducts")}</p>
+              <p className="text-sm text-stone-500">{t("tryDifferentSearch")}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {items.map((item) => {
-                const imgSrc = getItemImage(item);
-                return (
-                  <Link key={item._id} href={`/shop/${item._id}`}>
-                    <Card className="bg-white border border-gray-200 hover:shadow-lg transition-all cursor-pointer h-full overflow-hidden group rounded-xl">
-                      <div className="aspect-square bg-gray-50 overflow-hidden relative">
-                        {imgSrc ? (
-                          <img
-                            src={imgSrc}
-                            alt={item.name}
-                            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center p-4">
-                            <img src="/logo.png" alt="No image" className="w-16 h-16 object-contain opacity-30" />
-                          </div>
-                        )}
-                      </div>
-                      <CardContent className="p-3 md:p-4">
-                        <p className="text-xs text-[var(--brand)] font-semibold uppercase tracking-wide mb-1">
-                          {item.categoryId ? ln(item.categoryId.name, item.categoryId.nameAm) : t("uncategorized")}
-                        </p>
-                        <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 mb-1">
-                          {ln(item.name, item.nameAm)}
-                        </h3>
-                        {(item.supplier || item.supplierAm) && (
-                          <p className="text-xs text-gray-400 mb-1">
-                            {t("supplier")}: {ln(item.supplier, item.supplierAm)}
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-3 min-h-[2rem]">
-                          {ln(item.description, item.descriptionAm)}
-                        </p>
-                        {item.tags && item.tags.length > 0 && (
-                          <div className="flex gap-1 flex-wrap mb-3">
-                            {item.tags.slice(0, 2).map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0 text-gray-500 border-gray-200">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex items-end justify-between pt-2 border-t border-gray-100">
-                          <span className="text-lg font-bold text-gray-900">
-                            {item.local?.enabled && item.imported?.enabled
-                              ? `Br ${(item.local?.basePrice ?? 0).toLocaleString()} / ${(item.imported?.basePrice ?? 0).toLocaleString()}`
-                              : item.local?.enabled
-                              ? `Br ${item.local.basePrice.toLocaleString()}`
-                              : item.imported?.enabled
-                              ? `Br ${item.imported.basePrice.toLocaleString()}`
-                              : `Br 0`}
-                          </span>
-                          <span className="text-xs text-[var(--brand)] font-medium flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
-                            {t("view")} <ChevronRight className="h-3.5 w-3.5" />
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mt-3">
+              {items.map((item) => renderProductCard(item))}
             </div>
           )}
-        </div>
+        </section>
+
+        {/* ── 2 promo cards — auto-sliding, one at a time on mobile ── */}
+        <section aria-label="Featured collections">
+          <div
+            ref={promoRef}
+            onScroll={handlePromoScroll}
+            onTouchStart={() => { promoPaused.current = true; }}
+            onTouchEnd={() => { setTimeout(() => { promoPaused.current = false; }, 3000); }}
+            onMouseEnter={() => { promoPaused.current = true; }}
+            onMouseLeave={() => { promoPaused.current = false; }}
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide"
+          >
+            {PROMO_CARDS.map((promo) => (
+              <article
+                key={promo.title}
+                data-promo-card
+                className="relative snap-start shrink-0 w-full sm:w-[calc(50%-8px)] rounded-2xl overflow-hidden min-h-[210px] sm:min-h-[240px] flex"
+              >
+                <img src={promo.src} alt={promo.title} className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/10" />
+                <div className="relative mt-auto p-5 sm:p-6 max-w-[85%]">
+                  <p className="text-[10px] font-bold tracking-[0.2em] text-orange-300 uppercase mb-1">{promo.eyebrow}</p>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight tracking-tight">{promo.title}</h3>
+                  <p className="text-[12px] text-white/75 leading-relaxed mt-1.5">{promo.desc}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-1.5 mt-2">
+            {PROMO_CARDS.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => goToPromo(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  promoIndex === i ? "w-6 bg-[var(--brand)]" : "w-1.5 bg-stone-300 hover:bg-stone-400"
+                )}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* ── 4 mottos — auto-sliding, one at a time on mobile ── */}
+        <section aria-label="Our values">
+          <div
+            ref={mottoRef}
+            onScroll={handleMottoScroll}
+            onTouchStart={() => { mottoPaused.current = true; }}
+            onTouchEnd={() => { setTimeout(() => { mottoPaused.current = false; }, 3000); }}
+            onMouseEnter={() => { mottoPaused.current = true; }}
+            onMouseLeave={() => { mottoPaused.current = false; }}
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide sm:grid sm:grid-cols-4 sm:overflow-visible"
+          >
+            {MOTTOS.map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                data-motto-card
+                className="snap-start shrink-0 w-full sm:w-auto bg-white rounded-xl border border-stone-200/70 px-4 py-4 flex items-center gap-3"
+              >
+                <span className="h-9 w-9 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                  <Icon className="h-5 w-5 text-[var(--brand)]" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-extrabold tracking-wide leading-tight">{title}</p>
+                  <p className="text-[11px] text-stone-500 mt-0.5">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-1.5 mt-2 sm:hidden">
+            {MOTTOS.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Go to motto ${i + 1}`}
+                onClick={() => goToMotto(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  mottoIndex === i ? "w-6 bg-[var(--brand)]" : "w-1.5 bg-stone-300"
+                )}
+              />
+            ))}
+          </div>
+          {/* dots also visible on desktop for consistency */}
+          <div className="hidden sm:flex items-center justify-center gap-1.5 mt-2">
+            {MOTTOS.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Go to motto ${i + 1}`}
+                onClick={() => goToMotto(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  mottoIndex === i ? "w-6 bg-[var(--brand)]" : "w-1.5 bg-stone-300 hover:bg-stone-400"
+                )}
+              />
+            ))}
+          </div>
+        </section>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 mt-12">
-        <div className="px-3 sm:px-4 lg:px-6 py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="sm:col-span-2 lg:col-span-1">
+      {/* ── Footer (deep dojo green) ── */}
+      <footer className="bg-[#0E2B1E] text-stone-300 mt-6">
+        <div className="px-4 sm:px-6 lg:px-6 py-10 w-full">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-3">
-                <img src="/logo.png" alt="K-FORCE ETHIOPIA" className="w-8 h-8 rounded-full object-contain" />
-                <span className="font-bold text-gray-900">K-FORCE ETHIOPIA</span>
+                <img src="/logo.png" alt="K-FORCE ETHIOPIA" className="w-9 h-9 rounded-full object-contain bg-white" />
+                <span className="font-extrabold text-white tracking-tight text-sm">K-FORCE <span className="text-orange-400">ETHIOPIA</span></span>
               </div>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                {t("shopTagline")}
+              <p className="text-[10px] font-bold tracking-[0.2em] text-orange-300/80 uppercase mb-2">{t("premiumGear")}</p>
+              <p className="text-xs text-stone-400 leading-relaxed max-w-xs mb-4">
+                {t("premiumGearDesc")}
               </p>
+              <p className="text-xs text-stone-400 flex items-center gap-2">📍 {t("addisAbaba")}</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 text-sm mb-3">{t("shopFooter")}</h4>
+              <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3">{t("shopFooter")}</h4>
               <ul className="space-y-2">
-                <li><Link href="/shop" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("allProducts")}</Link></li>
-                <li><a href="#equipment" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("categories")}</a></li>
-                {session && <li><Link href="/shop/orders" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("myOrders")}</Link></li>}
+                <li><button onClick={() => scrollTo("products")} className="text-xs text-stone-400 hover:text-white transition-colors">{t("allProducts")}</button></li>
+                <li><button onClick={() => scrollTo("categories")} className="text-xs text-stone-400 hover:text-white transition-colors">{t("categories")}</button></li>
+                <li><Link href="/shop/orders" className="text-xs text-stone-400 hover:text-white transition-colors">{t("myOrders")}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 text-sm mb-3">{t("supportFooter")}</h4>
-              <ul className="space-y-2">
-                <li><span className="text-sm text-gray-500">{t("telegram")}: @tkd_equp_bot</span></li>
-                <li><span className="text-sm text-gray-500">{t("email")}: info@kforceethiopia.com</span></li>
-                <li><span className="text-sm text-gray-500">{t("addisAbaba")}</span></li>
+              <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3">{t("supportFooter")}</h4>
+              <ul className="space-y-2 text-xs text-stone-400">
+                <li>Telegram: @tkd_equp_bot</li>
+                <li>info@kforceethiopia.com</li>
+                <li>{t("addisAbaba")}</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 text-sm mb-3">{t("accountFooter")}</h4>
+              <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3">{t("accountFooter")}</h4>
               <ul className="space-y-2">
                 {session ? (
                   <>
-                    <li><Link href="/profile" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("profile")}</Link></li>
-                    <li><Link href="/shop/orders" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("myOrders")}</Link></li>
+                    <li><Link href="/profile" className="text-xs text-stone-400 hover:text-white transition-colors">{t("profile")}</Link></li>
+                    <li><Link href="/shop/orders" className="text-xs text-stone-400 hover:text-white transition-colors">{t("myOrders")}</Link></li>
                   </>
                 ) : (
-                  <li><Link href="/sign-in" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">{t("signIn")}</Link></li>
+                  <li><Link href="/sign-in" className="text-xs text-stone-400 hover:text-white transition-colors">{t("signIn")}</Link></li>
                 )}
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-100 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-xs text-gray-400">© 2026 {t("allRightsReserved")}</p>
+          <div className="border-t border-white/10 mt-8 pt-5 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-[11px] text-stone-500">© 2026 {t("allRightsReserved")}</p>
           </div>
         </div>
       </footer>
-
-      {/* Sign-out confirmation dialog */}
-      <ConfirmDialog
-        open={showSignOutConfirm}
-        title={t("signOutConfirmTitle")}
-        message={t("signOutConfirmMessage")}
-        confirmLabel={t("signOut")}
-        variant="warning"
-        onConfirm={() => {
-          import("next-auth/react").then(({ signOut }) =>
-            signOut({ callbackUrl: "/shop" })
-          );
-        }}
-        onCancel={() => setShowSignOutConfirm(false)}
-      />
     </div>
   );
 }

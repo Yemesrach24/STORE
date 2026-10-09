@@ -5,12 +5,12 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
+import { ShopHeader } from "@/components/shop/ShopHeader";
 import {
-  ArrowLeft, Package, Loader2, Clock, CheckCircle, XCircle,
-  ShoppingBag, Phone, MessageCircle, Send, Mail, Copy, Check, Pencil, Trash2
+  Package, Loader2, Clock, CheckCircle, XCircle,
+  Phone, MessageCircle, Send, Mail, Copy, Check, Pencil, Trash2, Minus, Plus
 } from "lucide-react";
 
 interface LineItem {
@@ -54,6 +54,9 @@ export default function ShopOrdersPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [editMessage, setEditMessage] = useState("");
+  const [editLineItems, setEditLineItems] = useState<LineItem[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,7 +101,9 @@ export default function ShopOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const params = new URLSearchParams({ page: currentPage.toString(), limit: "10" });
+      // mine=1 → even admins see only their own orders on the shop side.
+      // The dashboard (/admin/orders) omits it to see everyone's orders.
+      const params = new URLSearchParams({ page: currentPage.toString(), limit: "10", mine: "1" });
       if (activeTab !== "all") params.set("status", activeTab.toUpperCase());
       const response = await fetch(`/api/orders?${params}`);
       if (response.ok) {
@@ -119,7 +124,7 @@ export default function ShopOrdersPage() {
 
   const fetchCounts = async () => {
     try {
-      const response = await fetch("/api/orders?counts=1");
+      const response = await fetch("/api/orders?counts=1&mine=1");
       if (response.ok) {
         const data = await response.json();
         if (data.counts) setCounts(data.counts);
@@ -138,28 +143,44 @@ export default function ShopOrdersPage() {
   const startEdit = (order: Order) => {
     setEditingOrder(order);
     setEditMessage(order.message || "");
+    setEditLineItems((order.lineItems || []).map((li) => ({ ...li })));
+    setEditError(null);
   };
+
+  const updateEditQty = (idx: number, delta: number) => {
+    setEditLineItems((prev) =>
+      prev.map((li, i) => (i === idx ? { ...li, quantity: Math.max(1, li.quantity + delta) } : li))
+    );
+  };
+
+  const editTotal = editLineItems.reduce((s, li) => s + (li.unitPrice ?? 0) * li.quantity, 0);
 
   const saveEdit = async () => {
     if (!editingOrder) return;
+    setSavingEdit(true);
+    setEditError(null);
     try {
       const res = await fetch(`/api/orders/${editingOrder._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        // NOTE: no `status` — buyers may only change quantities + message
         body: JSON.stringify({
-          status: editingOrder.status,
           message: editMessage,
+          lineItems: editLineItems,
         }),
       });
       if (res.ok) {
         setEditingOrder(null);
         fetchOrders();
       } else {
-        const err = await res.json();
-        console.error("Edit failed:", err);
+        const err = await res.json().catch(() => ({}));
+        setEditError(err.error || t("placeOrderFailed"));
       }
     } catch (err) {
       console.error("Edit error:", err);
+      setEditError(t("placeOrderFailedRetry"));
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -218,24 +239,10 @@ export default function ShopOrdersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="px-3 sm:px-4 lg:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/shop" className="text-gray-500 hover:text-gray-900 transition-colors">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-lg font-semibold text-gray-900">{t("myOrders")}</h1>
-          </div>
-          <Link href="/shop">
-            <Button variant="outline" size="sm" className="font-medium gap-1.5">
-              <ShoppingBag className="h-4 w-4" /> {t("shop")}
-            </Button>
-          </Link>
-        </div>
-      </header>
+      <ShopHeader />
 
-      <div className="px-3 sm:px-4 lg:px-6 py-6">
+      <div className="px-3 sm:px-4 lg:px-6 py-6 w-full">
+        <h1 className="text-lg font-semibold text-gray-900 mb-4">{t("myOrders")}</h1>
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-white rounded-lg border border-gray-200 p-1 overflow-x-auto">
           {(["all", "pending", "approved", "declined"] as const).map((tab) => (
@@ -485,17 +492,48 @@ export default function ShopOrdersPage() {
           </div>
         )}
 
-        {/* Edit Modal */}
+        {/* Edit Modal — message + quantities */}
         {editingOrder && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setEditingOrder(null)}>
-            <div className="bg-white rounded-xl p-6 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-lg font-semibold">{t("editOrder")} #{editingOrder.orderNumber}</h3>
-              <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
-                {editingOrder.lineItems?.map((li: LineItem, idx: number) => (
-                  <p key={idx}>
-                    {li.source === 'local' ? t('sourceLocal') : t('sourceImported')} {li.size ? `${li.size} × ` : ''}{li.quantity} @ Br {(li.unitPrice ?? 0).toLocaleString()}
-                  </p>
-                ))}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">{t("editQuantities")}</label>
+                <div className="text-sm text-gray-600 bg-gray-50 rounded-xl p-3 space-y-2 border border-gray-100">
+                  {editLineItems.map((li: LineItem, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between gap-2 py-1 border-b border-gray-100 last:border-0">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-800 truncate">
+                          {li.source === 'local' ? t('sourceLocal') : t('sourceImported')}{li.size ? ` · ${li.size}` : ''}
+                        </p>
+                        <p className="text-xs text-gray-400">@ Br {(li.unitPrice ?? 0).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          aria-label="decrease"
+                          onClick={() => updateEditQty(idx, -1)}
+                          className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="text-base font-bold text-gray-900 w-6 text-center">{li.quantity}</span>
+                        <button
+                          type="button"
+                          aria-label="increase"
+                          onClick={() => updateEditQty(idx, 1)}
+                          className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-sm font-medium text-gray-600">{t("orderTotal")}</span>
+                  <span className="text-lg font-bold text-gray-900">Br {editTotal.toLocaleString()}</span>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">{t("messageToSeller")}</label>
@@ -507,9 +545,15 @@ export default function ShopOrdersPage() {
                   placeholder={t("messageToSeller")}
                 />
               </div>
+              {editError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{editError}</p>
+              )}
               <div className="flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditingOrder(null)}>{t("cancel")}</Button>
-                <Button size="sm" className="bg-[var(--brand)] hover:bg-[var(--brand-dark)]" onClick={saveEdit}>{t("save")}</Button>
+                <Button variant="outline" size="sm" onClick={() => setEditingOrder(null)} disabled={savingEdit}>{t("cancel")}</Button>
+                <Button size="sm" className="bg-[var(--brand)] hover:bg-[var(--brand-dark)]" onClick={saveEdit} disabled={savingEdit}>
+                  {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+                  {t("save")}
+                </Button>
               </div>
             </div>
           </div>

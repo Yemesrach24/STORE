@@ -45,7 +45,7 @@ describe('/api/items', () => {
       minQuantity: 10,
       maxQuantity: 500,
       unit: 'pieces',
-      location: 'Warehouse A',
+      location: 'Addis Ababa',
       supplier: 'Test Supplier',
       isActive: true,
       userId: testUser._id,

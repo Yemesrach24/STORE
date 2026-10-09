@@ -46,11 +46,11 @@ interface Category {
 
 interface ServerSize {
   name: string;
-  price?: number;
+  price?: number | string;
 }
 interface ServerSource {
   enabled: boolean;
-  basePrice: number;
+  basePrice: number | string;
   sizes: ServerSize[];
 }
 
@@ -179,14 +179,14 @@ function SourceBlockEditor({
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">{t("basePrice")} *</Label>
             <Input
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={block.basePrice}
               onChange={(e) => onChange({ ...block, basePrice: e.target.value })}
-              placeholder="0.00"
+              placeholder={t("pricePlaceholder")}
               required
             />
+            <p className="text-[11px] text-muted-foreground">{t("priceHint")}</p>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -215,13 +215,12 @@ function SourceBlockEditor({
                     className="flex-1"
                   />
                   <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
                     value={sz.price}
                     onChange={(e) => updateSize(idx, "price", e.target.value)}
-                    placeholder={t("sizePricePlaceholder")}
-                    className="w-28"
+                    placeholder={t("pricePlaceholder")}
+                    className="w-32"
                   />
                   <Button type="button" variant="ghost" size="sm" onClick={() => removeSize(idx)} className="text-red-500 hover:text-red-600 h-8 w-8 p-0">
                     <X className="h-4 w-4" />
@@ -259,7 +258,29 @@ export default function AdminItemsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  useEffect(() => { fetchCategories(); }, []);
+  useEffect(() => {
+    fetchCategories();
+    // Pick up dashboard header search (?search=...) so it actually filters.
+    if (typeof window !== "undefined") {
+      const q = new URLSearchParams(window.location.search).get("search");
+      if (q) {
+        setSearchTerm(q);
+        // Fetch immediately with the URL query (state not yet updated).
+        const params = new URLSearchParams({ page: "1", limit: "15", search: q });
+        if (categoryFilter !== "all") params.set("categoryId", categoryFilter);
+        setLoading(true);
+        fetch(`/api/items?${params}`)
+          .then((r) => r.json())
+          .then((data) => {
+            setItems(data.items || []);
+            setTotalPages(data.pagination?.pages || 1);
+          })
+          .catch(() => {})
+          .finally(() => setLoading(false));
+        return;
+      }
+    }
+  }, []);
 
   useEffect(() => { fetchItems(); }, [currentPage, categoryFilter]);
 
@@ -394,23 +415,32 @@ export default function AdminItemsPage() {
       if (form.color) body.color = form.color;
       if (form.colorAm) body.colorAm = form.colorAm;
 
-      // Local / Imported source blocks
+      // Local / Imported source blocks (prices may be numbers or text like "300-700")
+      const normPrice = (v: string) => {
+        const text = (v || "").trim();
+        if (!text) return undefined;
+        if (/^[\d,.\s]+$/.test(text)) {
+          const n = Number(text.replace(/,/g, ""));
+          if (Number.isFinite(n) && n >= 0) return n;
+        }
+        return text.slice(0, 50);
+      };
       body.local = {
         enabled: form.local.enabled,
-        basePrice: form.local.enabled ? parseFloat(form.local.basePrice) || 0 : 0,
+        basePrice: form.local.enabled ? (normPrice(form.local.basePrice) ?? 0) : 0,
         sizes: form.local.sizes.filter((s) => s.name.trim()).map((s) => ({
           name: s.name.trim(),
           nameAm: s.nameAm.trim() || undefined,
-          price: s.price !== "" ? parseFloat(s.price) || undefined : undefined,
+          price: normPrice(s.price),
         })),
       };
       body.imported = {
         enabled: form.imported.enabled,
-        basePrice: form.imported.enabled ? parseFloat(form.imported.basePrice) || 0 : 0,
+        basePrice: form.imported.enabled ? (normPrice(form.imported.basePrice) ?? 0) : 0,
         sizes: form.imported.sizes.filter((s) => s.name.trim()).map((s) => ({
           name: s.name.trim(),
           nameAm: s.nameAm.trim() || undefined,
-          price: s.price !== "" ? parseFloat(s.price) || undefined : undefined,
+          price: normPrice(s.price),
         })),
       };
 
@@ -470,9 +500,19 @@ export default function AdminItemsPage() {
   };
 
   const getPriceDisplay = (item: Item) => {
+    const fmt = (v: number | string | undefined) => {
+      if (v == null || v === "") return "0";
+      if (typeof v === "number") return v.toLocaleString();
+      const text = String(v).trim();
+      if (/^[\d,.\s]+$/.test(text)) {
+        const n = Number(text.replace(/,/g, ""));
+        if (Number.isFinite(n)) return n.toLocaleString();
+      }
+      return text;
+    };
     const parts: string[] = [];
-    if (item.local?.enabled) parts.push(`Local: Br ${item.local.basePrice.toLocaleString()}`);
-    if (item.imported?.enabled) parts.push(`Imported: Br ${item.imported.basePrice.toLocaleString()}`);
+    if (item.local?.enabled) parts.push(`Local: Br ${fmt(item.local.basePrice)}`);
+    if (item.imported?.enabled) parts.push(`Imported: Br ${fmt(item.imported.basePrice)}`);
     return parts.length > 0 ? parts.join(" | ") : `Br ${(item as any).price?.toLocaleString() || "0"}`;
   };
 
@@ -645,6 +685,7 @@ export default function AdminItemsPage() {
             message={uploadError || t("uploadFailedConfirm")}
             confirmLabel={t("ok")}
             variant="info"
+            hideCancel
             onConfirm={() => setUploadError(null)}
             onCancel={() => setUploadError(null)}
           />
@@ -764,6 +805,7 @@ export default function AdminItemsPage() {
                       rows={3}
                       required
                     />
+                    <p className="text-[11px] text-muted-foreground">{t("descriptionKeepLines")}</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="descriptionAm">{t("descriptionAmharic")}</Label>
@@ -970,6 +1012,19 @@ export default function AdminItemsPage() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">{t("imagesHint")}</p>
+                  {uploadError && (
+                    <div className="flex items-start justify-between gap-2 text-sm text-red-700 bg-red-50 border border-red-200 p-2 rounded">
+                      <span>{uploadError}</span>
+                      <button
+                        type="button"
+                        aria-label={t("close")}
+                        onClick={() => setUploadError(null)}
+                        className="text-red-400 hover:text-red-700 p-0.5 rounded shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Error */}

@@ -51,7 +51,7 @@ export const createMockItem = (overrides = {}) => ({
   minQuantity: 10,
   maxQuantity: 500,
   unit: 'pieces',
-  location: 'Warehouse A',
+  location: 'Addis Ababa',
   supplier: 'Test Supplier',
   imageUrl: 'https://example.com/item.jpg',
   tags: ['test', 'sample'],
@@ -69,6 +69,8 @@ export const createMockCategory = (overrides = {}) => ({
   slug: 'test-category',
   parentId: null,
   userId: 'test-user-id',
+
+  
   isActive: true,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),

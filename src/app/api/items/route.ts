@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import dbConnect from '@/lib/mongodb';
 import { Item, Category } from '@/models';
+import { normalizePriceInput } from '@/lib/price';
 
 // GET /api/items - List items (admin sees all their items, public sees active)
 export async function GET(request: NextRequest) {
@@ -18,9 +19,22 @@ export async function GET(request: NextRequest) {
     try {
       user = await requireAdmin();
     } catch {
-      // Public access
+      // Public access (same search behaviour as admin/shop endpoints)
       const query: any = { isActive: true };
       if (categoryId) query.categoryId = categoryId;
+      if (search) {
+        const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        query.$or = [
+          { name: { $regex: escaped, $options: 'i' } },
+          { nameAm: { $regex: escaped, $options: 'i' } },
+          { description: { $regex: escaped, $options: 'i' } },
+          { descriptionAm: { $regex: escaped, $options: 'i' } },
+          { color: { $regex: escaped, $options: 'i' } },
+          { colorAm: { $regex: escaped, $options: 'i' } },
+          { tags: { $regex: escaped, $options: 'i' } },
+          { tagsAm: { $regex: escaped, $options: 'i' } },
+        ];
+      }
 
       const [items, total] = await Promise.all([
         Item.find(query).populate('categoryId', 'name nameAm description descriptionAm imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
@@ -92,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique number if not provided
-    const finalUniqueNumber = uniqueNumber || `TKD-${Date.now().toString(36).toUpperCase()}`;
+    const finalUniqueNumber = uniqueNumber || `KF-${Date.now().toString(36).toUpperCase()}`;
 
     const item = new Item({
       name,
@@ -105,20 +119,20 @@ export async function POST(request: NextRequest) {
       colorAm: colorAm || undefined,
       local: {
         enabled: localEnabled,
-        basePrice: localEnabled ? (local.basePrice ?? 0) : 0,
+        basePrice: localEnabled ? (normalizePriceInput(local.basePrice) ?? 0) : 0,
         sizes: (localEnabled && Array.isArray(local.sizes) ? local.sizes : []).map((s: any) => ({
           name: s.name,
           nameAm: s.nameAm || undefined,
-          price: s.price != null && s.price !== '' ? Number(s.price) : undefined,
+          price: normalizePriceInput(s.price),
         })),
       },
       imported: {
         enabled: importedEnabled,
-        basePrice: importedEnabled ? (imported.basePrice ?? 0) : 0,
+        basePrice: importedEnabled ? (normalizePriceInput(imported.basePrice) ?? 0) : 0,
         sizes: (importedEnabled && Array.isArray(imported.sizes) ? imported.sizes : []).map((s: any) => ({
           name: s.name,
           nameAm: s.nameAm || undefined,
-          price: s.price != null && s.price !== '' ? Number(s.price) : undefined,
+          price: normalizePriceInput(s.price),
         })),
       },
       supplier: supplier || undefined,

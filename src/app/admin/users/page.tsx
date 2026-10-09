@@ -105,7 +105,7 @@ export default function AdminUsersPage() {
     setDeactivating(true);
     try {
       const response = await fetch(`/api/admin/users/${deactivateUserId}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Failed to deactivate user");
+      if (!response.ok) throw new Error("Failed to delete user");
       fetchUsers();
     } catch (error) {
       console.error("Error:", error);
@@ -196,15 +196,18 @@ export default function AdminUsersPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t("searchUsers")}</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder={t("searchUsers")}
-                      className="pl-10"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { setCurrentPage(1); fetchUsers(); } }}
-                    />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder={t("searchUsers")}
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { setCurrentPage(1); fetchUsers(); } }}
+                      />
+                    </div>
+                    <Button onClick={() => { setCurrentPage(1); fetchUsers(); }}>{t("search")}</Button>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -249,9 +252,9 @@ export default function AdminUsersPage() {
 
           <ConfirmDialog
             open={!!deactivateUserId}
-            title={t("notice")}
+            title={t("delete") + " " + t("userLabel")}
             message={t("deactivateUserConfirm")}
-            confirmLabel={t("confirm")}
+            confirmLabel={t("delete")}
             variant="danger"
             loading={deactivating}
             onConfirm={confirmDeleteUser}

@@ -2,6 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import dbConnect from '@/lib/mongodb';
 import { Item } from '@/models';
+import { normalizePriceInput } from '@/lib/price';
+
+/** Normalize flexible price fields (number, numeric string, or text like "300-700"). */
+function normalizeSourceBlock(source: any) {
+  if (!source || typeof source !== 'object') return source;
+  const out: any = { ...source };
+  if ('basePrice' in source) {
+    const n = normalizePriceInput(source.basePrice);
+    out.basePrice = n ?? 0;
+  }
+  if (Array.isArray(source.sizes)) {
+    out.sizes = source.sizes.map((s: any) => {
+      if (!s || typeof s !== 'object') return s;
+      const size: any = { ...s };
+      if ('price' in s) {
+        const n = normalizePriceInput(s.price);
+        if (n === undefined) delete size.price;
+        else size.price = n;
+      }
+      return size;
+    });
+  }
+  return out;
+}
 
 // GET /api/items/[id] - Get single item (public)
 export async function GET(
@@ -37,6 +61,10 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
+
+    // Accept flexible prices (numbers or text like "300-700") on update
+    if (body.local) body.local = normalizeSourceBlock(body.local);
+    if (body.imported) body.imported = normalizeSourceBlock(body.imported);
 
     const item = await Item.findOneAndUpdate(
       { _id: id },
