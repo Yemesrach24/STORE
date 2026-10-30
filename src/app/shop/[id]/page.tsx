@@ -33,11 +33,15 @@ interface Item {
   _id: string;
   name: string;
   nameAm?: string;
+  nameKo?: string;
   description: string;
   descriptionAm?: string;
+  descriptionKo?: string;
   uniqueNumber: string;
-  categoryId: { _id: string; name: string; nameAm?: string; imageUrl?: string };
+  categoryId: { _id: string; name: string; nameAm?: string; nameKo?: string; imageUrl?: string };
   color?: string;
+  colorAm?: string;
+  colorKo?: string;
   local: ItemSource;
   imported: ItemSource;
   imageUrl?: string;
@@ -45,8 +49,10 @@ interface Item {
   tags?: string[];
   supplier?: string;
   supplierAm?: string;
+  supplierKo?: string;
   companyName?: string;
   companyNameAm?: string;
+  companyNameKo?: string;
   companyPhone?: string;
   companyWhatsapp?: string;
   companyTelegram?: string;
@@ -219,12 +225,12 @@ export default function ItemDetailPage() {
     return images;
   };
 
-  const localizedName = () => ln(item?.name, item?.nameAm);
-  const localizedDescription = () => ln(item?.description, item?.descriptionAm);
+  const localizedName = () => ln(item?.name, item?.nameAm, item?.nameKo);
+  const localizedDescription = () => ln(item?.description, item?.descriptionAm, item?.descriptionKo);
   const localizedCategoryName = () => {
     const cat = item?.categoryId as any;
     if (!cat) return t("uncategorized");
-    return ln(cat.name, cat.nameAm) || t("uncategorized");
+    return ln(cat.name, cat.nameAm, cat.nameKo) || t("uncategorized");
   };
 
   const toggleSizeQty = (key: string, delta: number) => {
@@ -281,8 +287,8 @@ export default function ItemDetailPage() {
 
           {(item.companyPhone || item.companyWhatsapp) && (
             <div className="max-w-sm mx-auto bg-white rounded-2xl p-4 mb-6 text-left border border-stone-200 shadow-sm">
-              {ln(item.companyName, item.companyNameAm) ? (
-                <p className="text-sm font-semibold text-stone-900 mb-2">{ln(item.companyName, item.companyNameAm)}</p>
+              {ln(item.companyName, item.companyNameAm, item.companyNameKo) ? (
+                <p className="text-sm font-semibold text-stone-900 mb-2">{ln(item.companyName, item.companyNameAm, item.companyNameKo)}</p>
               ) : null}
               <p className="text-xs text-gray-500 mb-3">{t("contactSellerDirectly")}</p>
               <div className="space-y-2">
@@ -410,10 +416,10 @@ export default function ItemDetailPage() {
               </div>
 
               {item.color && (
-                <p className="text-sm text-stone-500 mt-2">{t("color")}: {item.color}</p>
+                <p className="text-sm text-stone-500 mt-2">{t("color")}: {ln(item.color, item.colorAm, item.colorKo)}</p>
               )}
-              {(item.supplier || item.supplierAm) && (
-                <p className="text-sm text-stone-500 mt-1">{ln(item.supplier, item.supplierAm)}</p>
+              {(item.supplier || item.supplierAm || item.supplierKo) && (
+                <p className="text-sm text-stone-500 mt-1">{ln(item.supplier, item.supplierAm, item.supplierKo)}</p>
               )}
             </div>
 
@@ -552,8 +558,8 @@ export default function ItemDetailPage() {
             {/* Contact info — company name shown only when entered */}
             {(item.companyPhone || item.companyWhatsapp || item.companyTelegram || item.companyInstagram || item.companyEmail) && (
               <div className="bg-white rounded-2xl border border-stone-200/70 p-4 shadow-sm">
-                {ln(item.companyName, item.companyNameAm) ? (
-                  <p className="text-sm font-semibold text-stone-900 mb-3">{ln(item.companyName, item.companyNameAm)}</p>
+                {ln(item.companyName, item.companyNameAm, item.companyNameKo) ? (
+                  <p className="text-sm font-semibold text-stone-900 mb-3">{ln(item.companyName, item.companyNameAm, item.companyNameKo)}</p>
                 ) : null}
                 <div className="space-y-2">
                   {item.companyPhone && (

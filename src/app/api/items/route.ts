@@ -27,17 +27,21 @@ export async function GET(request: NextRequest) {
         query.$or = [
           { name: { $regex: escaped, $options: 'i' } },
           { nameAm: { $regex: escaped, $options: 'i' } },
+          { nameKo: { $regex: escaped, $options: 'i' } },
           { description: { $regex: escaped, $options: 'i' } },
           { descriptionAm: { $regex: escaped, $options: 'i' } },
+          { descriptionKo: { $regex: escaped, $options: 'i' } },
           { color: { $regex: escaped, $options: 'i' } },
           { colorAm: { $regex: escaped, $options: 'i' } },
+          { colorKo: { $regex: escaped, $options: 'i' } },
           { tags: { $regex: escaped, $options: 'i' } },
           { tagsAm: { $regex: escaped, $options: 'i' } },
+          { tagsKo: { $regex: escaped, $options: 'i' } },
         ];
       }
 
       const [items, total] = await Promise.all([
-        Item.find(query).populate('categoryId', 'name nameAm description descriptionAm imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        Item.find(query).populate('categoryId', 'name nameAm nameKo description descriptionAm descriptionKo imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
         Item.countDocuments(query),
       ]);
 
@@ -55,17 +59,21 @@ export async function GET(request: NextRequest) {
       query.$or = [
         { name: { $regex: escaped, $options: 'i' } },
         { nameAm: { $regex: escaped, $options: 'i' } },
+        { nameKo: { $regex: escaped, $options: 'i' } },
         { description: { $regex: escaped, $options: 'i' } },
         { descriptionAm: { $regex: escaped, $options: 'i' } },
+        { descriptionKo: { $regex: escaped, $options: 'i' } },
         { color: { $regex: escaped, $options: 'i' } },
         { colorAm: { $regex: escaped, $options: 'i' } },
+        { colorKo: { $regex: escaped, $options: 'i' } },
         { tags: { $regex: escaped, $options: 'i' } },
         { tagsAm: { $regex: escaped, $options: 'i' } },
+        { tagsKo: { $regex: escaped, $options: 'i' } },
       ];
     }
 
     const [items, total] = await Promise.all([
-      Item.find(query).populate('categoryId', 'name nameAm description descriptionAm imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Item.find(query).populate('categoryId', 'name nameAm nameKo description descriptionAm descriptionKo imageUrl').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Item.countDocuments(query),
     ]);
 
@@ -86,7 +94,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
-    const { name, nameAm, description, descriptionAm, uniqueNumber, categoryId, color, colorAm, supplier, supplierAm, imageUrl, imageUrls, tags, tagsAm, location, companyName, companyNameAm, companyPhone, companyWhatsapp, companyTelegram, companyInstagram, companyEmail, local, imported } = body;
+    const { name, nameAm, nameKo, description, descriptionAm, descriptionKo, uniqueNumber, categoryId, color, colorAm, colorKo, supplier, supplierAm, supplierKo, imageUrl, imageUrls, tags, tagsAm, tagsKo, location, companyName, companyNameAm, companyNameKo, companyPhone, companyWhatsapp, companyTelegram, companyInstagram, companyEmail, local, imported } = body;
 
     if (!name || !description || !categoryId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -111,18 +119,22 @@ export async function POST(request: NextRequest) {
     const item = new Item({
       name,
       nameAm: nameAm || undefined,
+      nameKo: nameKo || undefined,
       description,
       descriptionAm: descriptionAm || undefined,
+      descriptionKo: descriptionKo || undefined,
       uniqueNumber: finalUniqueNumber,
       categoryId,
       color: color || undefined,
       colorAm: colorAm || undefined,
+      colorKo: colorKo || undefined,
       local: {
         enabled: localEnabled,
         basePrice: localEnabled ? (normalizePriceInput(local.basePrice) ?? 0) : 0,
         sizes: (localEnabled && Array.isArray(local.sizes) ? local.sizes : []).map((s: any) => ({
           name: s.name,
           nameAm: s.nameAm || undefined,
+          nameKo: s.nameKo || undefined,
           price: normalizePriceInput(s.price),
         })),
       },
@@ -132,18 +144,22 @@ export async function POST(request: NextRequest) {
         sizes: (importedEnabled && Array.isArray(imported.sizes) ? imported.sizes : []).map((s: any) => ({
           name: s.name,
           nameAm: s.nameAm || undefined,
+          nameKo: s.nameKo || undefined,
           price: normalizePriceInput(s.price),
         })),
       },
       supplier: supplier || undefined,
       supplierAm: supplierAm || undefined,
+      supplierKo: supplierKo || undefined,
       imageUrl,
       imageUrls: imageUrls || (imageUrl ? [imageUrl] : []),
       tags,
       tagsAm: tagsAm || undefined,
+      tagsKo: tagsKo || undefined,
       location,
       companyName,
       companyNameAm: companyNameAm || undefined,
+      companyNameKo: companyNameKo || undefined,
       companyPhone,
       companyWhatsapp,
       companyTelegram,
@@ -153,7 +169,7 @@ export async function POST(request: NextRequest) {
     });
 
     await item.save();
-    await item.populate('categoryId', 'name nameAm description descriptionAm imageUrl');
+    await item.populate('categoryId', 'name nameAm nameKo description descriptionAm descriptionKo imageUrl');
     return NextResponse.json(item, { status: 201 });
   } catch (error: any) {
     console.error('Error creating item:', error);

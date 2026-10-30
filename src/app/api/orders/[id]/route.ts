@@ -172,8 +172,8 @@ export async function PUT(
       if (buyer?.telegramChatId) {
         const { sendTelegramMessage } = await import('@/lib/telegram');
         const statusEmoji = status === 'APPROVED' ? '✅' : status === 'DECLINED' ? '❌' : '⏳';
-        const am = buyer.language === 'am';
-        const msg = am
+        const buyerLang = buyer.language === 'am' ? 'am' : buyer.language === 'ko' ? 'ko' : 'en';
+        const msg = buyerLang === 'am'
           ? [
               `${statusEmoji} <b>ትዕዛዝ #${updatedOrder.orderNumber}</b> ወደ <b>${status}</b> ተቀይሯል`,
               statusNote ? `📝 ማስታወሻ: ${statusNote}` : '',
@@ -183,6 +183,17 @@ export async function PUT(
                 : status === 'DECLINED'
                 ? '❌ ትዕዛዝዎ ተግቷል። ለበለጠ መረጃ ሻጩን ያግኙ።'
                 : '⏳ ትዕዛዝዎ በመጠባበቅ ላይ ነው።',
+            ]
+          : buyerLang === 'ko'
+          ? [
+              `${statusEmoji} <b>주문 #${updatedOrder.orderNumber}</b> 상태가 <b>${status}</b>(으)로 변경되었습니다`,
+              statusNote ? `📝 메모: ${statusNote}` : '',
+              '',
+              status === 'APPROVED'
+                ? '✅ 결제와 배송 협의를 위해 판매자에게 연락하세요.'
+                : status === 'DECLINED'
+                ? '❌ 주문이 거절되었습니다. 자세한 내용은 판매자에게 문의하세요.'
+                : '⏳ 주문이 검토 대기 중입니다.',
             ]
           : [
               `${statusEmoji} <b>Order #${updatedOrder.orderNumber}</b> has been <b>${status}</b>`,

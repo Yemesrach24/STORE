@@ -22,9 +22,12 @@ export interface IOrder extends Document {
   itemId: mongoose.Types.ObjectId;
   itemName: string;
   itemNameAm?: string;
+  itemNameKo?: string;
   itemCategory: string;
   itemCategoryAm?: string;
+  itemCategoryKo?: string;
   itemColor?: string;
+  itemColorKo?: string;
   itemImage?: string;
   // Line items: multiple source/size/quantity combos per order
   lineItems: IOrderLineItem[];
@@ -33,6 +36,7 @@ export interface IOrder extends Document {
   // Company/seller info (snapshot from item at time of order)
   companyName?: string;
   companyNameAm?: string;
+  companyNameKo?: string;
   companyPhone?: string;
   companyWhatsapp?: string;
   companyTelegram?: string;
@@ -117,6 +121,10 @@ const OrderSchema: Schema = new Schema(
       type: String,
       trim: true,
     },
+    itemNameKo: {
+      type: String,
+      trim: true,
+    },
     itemCategory: {
       type: String,
       required: [true, 'Item category is required'],
@@ -126,7 +134,15 @@ const OrderSchema: Schema = new Schema(
       type: String,
       trim: true,
     },
+    itemCategoryKo: {
+      type: String,
+      trim: true,
+    },
     itemColor: {
+      type: String,
+      trim: true,
+    },
+    itemColorKo: {
       type: String,
       trim: true,
     },
@@ -155,6 +171,7 @@ const OrderSchema: Schema = new Schema(
     },
     companyName: { type: String, trim: true },
     companyNameAm: { type: String, trim: true },
+    companyNameKo: { type: String, trim: true },
     companyPhone: { type: String, trim: true },
     companyWhatsapp: { type: String, trim: true },
     companyTelegram: { type: String, trim: true },

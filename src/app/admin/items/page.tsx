@@ -19,6 +19,7 @@ import { Package, Plus, Edit, Trash2, Loader2, Search, Upload, X, Image as Image
 interface SizeRow {
   name: string;
   nameAm: string;
+  nameKo: string;
   price: string; // optional — empty means use base price
 }
 
@@ -28,7 +29,7 @@ interface SourceBlock {
   sizes: SizeRow[];
 }
 
-const emptySizeRow = (): SizeRow => ({ name: "", nameAm: "", price: "" });
+const emptySizeRow = (): SizeRow => ({ name: "", nameAm: "", nameKo: "", price: "" });
 
 const emptySource = (): SourceBlock => ({
   enabled: false,
@@ -41,11 +42,14 @@ interface Category {
   _id: string;
   name: string;
   nameAm?: string;
+  nameKo?: string;
   imageUrl?: string;
 }
 
 interface ServerSize {
   name: string;
+  nameAm?: string;
+  nameKo?: string;
   price?: number | string;
 }
 interface ServerSource {
@@ -58,17 +62,23 @@ interface Item {
   _id: string;
   name: string;
   nameAm?: string;
+  nameKo?: string;
   description: string;
   descriptionAm?: string;
+  descriptionKo?: string;
   uniqueNumber: string;
-  categoryId: { _id: string; name: string; imageUrl?: string } | string;
+  categoryId: { _id: string; name: string; nameAm?: string; nameKo?: string; imageUrl?: string } | string;
   color?: string;
+  colorAm?: string;
+  colorKo?: string;
   local: ServerSource;
   imported: ServerSource;
   supplier?: string;
   supplierAm?: string;
+  supplierKo?: string;
   companyName?: string;
   companyNameAm?: string;
+  companyNameKo?: string;
   companyPhone?: string;
   companyWhatsapp?: string;
   companyTelegram?: string;
@@ -77,6 +87,8 @@ interface Item {
   imageUrl?: string;
   imageUrls?: string[];
   tags?: string[];
+  tagsAm?: string[];
+  tagsKo?: string[];
   location?: string;
   isActive: boolean;
   createdAt: string;
@@ -85,18 +97,23 @@ interface Item {
 interface ItemFormData {
   name: string;
   nameAm: string;
+  nameKo: string;
   description: string;
   descriptionAm: string;
+  descriptionKo: string;
   uniqueNumber: string;
   categoryId: string;
   color: string;
   colorAm: string;
+  colorKo: string;
   local: SourceBlock;
   imported: SourceBlock;
   supplier: string;
   supplierAm: string;
+  supplierKo: string;
   companyName: string;
   companyNameAm: string;
+  companyNameKo: string;
   companyPhone: string;
   companyWhatsapp: string;
   companyTelegram: string;
@@ -106,6 +123,7 @@ interface ItemFormData {
   imageUrls: string[];
   tags: string;
   tagsAm: string;
+  tagsKo: string;
   location: string;
   autoGenerate: boolean;
 }
@@ -113,18 +131,23 @@ interface ItemFormData {
 const emptyForm: ItemFormData = {
   name: "",
   nameAm: "",
+  nameKo: "",
   description: "",
   descriptionAm: "",
+  descriptionKo: "",
   uniqueNumber: "",
   categoryId: "",
   color: "",
   colorAm: "",
+  colorKo: "",
   local: emptySource(),
   imported: emptySource(),
   supplier: "",
   supplierAm: "",
+  supplierKo: "",
   companyName: "",
   companyNameAm: "",
+  companyNameKo: "",
   companyPhone: "",
   companyWhatsapp: "",
   companyTelegram: "",
@@ -134,6 +157,7 @@ const emptyForm: ItemFormData = {
   imageUrls: [],
   tags: "",
   tagsAm: "",
+  tagsKo: "",
   location: "",
   autoGenerate: true,
 };
@@ -212,6 +236,12 @@ function SourceBlockEditor({
                     value={sz.nameAm}
                     onChange={(e) => updateSize(idx, "nameAm", e.target.value)}
                     placeholder={t("sizeNameAmPlaceholder")}
+                    className="flex-1"
+                  />
+                  <Input
+                    value={sz.nameKo}
+                    onChange={(e) => updateSize(idx, "nameKo", e.target.value)}
+                    placeholder={t("sizeNameKoPlaceholder")}
                     className="flex-1"
                   />
                   <Input
@@ -320,7 +350,7 @@ export default function AdminItemsPage() {
     return {
       enabled: true,
       basePrice: String(s.basePrice ?? ""),
-      sizes: (s.sizes || []).map((sz) => ({ name: sz.name, nameAm: (sz as any).nameAm || "", price: sz.price != null ? String(sz.price) : "" })),
+      sizes: (s.sizes || []).map((sz) => ({ name: sz.name, nameAm: sz.nameAm || "", nameKo: sz.nameKo || "", price: sz.price != null ? String(sz.price) : "" })),
     };
   };
 
@@ -331,19 +361,24 @@ export default function AdminItemsPage() {
       const allImages = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls : (item.imageUrl ? [item.imageUrl] : []);
       setForm({
         name: item.name,
-        nameAm: (item as any).nameAm || "",
+        nameAm: item.nameAm || "",
+        nameKo: item.nameKo || "",
         description: item.description,
-        descriptionAm: (item as any).descriptionAm || "",
+        descriptionAm: item.descriptionAm || "",
+        descriptionKo: item.descriptionKo || "",
         uniqueNumber: item.uniqueNumber,
         categoryId: catId,
         color: item.color || "",
-        colorAm: (item as any).colorAm || "",
+        colorAm: item.colorAm || "",
+        colorKo: item.colorKo || "",
         local: serverSourceToForm(item.local),
         imported: serverSourceToForm(item.imported),
         supplier: item.supplier || "",
         supplierAm: item.supplierAm || "",
+        supplierKo: item.supplierKo || "",
         companyName: item.companyName || "",
         companyNameAm: item.companyNameAm || "",
+        companyNameKo: item.companyNameKo || "",
         companyPhone: item.companyPhone || "",
         companyWhatsapp: item.companyWhatsapp || "",
         companyTelegram: item.companyTelegram || "",
@@ -352,7 +387,8 @@ export default function AdminItemsPage() {
         imageUrl: item.imageUrl || "",
         imageUrls: allImages,
         tags: item.tags?.join(", ") || "",
-        tagsAm: (item as any).tagsAm?.join(", ") || "",
+        tagsAm: item.tagsAm?.join(", ") || "",
+        tagsKo: item.tagsKo?.join(", ") || "",
         location: item.location || "",
         autoGenerate: false,
       });
@@ -410,10 +446,13 @@ export default function AdminItemsPage() {
       };
 
       if (form.nameAm) body.nameAm = form.nameAm;
+      if (form.nameKo) body.nameKo = form.nameKo;
       if (form.descriptionAm) body.descriptionAm = form.descriptionAm;
+      if (form.descriptionKo) body.descriptionKo = form.descriptionKo;
       if (!form.autoGenerate || editingItem) body.uniqueNumber = form.uniqueNumber;
       if (form.color) body.color = form.color;
       if (form.colorAm) body.colorAm = form.colorAm;
+      if (form.colorKo) body.colorKo = form.colorKo;
 
       // Local / Imported source blocks (prices may be numbers or text like "300-700")
       const normPrice = (v: string) => {
@@ -431,6 +470,7 @@ export default function AdminItemsPage() {
         sizes: form.local.sizes.filter((s) => s.name.trim()).map((s) => ({
           name: s.name.trim(),
           nameAm: s.nameAm.trim() || undefined,
+          nameKo: s.nameKo.trim() || undefined,
           price: normPrice(s.price),
         })),
       };
@@ -440,15 +480,18 @@ export default function AdminItemsPage() {
         sizes: form.imported.sizes.filter((s) => s.name.trim()).map((s) => ({
           name: s.name.trim(),
           nameAm: s.nameAm.trim() || undefined,
+          nameKo: s.nameKo.trim() || undefined,
           price: normPrice(s.price),
         })),
       };
 
       if (form.supplier) body.supplier = form.supplier;
       if (form.supplierAm) body.supplierAm = form.supplierAm;
+      if (form.supplierKo) body.supplierKo = form.supplierKo;
       if (form.location) body.location = form.location;
       if (form.companyName) body.companyName = form.companyName;
       if (form.companyNameAm) body.companyNameAm = form.companyNameAm;
+      if (form.companyNameKo) body.companyNameKo = form.companyNameKo;
       if (form.companyPhone) body.companyPhone = form.companyPhone;
       if (form.companyWhatsapp) body.companyWhatsapp = form.companyWhatsapp;
       if (form.companyTelegram) body.companyTelegram = form.companyTelegram;
@@ -463,6 +506,9 @@ export default function AdminItemsPage() {
       }
       if (form.tagsAm) {
         body.tagsAm = form.tagsAm.split(",").map((t: string) => t.trim()).filter(Boolean);
+      }
+      if (form.tagsKo) {
+        body.tagsKo = form.tagsKo.split(",").map((t: string) => t.trim()).filter(Boolean);
       }
 
       const url = editingItem ? `/api/items/${editingItem._id}` : "/api/items";
@@ -516,10 +562,10 @@ export default function AdminItemsPage() {
     return parts.length > 0 ? parts.join(" | ") : `Br ${(item as any).price?.toLocaleString() || "0"}`;
   };
 
-  const getCategoryName = (categoryId: string | { _id: string; name: string; nameAm?: string } | undefined) => {
-    if (typeof categoryId === "object" && categoryId?.name) return ln(categoryId.name, categoryId.nameAm);
+  const getCategoryName = (categoryId: string | { _id: string; name: string; nameAm?: string; nameKo?: string } | undefined) => {
+    if (typeof categoryId === "object" && categoryId?.name) return ln(categoryId.name, categoryId.nameAm, categoryId.nameKo);
     const cat = categories.find((c) => c._id === categoryId);
-    return cat ? ln(cat.name, cat.nameAm) : t("unknown");
+    return cat ? ln(cat.name, cat.nameAm, cat.nameKo) : t("unknown");
   };
 
   const updateForm = (key: keyof ItemFormData, value: any) => {
@@ -581,7 +627,7 @@ export default function AdminItemsPage() {
                 >
                   <option value="all">{t("allCategories")}</option>
                   {categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>{ln(cat.name, cat.nameAm)}</option>
+                    <option key={cat._id} value={cat._id}>{ln(cat.name, cat.nameAm, cat.nameKo)}</option>
                   ))}
                 </select>
                 <Button onClick={handleSearch}>{t("search")}</Button>
@@ -637,9 +683,9 @@ export default function AdminItemsPage() {
                               </div>
                             )}
                             <div>
-                              <p className="font-medium">{ln(item.name, item.nameAm)}</p>
+                              <p className="font-medium">{ln(item.name, item.nameAm, item.nameKo)}</p>
                               <p className="text-sm text-muted-foreground line-clamp-1">
-                                {ln(item.description, item.descriptionAm)}
+                                {ln(item.description, item.descriptionAm, item.descriptionKo)}
                               </p>
                             </div>
                           </div>
@@ -648,7 +694,7 @@ export default function AdminItemsPage() {
                           <Badge variant="outline">{getCategoryName(item.categoryId)}</Badge>
                         </TableCell>
                         <TableCell className="font-medium text-sm">{getPriceDisplay(item)}</TableCell>
-                        <TableCell>{ln(item.companyName, item.companyNameAm) || "-"}</TableCell>
+                        <TableCell>{ln(item.companyName, item.companyNameAm, item.companyNameKo) || "-"}</TableCell>
                         <TableCell className="text-sm font-mono">{item.uniqueNumber || item._id.slice(-8)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
@@ -737,6 +783,15 @@ export default function AdminItemsPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="nameKo">{t("itemNameKorean")}</Label>
+                    <Input
+                      id="nameKo"
+                      value={form.nameKo}
+                      onChange={(e) => updateForm("nameKo", e.target.value)}
+                      placeholder={t("itemNameKoPlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="categoryId">{t("category")} *</Label>
                     <select
                       id="categoryId"
@@ -747,7 +802,7 @@ export default function AdminItemsPage() {
                     >
                       <option value="">{t("selectCategory")}</option>
                       {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>{ln(cat.name, cat.nameAm)}</option>
+                        <option key={cat._id} value={cat._id}>{ln(cat.name, cat.nameAm, cat.nameKo)}</option>
                       ))}
                     </select>
                   </div>
@@ -775,7 +830,7 @@ export default function AdminItemsPage() {
                       <p className="text-xs text-muted-foreground">{t("autoGenerateHint")}</p>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="color">{t("colorOptional")}</Label>
                       <Input
@@ -792,6 +847,15 @@ export default function AdminItemsPage() {
                         value={form.colorAm}
                         onChange={(e) => updateForm("colorAm", e.target.value)}
                         placeholder={t("colorAmPlaceholder")}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="colorKo">{t("colorKoOptional")}</Label>
+                      <Input
+                        id="colorKo"
+                        value={form.colorKo}
+                        onChange={(e) => updateForm("colorKo", e.target.value)}
+                        placeholder={t("colorKoPlaceholder")}
                       />
                     </div>
                   </div>
@@ -814,6 +878,16 @@ export default function AdminItemsPage() {
                       value={form.descriptionAm}
                       onChange={(e) => updateForm("descriptionAm", e.target.value)}
                       placeholder={t("descriptionAmPlaceholder")}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="descriptionKo">{t("descriptionKorean")}</Label>
+                    <Textarea
+                      id="descriptionKo"
+                      value={form.descriptionKo}
+                      onChange={(e) => updateForm("descriptionKo", e.target.value)}
+                      placeholder={t("descriptionKoPlaceholder")}
                       rows={3}
                     />
                   </div>
@@ -852,6 +926,15 @@ export default function AdminItemsPage() {
                       value={form.companyNameAm}
                       onChange={(e) => updateForm("companyNameAm", e.target.value)}
                       placeholder={t("companyNameAmPlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyNameKo">{t("companyNameKo")}</Label>
+                    <Input
+                      id="companyNameKo"
+                      value={form.companyNameKo}
+                      onChange={(e) => updateForm("companyNameKo", e.target.value)}
+                      placeholder={t("companyNameKoPlaceholder")}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -929,6 +1012,15 @@ export default function AdminItemsPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="supplierKo">{t("supplierKo")}</Label>
+                    <Input
+                      id="supplierKo"
+                      value={form.supplierKo}
+                      onChange={(e) => updateForm("supplierKo", e.target.value)}
+                      placeholder={t("supplierKoPlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="tags">{t("tagsComma")}</Label>
                     <Input
                       id="tags"
@@ -944,6 +1036,15 @@ export default function AdminItemsPage() {
                       value={form.tagsAm}
                       onChange={(e) => updateForm("tagsAm", e.target.value)}
                       placeholder={t("tagsAmPlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tagsKo">{t("tagsKo")}</Label>
+                    <Input
+                      id="tagsKo"
+                      value={form.tagsKo}
+                      onChange={(e) => updateForm("tagsKo", e.target.value)}
+                      placeholder={t("tagsKoPlaceholder")}
                     />
                   </div>
                   <div className="space-y-2">

@@ -8,7 +8,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { useSidebar } from "./sidebar-context";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { TranslationKey } from "@/lib/i18n";
 import {
@@ -124,7 +123,6 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="flex h-full flex-col bg-white">
             <div className="flex min-h-16 items-center gap-2 border-b border-stone-200 px-4 py-2">
               {brandHead}
-              <LanguageSwitcher className="ml-auto shrink-0" />
             </div>
             <ScrollArea className="flex-1">
               <NavLinks onNavigate={() => setIsOpen(false)} />

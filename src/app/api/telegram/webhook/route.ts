@@ -26,8 +26,29 @@ interface TelegramUpdate {
 
 // ---------- Message builders (per language) ----------
 
-function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
+function getWelcomeMessage(lang: 'en' | 'am' | 'ko', firstName?: string): string {
   const name = firstName ? ` <b>${firstName}</b>` : '';
+  if (lang === 'ko') {
+    return [
+      `🥋 <b>K-FORCE ETHIOPIA에 오신 것을 환영합니다!</b>`,
+      ``,
+      `안녕하세요${name}! 프리미엄 <b>태권도 장비</b> 전문 쇼핑몰입니다.`,
+      ``,
+      `<b>취급 품목:</b>`,
+      `• 보호 패드 및 가드`,
+      `• 도복 (유니폼)`,
+      `• 스파링 장비`,
+      `• 훈련 액세서리`,
+      `• 벨트 및 액세서리`,
+      ``,
+      `🛒 <b>매장 둘러보기:</b>`,
+      `[K-FORCE ETHIOPIA 방문](${STORE_URL})`,
+      ``,
+      `초보자부터 블랙벨트까지, 모든 수련생을 위한 고품질 장비! 💪`,
+      ``,
+      `/shop을 입력해 둘러보거나, /about으로 더 알아보세요.`,
+    ].join('\n');
+  }
   if (lang === 'am') {
     return [
       `🥋 <b>እንኳን ወደ K-FORCE ETHIOPIA በደህና መጡ!</b>`,
@@ -68,7 +89,19 @@ function getWelcomeMessage(lang: 'en' | 'am', firstName?: string): string {
   ].join('\n');
 }
 
-function getShopMessage(lang: 'en' | 'am'): string {
+function getShopMessage(lang: 'en' | 'am' | 'ko'): string {
+  if (lang === 'ko') {
+    return [
+      `🥊 <b>K-FORCE ETHIOPIA — 태권도 장비</b>`,
+      ``,
+      `무술 장비 전체 카탈로그를 둘러보세요:`,
+      `[K-FORCE ETHIOPIA 방문](${STORE_URL})`,
+      ``,
+      `✅ 품질 보증`,
+      `✅ 다양한 선택`,
+      `✅ 에티오피아 전역 빠른 배송`,
+    ].join('\n');
+  }
   if (lang === 'am') {
     return [
       `🥊 <b>K-FORCE ETHIOPIA — የቴኳንዶ መሣሪያዎች</b>`,
@@ -93,7 +126,24 @@ function getShopMessage(lang: 'en' | 'am'): string {
   ].join('\n');
 }
 
-function getAboutMessage(lang: 'en' | 'am'): string {
+function getAboutMessage(lang: 'en' | 'am' | 'ko'): string {
+  if (lang === 'ko') {
+    return [
+      `ℹ️ <b>K-FORCE ETHIOPIA 소개</b>`,
+      ``,
+      `K-FORCE ETHIOPIA는 에티오피아의 <b>태권도 및 무술 장비</b> 전문 온라인 숍입니다.`,
+      ``,
+      `화이트벨트 초보자부터 블랙벨트 마스터까지, 모든 수준의 수련생에게 고품질 장비를 제공합니다.`,
+      ``,
+      `<b>주문 방법:</b>`,
+      `1. 웹사이트에서 상품 둘러보기`,
+      `2. 상품을 선택하고 주문하기`,
+      `3. 전화, 왓츠앱, 텔레그램으로 판매자에게 연락`,
+      `4. 결제와 배송을 직접 협의`,
+      ``,
+      `🌐 <b>웹사이트:</b> [${STORE_URL_BASE}](${STORE_URL})`,
+    ].join('\n');
+  }
   if (lang === 'am') {
     return [
       `ℹ️ <b>ስለ K-FORCE ETHIOPIA</b>`,
@@ -131,7 +181,21 @@ function getAboutMessage(lang: 'en' | 'am'): string {
   ].join('\n');
 }
 
-function getHelpMessage(lang: 'en' | 'am'): string {
+function getHelpMessage(lang: 'en' | 'am' | 'ko'): string {
+  if (lang === 'ko') {
+    return [
+      `❓ <b>도움말 — K-FORCE ETHIOPIA</b>`,
+      ``,
+      `<b>사용 가능한 명령어:</b>`,
+      `/language — 언어 변경`,
+      `/start — 매장 소개와 함께 환영 메시지`,
+      `/shop — 매장 둘러보기`,
+      `/about — K-FORCE ETHIOPIA 소개`,
+      `/help — 이 도움말 표시`,
+      ``,
+      `🌐 웹사이트: [${STORE_URL_BASE}](${STORE_URL})`,
+    ].join('\n');
+  }
   if (lang === 'am') {
     return [
       `❓ <b>እርዳታ — K-FORCE ETHIOPIA</b>`,
@@ -162,7 +226,7 @@ function getHelpMessage(lang: 'en' | 'am'): string {
 
 // ---------- Language persistence ----------
 
-async function getUserLang(chatId: number): Promise<'en' | 'am' | null> {
+async function getUserLang(chatId: number): Promise<'en' | 'am' | 'ko' | null> {
   try {
     await dbConnect();
     const u: any = await User.findOne({ telegramChatId: String(chatId) })
@@ -171,13 +235,15 @@ async function getUserLang(chatId: number): Promise<'en' | 'am' | null> {
     // No record yet, or the user never explicitly picked a language → treat as
     // a first-time interaction so the picker is shown.
     if (!u || !u.languageChosenAt) return null;
-    return u.language === 'am' ? 'am' : 'en';
+    if (u.language === 'am') return 'am';
+    if (u.language === 'ko') return 'ko';
+    return 'en';
   } catch {
     return null;
   }
 }
 
-async function saveUserLang(chatId: number, lang: 'en' | 'am') {
+async function saveUserLang(chatId: number, lang: 'en' | 'am' | 'ko') {
   try {
     await dbConnect();
     const id = String(chatId);
@@ -211,6 +277,7 @@ function languageKeyboard() {
       [
         { text: '🇬🇧 English', callback_data: 'lang:en' },
         { text: '🇪🇹 አማርኛ', callback_data: 'lang:am' },
+        { text: '🇰🇷 한국어', callback_data: 'lang:ko' },
       ],
     ],
   };
@@ -219,10 +286,11 @@ function languageKeyboard() {
 async function sendLangPrompt(chatId: number, firstName?: string) {
   const name = firstName ? ` <b>${firstName}</b>` : '';
   const text = [
-    `🌐 <b>Choose your language / ቋንቋ ይምረጡ</b>`,
+    `🌐 <b>Choose your language / ቋንቋ ይምረጡ / 언어를 선택하세요</b>`,
     ``,
     `Hi${name}! Please choose a language.`,
     `ሰላም${name}! እባክዎ ቋንቋ ይምረጡ።`,
+    `안녕하세요${name}! 언어를 선택해 주세요.`,
   ].join('\n');
   await sendTelegramMessage(chatId, text, 'HTML', languageKeyboard());
 }
@@ -248,8 +316,8 @@ async function handleMessage(update: TelegramUpdate) {
   const firstName = update.message.chat.first_name;
   const chatIdStr = String(chatId);
 
-  // Language change command always available
-  if (text === '/language' || text === '/ቋንቋ') {
+  // Language change command always available (English, Amharic, Korean)
+  if (text === '/language' || text === '/ቋንቋ' || text === '/언어') {
     await sendLangPrompt(chatId, firstName);
     return;
   }
@@ -290,10 +358,13 @@ async function handleCallback(update: TelegramUpdate) {
   const chatId = cq.message.chat.id;
   const data = cq.data;
 
-  if (data === 'lang:en' || data === 'lang:am') {
-    const lang = data === 'lang:am' ? 'am' : 'en';
+  if (data === 'lang:en' || data === 'lang:am' || data === 'lang:ko') {
+    const lang = data === 'lang:am' ? 'am' : data === 'lang:ko' ? 'ko' : 'en';
     // Answer callback FIRST to acknowledge the button press within Telegram's 5s limit
-    await answerCallback(cq.id, lang === 'am' ? 'ቋንቋ ወደ አማርኛ ተቀይሯል' : 'Language set to English');
+    await answerCallback(
+      cq.id,
+      lang === 'am' ? 'ቋንቋ ወደ አማርኛ ተቀይሯል' : lang === 'ko' ? '언어가 한국어로 설정되었습니다' : 'Language set to English'
+    );
     // Then save language and send welcome message
     await saveUserLang(chatId, lang);
     const welcomeMsg = getWelcomeMessage(lang, cq.message.chat.first_name);

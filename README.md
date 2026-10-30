@@ -1,373 +1,210 @@
-# Inventory Management System
+# K-FORCE ETHIOPIA — Taekwondo Equipment Store & Inventory Management
 
-A comprehensive inventory management application built with Next.js 14, TypeScript, Tailwind CSS, and MongoDB. Features user authentication, role-based access control, real-time inventory tracking, and a modern responsive interface.
+An inventory and storefront application for **K-FORCE ETHIOPIA**, a taekwondo /
+martial-arts equipment shop. It combines a public product catalogue and ordering
+flow with an admin dashboard for managing items, categories, orders and users.
 
-## 🚀 Features
+The whole interface is **multilingual**: English, Amharic (አማርኛ) and Korean (한국어).
+Store content (items and categories) can also be entered in all three languages.
 
-### 🔐 Authentication & Authorization
-- **Google OAuth 2.0**: Secure user authentication with Google Sign-In (Auth.js)
-- **Role-Based Access Control**: Admin, Manager, and User roles
-- **Protected Routes**: Middleware-based route protection
-- **Session Management**: Secure session handling
+---
 
-### 📦 Inventory Management
-- **CRUD Operations**: Complete Create, Read, Update, Delete for inventory items
-- **Real-time Tracking**: Live inventory updates and stock monitoring
-- **Category Management**: Hierarchical category system with colors and icons
-- **Stock Alerts**: Low stock and out-of-stock notifications
-- **Barcode/SKU Support**: Product identification and tracking
-- **Supplier Management**: Track suppliers and purchase information
+## ✨ Features
 
-### 📊 Analytics & Reporting
-- **Dashboard Analytics**: Real-time statistics and metrics
-- **Export Functionality**: CSV export for inventory data
-- **Stock Status Tracking**: In-stock, low-stock, out-of-stock monitoring
-- **Profit Margin Calculation**: Automatic profit margin calculations
-- **Transaction History**: Complete audit trail for all inventory changes
+### 🛍️ Public storefront (`/shop`)
+- Browse equipment by category, live search, promotional carousels.
+- Product detail pages with pricing, sizes, images and seller contact details.
+- Place an order (guests allowed — no account required) and arrange payment and
+  delivery directly with the seller via phone, WhatsApp or Telegram.
+- "My Orders" page so buyers can track their own orders.
 
-### 👥 User Management
-- **Profile Management**: User profiles with customizable settings
-- **Account Settings**: Regional, notification, and security preferences
-- **Personal Inventory**: User-specific inventory views
-- **Avatar Upload**: Profile picture management
+### 🛠️ Admin dashboard (`/admin`)
+- **Dashboard** — key metrics (orders, items, categories, revenue, recent items).
+- **Orders** — review, approve or decline customer orders.
+- **Categories** — create/edit hierarchical (parent/child) categories.
+- **Items** — full product catalogue with pricing, stock, sizes, images and
+  contact info.
+- **Inventory** — system-wide inventory overview.
+- **Analytics** — sales and category performance (Super Admin).
+- **Users** — manage accounts and roles (Super Admin).
+- **Telegram** — connect and manage the customer-support bot.
 
-### 🛠️ Admin Panel
-- **User Management**: Admin control over user accounts
-- **Global Inventory**: System-wide inventory overview
-- **Bulk Operations**: Mass actions on users and inventory
-- **System Analytics**: Comprehensive system statistics
-- **Activity Logs**: User activity tracking
+### 🌐 Multilingual (English / አማርኛ / 한국어)
+- Language switcher in the site header (and shop header), persisted in a cookie.
+- **Store content is translatable too**: items and categories carry an English,
+  Amharic and Korean version of their name and description (items additionally
+  have Korean/Amharic colour, tags, supplier, company name and per-size names).
+- When a language is active, the localized value is shown and it falls back to
+  English when a translation is missing.
+- UI strings live in a single dictionary: [`src/lib/i18n.ts`](./src/lib/i18n.ts).
 
-### 🎨 Modern UI/UX
-- **Responsive Design**: Mobile-first responsive layout
-- **shadcn/ui Components**: Beautiful, accessible UI components
-- **Dark/Light Mode**: Theme customization
-- **Loading States**: Smooth loading experiences
-- **Error Boundaries**: Graceful error handling
+### 🤖 Telegram bot
+- `/start` (with a one-time language picker), `/shop`, `/about`, `/help` and
+  `/language` commands.
+- The bot replies in the user's chosen language (English / Amharic / Korean),
+  saved on their account.
+- New orders are pushed to the seller's Telegram chat.
+- Works via webhooks in production (HTTPS) and via a manual "Poll for Messages"
+  button in local development.
 
-## 🛠️ Tech Stack
+### 🔐 Authentication & roles
+- **Google-only sign-in** via Auth.js (NextAuth). No passwords to manage.
+- Roles: `SUPER_ADMIN`, `ADMIN`, `CUSTOMER`.
+- Role-gated dashboard routes; guests can still browse and order.
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Authentication**: Google OAuth 2.0 via Auth.js (NextAuth)
-- **Database**: MongoDB with Mongoose
-- **Form Handling**: React Hook Form + Zod
-- **State Management**: React Hooks
-- **Icons**: Lucide React
+---
 
-## 📋 Prerequisites
+## 🧰 Tech stack
 
-Before you begin, ensure you have the following installed:
+| Area | Technology |
+| --- | --- |
+| Framework | [Next.js](https://nextjs.org/) 15 (App Router) |
+| Language | TypeScript |
+| UI | Tailwind CSS v4, [shadcn/ui](https://ui.shadcn.com/) (Radix primitives), Lucide icons |
+| Auth | [Auth.js / NextAuth](https://authjs.dev/) v5 — Google OAuth 2.0 |
+| Database | MongoDB with [Mongoose](https://mongoosejs.com/) |
+| Forms & validation | React Hook Form + Zod |
+| Testing | Jest + React Testing Library, Playwright (E2E) |
 
-- **Node.js** (v18 or higher)
-- **npm** or **yarn**
-- **MongoDB** (local or MongoDB Atlas)
-- **Git**
+> Note: authentication is Google-only; there are no password-based accounts.
 
-## 🚀 Quick Start
+---
 
-### 1. Clone the Repository
+## 🚀 Getting started
 
-```bash
-git clone <repository-url>
-cd inventory-management
-```
+### 1. Prerequisites
+- Node.js 18+
+- npm (or yarn / pnpm)
+- A MongoDB instance (local, Docker, or MongoDB Atlas)
+- A Google OAuth 2.0 Client ID (see below)
 
-### 2. Install Dependencies
-
+### 2. Install dependencies
 ```bash
 npm install
 ```
 
-### 3. Environment Setup
-
-Copy the environment example file and configure your variables:
-
+### 3. Configure environment variables
 ```bash
 cp env.example .env.local
 ```
-
-Update `.env.local` with your configuration:
-
+At minimum set:
 ```env
-# Google OAuth (Auth.js)
-# Generate with: openssl rand -base64 32
-AUTH_SECRET=your_auth_secret_here
-AUTH_GOOGLE_ID=your_google_client_id.apps.googleusercontent.com
-AUTH_GOOGLE_SECRET=your_google_client_secret
-
-# MongoDB
+AUTH_SECRET=            # generate with: openssl rand -base64 32
+AUTH_GOOGLE_ID=         # Google OAuth Client ID
+AUTH_GOOGLE_SECRET=     # Google OAuth Client Secret
 MONGODB_URI=mongodb://localhost:27017/inventory-management
 ```
-
-> 📘 **Need the Google OAuth Client ID/Secret?** Follow the complete
-> step-by-step walkthrough in [`GOOGLE_OAUTH_SETUP.md`](./GOOGLE_OAUTH_SETUP.md) —
-> it covers the Google Cloud Console clicks, the exact redirect URI, and
-> troubleshooting for the most common errors.
-
-### 4. Database Setup
-
-#### Local MongoDB
-```bash
-# Start MongoDB service
-mongod
-
-# Or using Docker
-docker run -d -p 27017:27017 --name mongodb mongo:latest
+Telegram (optional, for the bot):
+```env
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_STORE_URL=http://localhost:3000/shop
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=K_Force_Ethiopia_store
 ```
+`env.example` documents every supported variable.
 
-#### MongoDB Atlas
-1. Create a MongoDB Atlas account
-2. Create a new cluster
-3. Get your connection string
-4. Update `MONGODB_URI` in `.env.local`
+### 4. Google OAuth setup
+1. Open <https://console.cloud.google.com/apis/credentials>.
+2. Create an **OAuth 2.0 Client ID** (Web application).
+3. Add an authorized redirect URI:
+   `http://localhost:3000/api/auth/callback/google`
+4. Put the generated client ID/secret into `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`.
 
-### 5. Seed Database (Optional)
+A step-by-step walkthrough is in [`GOOGLE_OAUTH_SETUP.md`](./GOOGLE_OAUTH_SETUP.md).
 
-Populate the database with sample data:
-
-```bash
-npm run seed
-```
-
-### 6. Start Development Server
-
+### 5. Run the app
 ```bash
 npm run dev
 ```
+Open <http://localhost:3000>. The storefront lives at `/shop` and the dashboard
+at `/admin`. On first sign-in the user is created automatically; promote the
+first account to `SUPER_ADMIN` in MongoDB to unlock the admin sections.
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+---
 
-## 📚 API Documentation
-
-### Base URL
+## 📁 Project structure
 ```
-http://localhost:3000/api
+src/
+├── app/
+│   ├── shop/            # Public storefront (catalogue, product, orders)
+│   ├── admin/           # Admin dashboard (orders, items, categories, users, …)
+│   ├── dashboard/       # Signed-in user dashboard
+│   ├── profile/         # User profile
+│   ├── api/             # Route handlers (REST endpoints)
+│   └── ...
+├── components/
+│   ├── ui/              # shadcn/ui primitives
+│   ├── layout/          # Sidebar, Header, DashboardLayout
+│   ├── shop/            # ShopHeader
+│   ├── i18n/            # LanguageProvider + LanguageSwitcher
+│   └── ...
+├── lib/                 # i18n dictionary, helpers, mongodb, telegram, price…
+├── models/              # Mongoose models (Item, Category, Order, User, …)
+└── ...
 ```
 
-### Authentication
-All API endpoints require authentication. Include the authorization header:
-```
-// Sessions are cookie-based — the NextAuth session cookie is sent automatically
-```
+---
 
-### Endpoints
+## 🌍 Editing translations
 
-#### Authentication
-- `GET /api/users/me` - Get current user profile
+All UI text lives in [`src/lib/i18n.ts`](./src/lib/i18n.ts) as three dictionaries
+(`en`, `am`, `ko`) keyed by the same identifiers. To add or change a string:
 
-#### User Management
-- `PATCH /api/users/{userId}/settings` - Update user settings
+1. Add the key to the `en` object.
+2. Add the matching `am` and `ko` values (the Amharic and Korean objects are
+   typed against the English keys, so TypeScript will flag anything missing).
+3. Use it in components with `const { t } = useLanguage();` → `t("yourKey")`.
 
-#### Categories
-- `GET /api/categories` - Get all categories
-- `POST /api/categories` - Create new category
+Localized **store content** (item/category names, descriptions, etc.) is entered
+directly in the admin item and category forms, one field per language.
 
-#### Inventory Items
-- `GET /api/items` - Get inventory items (with pagination, search, filters)
-- `POST /api/items` - Create new item
-- `GET /api/items/{id}` - Get item by ID
-- `PUT /api/items/{id}` - Update item
-- `PATCH /api/items/{id}` - Update item quantity
-- `DELETE /api/items/{id}` - Delete item
-- `GET /api/items/export` - Export items to CSV
+---
 
-#### Admin Endpoints
-- `GET /api/admin/users` - Get all users (admin only)
-- `POST /api/admin/users` - Create user (admin only)
-- `PUT /api/admin/users/{id}` - Update user (admin only)
-- `DELETE /api/admin/users/{id}` - Delete user (admin only)
-- `PATCH /api/admin/users/bulk` - Bulk user operations (admin only)
-- `GET /api/admin/inventory` - Global inventory overview (admin only)
-- `GET /api/admin/analytics` - System analytics (admin only)
+## 🔌 API (overview)
+All endpoints are under `/api`. Sessions are cookie-based (NextAuth), so no
+manual authorization header is needed.
 
-### Rate Limiting
-- **Authentication endpoints**: 5 requests/minute
-- **Admin endpoints**: 50 requests/minute
-- **Regular endpoints**: 100 requests/minute
+- `GET/POST /api/items`, `GET/PUT/DELETE /api/items/{id}`, `GET /api/items/export`
+- `GET/POST /api/categories`, `PUT/DELETE /api/categories/{id}`
+- `GET/POST /api/orders`, `PATCH /api/orders/{id}`
+- `GET /api/shop/items`, `GET /api/shop/items/{id}`, `GET /api/shop/categories`
+- `GET /api/admin/users`, `POST /api/admin/users`, `GET /api/admin/inventory`,
+  `GET /api/admin/analytics`
+- `GET /api/telegram/webhook` (local polling), `POST /api/telegram/webhook`
+  (production webhook)
 
-For complete API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+See [`API_DOCUMENTATION.md`](./API_DOCUMENTATION.md) and the bundled
+`postman_collection.json` for details and examples.
+
+---
 
 ## 🧪 Testing
-
-### Postman Collection
-Import the provided Postman collection (`postman_collection.json`) to test all API endpoints.
-
-### Manual Testing
-1. Start the development server
-2. Navigate to the application
-3. Sign up for a new account
-4. Test all features and functionality
-
-## 📁 Project Structure
-
-```
-inventory-management/
-├── src/
-│   ├── app/                    # Next.js App Router pages
-│   │   ├── api/               # API routes
-│   │   ├── admin/             # Admin pages
-│   │   ├── dashboard/         # Dashboard pages
-│   │   ├── inventory/         # Inventory pages
-│   │   ├── profile/           # Profile pages
-│   │   └── auth/              # Authentication pages
-│   ├── components/            # React components
-│   │   ├── ui/               # shadcn/ui components
-│   │   ├── layout/           # Layout components
-│   │   ├── inventory/        # Inventory components
-│   │   ├── profile/          # Profile components
-│   │   └── admin/            # Admin components
-│   ├── lib/                  # Utility libraries
-│   │   ├── validations/      # Zod schemas
-│   │   ├── mongodb.ts        # Database connection
-│   │   ├── auth.ts           # Authentication utilities
-│   │   ├── rate-limit.ts     # Rate limiting
-│   │   └── error-handler.ts  # Error handling
-│   ├── models/               # Mongoose models
-│   └── hooks/                # Custom React hooks
-├── public/                   # Static assets
-├── postman_collection.json   # Postman API collection
-├── API_DOCUMENTATION.md      # Complete API documentation
-└── env.example              # Environment variables template
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-See `env.example` for all available environment variables and their descriptions.
-
-### Database Models
-
-#### User Model
-- Basic info (name, email, role)
-- Profile settings (phone, location, bio)
-- Preferences (timezone, language, currency, theme)
-- Notification settings
-- Security settings
-
-#### Item Model
-- Product information (name, description, SKU, barcode)
-- Inventory data (quantity, price, cost price)
-- Category and supplier information
-- Stock management (min/max quantities)
-- Tags and metadata
-
-#### Category Model
-- Hierarchical categories with parent-child relationships
-- Color and icon customization
-- User association
-
-#### Transaction Model
-- Complete audit trail for inventory changes
-- Transaction types (IN, OUT, ADJUSTMENT, TRANSFER)
-- User tracking and timestamps
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Configure environment variables in Vercel dashboard
-4. Deploy
-
-### Other Platforms
-
-The application can be deployed to any platform that supports Next.js:
-
-- **Netlify**: Configure build settings for Next.js
-- **Railway**: Use the Next.js template
-- **DigitalOcean App Platform**: Select Next.js as the framework
-
-### Environment Setup for Production
-
-1. Create production environment variables
-2. Set up production MongoDB database
-3. Configure Google OAuth and AUTH_SECRET for production
-4. Set up domain and SSL certificates
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-If you encounter any issues or have questions:
-
-1. Check the [API Documentation](./API_DOCUMENTATION.md)
-2. Review the [Issues](../../issues) page
-3. Create a new issue with detailed information
-
-## 🧪 Testing
-
-### Test Types
-
-- **Unit Tests**: Jest + React Testing Library for component testing
-- **Integration Tests**: Component interaction and workflow testing
-- **API Tests**: Backend endpoint testing with database integration
-- **E2E Tests**: Playwright for full user journey testing
-
-### Running Tests
-
 ```bash
-# Unit and integration tests
-npm test
+npm test              # Jest unit + integration
 npm run test:unit
 npm run test:integration
 npm run test:coverage
+npm run test:e2e      # Playwright end-to-end
+```
+See [`TESTING.md`](./TESTING.md) for the full testing guide.
 
-# E2E tests
-npm run test:e2e
-npm run test:e2e:ui
-npm run test:e2e:debug
+---
 
-# Database seeding
-npm run seed
-npm run test:seed
+## 📜 Scripts
+```bash
+npm run dev        # start the dev server
+npm run build      # production build
+npm run start      # run the production build
+npm run lint       # ESLint
+npm run type-check # TypeScript (tsc --noEmit)
+npm run seed       # seed sample data
 ```
 
-### Test Coverage
+---
 
-- Unit tests: 80%+ coverage target
-- Integration tests: Critical user flows
-- E2E tests: Main user journeys
-- API tests: All endpoints
+## 🤝 Contributing
+1. Create a feature branch.
+2. Make your changes and run `npm run lint` / `npm test`.
+3. Open a pull request.
 
-### Documentation
-
-- [Testing Guide](TESTING.md) - Comprehensive testing documentation
-- [API Documentation](API_DOCUMENTATION.md) - API testing and examples
-- Postman collection for API testing
-
-## 🗺️ Roadmap
-
-- [ ] Real-time notifications
-- [ ] Mobile app (React Native)
-- [ ] Advanced reporting and analytics
-- [ ] Integration with external APIs
-- [ ] Multi-tenant support
-- [ ] Advanced search and filtering
-- [ ] Barcode scanning
-- [ ] Email notifications
-- [ ] Backup and restore functionality
-- [ ] Performance optimizations
-
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) - React framework
-- [Auth.js](https://authjs.dev/) - Authentication (Google OAuth 2.0)
-- [shadcn/ui](https://ui.shadcn.com/) - UI components
-- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
-- [MongoDB](https://www.mongodb.com/) - Database
-- [Mongoose](https://mongoosejs.com/) - MongoDB ODM
+## 📝 License
+MIT — see the [`LICENSE`](./LICENSE) file.

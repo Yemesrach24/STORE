@@ -69,11 +69,11 @@ export async function GET() {
         // /language is listed first so it stays visible without scrolling in
         // the Telegram mobile command menu, which shows only the top entries.
         commands: [
-          { command: 'language', description: 'Change language / ቋንቋ ይቀይሩ' },
-          { command: 'start', description: 'Welcome message with store info / መግቢያ' },
-          { command: 'shop', description: 'Browse our taekwondo store / ሱቅ' },
-          { command: 'about', description: 'Learn about K-FORCE ETHIOPIA / ስለ እኛ' },
-          { command: 'help', description: 'Get help and instructions / እርዳታ' },
+          { command: 'language', description: 'Change language / ቋንቋ ይቀይሩ / 언어 변경' },
+          { command: 'start', description: 'Welcome message with store info / መግቢያ / 환영 메시지' },
+          { command: 'shop', description: 'Browse our taekwondo store / ሱቅ / 스토어 둘러보기' },
+          { command: 'about', description: 'Learn about K-FORCE ETHIOPIA / ስለ እኛ / 소개' },
+          { command: 'help', description: 'Get help and instructions / እርዳታ / 도움말' },
         ],
       }),
     });
@@ -84,7 +84,7 @@ export async function GET() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        description: '🥋 K-FORCE ETHIOPIA - Premium taekwondo equipment. Browse, order, and connect with sellers directly.',
+        description: '🥋 K-FORCE ETHIOPIA - Premium taekwondo equipment. Browse, order, and connect with sellers directly.\n🥋 프리미엄 태권도 장비 — 둘러보고, 주문하고, 판매자와 직접 연결하세요.',
       }),
     });
 
@@ -93,7 +93,7 @@ export async function GET() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        short_description: '🥋 Premium Taekwondo Equipment Store',
+        short_description: '🥋 Premium Taekwondo Equipment Store / 프리미엄 태권도 장비 스토어',
       }),
     });
 

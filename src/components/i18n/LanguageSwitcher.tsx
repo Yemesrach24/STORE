@@ -1,38 +1,63 @@
 "use client";
 
+import { Check, ChevronDown, Languages } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLanguage } from "./LanguageProvider";
-import { Languages } from "lucide-react";
+import { Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export function LanguageSwitcher({ className, dark }: { className?: string; dark?: boolean }) {
-  const { lang, setLang } = useLanguage();
+const OPTIONS: { value: Lang; label: string; flag: string }[] = [
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "am", label: "አማርኛ", flag: "🇪🇹" },
+  { value: "ko", label: "한국어", flag: "🇰🇷" },
+];
+
+export function LanguageSwitcher({ className }: { className?: string }) {
+  const { lang, setLang, t } = useLanguage();
+  const current = OPTIONS.find((opt) => opt.value === lang) ?? OPTIONS[0];
 
   return (
-    <div className={cn("flex items-center gap-1 rounded-lg border p-0.5", dark ? "border-gray-700" : "border-gray-200", className)}>
-      <button
-        onClick={() => setLang("en")}
-        className={cn(
-          "px-2 py-1 text-xs font-semibold rounded-md transition-colors",
-          lang === "en"
-            ? "bg-[var(--brand)] text-white"
-            : dark ? "text-gray-300 hover:text-white" : "text-gray-500 hover:text-gray-900"
-        )}
-        aria-label="English"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-stone-700 transition-colors hover:bg-orange-50 hover:text-[var(--brand)] hover:border-[var(--brand)]/40",
+            className
+          )}
+          aria-label={t("changeLanguage")}
+          title={t("changeLanguage")}
+        >
+          <Languages className="h-3.5 w-3.5" />
+          <span>{current.label}</span>
+          <ChevronDown className="h-3 w-3 opacity-60" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="min-w-[190px] rounded-xl border-stone-200 p-1.5 shadow-lg"
       >
-        EN
-      </button>
-      <button
-        onClick={() => setLang("am")}
-        className={cn(
-          "px-2 py-1 text-xs font-semibold rounded-md transition-colors",
-          lang === "am"
-            ? "bg-[var(--brand)] text-white"
-            : dark ? "text-gray-300 hover:text-white" : "text-gray-500 hover:text-gray-900"
-        )}
-        aria-label="አማርኛ"
-      >
-        አማ
-      </button>
-    </div>
+        {OPTIONS.map((opt) => (
+          <DropdownMenuItem
+            key={opt.value}
+            onClick={() => setLang(opt.value)}
+            className={cn(
+              "cursor-pointer gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "hover:bg-orange-50 hover:text-[var(--brand)] focus:bg-orange-50 focus:text-[var(--brand)]",
+              lang === opt.value && "bg-orange-50/70 text-[var(--brand)]"
+            )}
+          >
+            <span className="text-base leading-none">{opt.flag}</span>
+            <span>{opt.label}</span>
+            {lang === opt.value && <Check className="ml-auto h-4 w-4" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

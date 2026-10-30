@@ -25,10 +25,13 @@ interface Order {
   orderNumber: string;
   itemName: string;
   itemNameAm?: string;
+  itemNameKo?: string;
   itemCategory: string;
   itemCategoryAm?: string;
+  itemCategoryKo?: string;
   itemImage?: string;
   itemColor?: string;
+  itemColorKo?: string;
   lineItems: LineItem[];
   totalPrice: number;
   status: "PENDING" | "APPROVED" | "DECLINED";
@@ -36,6 +39,7 @@ interface Order {
   orderDate: string;
   companyName?: string;
   companyNameAm?: string;
+  companyNameKo?: string;
   companyPhone?: string;
   companyWhatsapp?: string;
   companyTelegram?: string;
@@ -333,14 +337,14 @@ export default function ShopOrdersPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 uppercase font-medium">{ln(order.itemCategory, order.itemCategoryAm)}</p>
-                      <p className="font-semibold text-gray-900 truncate">{ln(order.itemName, order.itemNameAm)}</p>
-                      {(order.companyName || order.companyNameAm) && (
-                        <p className="text-xs text-[var(--brand)] font-medium">{ln(order.companyName, order.companyNameAm)}</p>
+                      <p className="text-xs text-gray-500 uppercase font-medium">{ln(order.itemCategory, order.itemCategoryAm, order.itemCategoryKo)}</p>
+                      <p className="font-semibold text-gray-900 truncate">{ln(order.itemName, order.itemNameAm, order.itemNameKo)}</p>
+                      {(order.companyName || order.companyNameAm || order.companyNameKo) && (
+                        <p className="text-xs text-[var(--brand)] font-medium">{ln(order.companyName, order.companyNameAm, order.companyNameKo)}</p>
                       )}
                       {order.itemColor && (
                         <p className="text-xs text-gray-400 mt-0.5">
-                          {order.itemColor}
+                          {ln(order.itemColor, undefined, order.itemColorKo)}
                         </p>
                       )}
                       <div className="text-sm text-gray-500 mt-0.5 space-y-0.5">
@@ -367,8 +371,8 @@ export default function ShopOrdersPage() {
                         {order.status === "APPROVED" ? t("contactSellerArrange") : t("sellerContactInfo")}
                       </p>
                       <div className="space-y-2">
-                        {(order.companyName || order.companyNameAm) && (
-                          <p className="text-xs font-semibold text-gray-900 mb-1">{ln(order.companyName, order.companyNameAm)}</p>
+                        {(order.companyName || order.companyNameAm || order.companyNameKo) && (
+                          <p className="text-xs font-semibold text-gray-900 mb-1">{ln(order.companyName, order.companyNameAm, order.companyNameKo)}</p>
                         )}
                         <div className="flex flex-wrap gap-2">
                           {order.companyPhone && (

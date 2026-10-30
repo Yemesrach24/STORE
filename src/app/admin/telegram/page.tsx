@@ -19,7 +19,10 @@ export default function AdminTelegramPage() {
   const [isPolling, setIsPolling] = useState(false);
   const [pollResults, setPollResults] = useState<{ from: string; message: string; chatId: number }[]>([]);
   const [pollStatus, setPollStatus] = useState<string | null>(null);
-  const [botUsername, setBotUsername] = useState("tkd_equp_bot");
+  const [pollError, setPollError] = useState(false);
+  const [botUsername, setBotUsername] = useState(
+    process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "K_Force_Ethiopia_store"
+  );
   const [copied, setCopied] = useState(false);
   const [botConnected, setBotConnected] = useState<boolean | null>(null);
 
@@ -68,16 +71,20 @@ export default function AdminTelegramPage() {
     setIsPolling(true);
     setPollResults([]);
     setPollStatus(null);
+    setPollError(false);
     try {
       const response = await fetch("/api/telegram/webhook");
       const data = await response.json();
       if (data.ok) {
-        setPollResults(data.processed || []);
-        setPollStatus(data.message || "No pending messages");
+        const processed = data.processed || [];
+        setPollResults(processed);
+        setPollStatus(processed.length > 0 ? data.message : t("noPendingMessages"));
       } else {
-        setPollStatus(`Error: ${data.error || "Failed"}`);
+        setPollError(true);
+        setPollStatus(`${t("error")}: ${data.error || t("pollFailedConnect")}`);
       }
     } catch {
+      setPollError(true);
       setPollStatus(t("pollFailedConnect"));
     } finally {
       setIsPolling(false);
@@ -176,7 +183,7 @@ export default function AdminTelegramPage() {
               </div>
 
               {pollStatus && (
-                <div className={`rounded-lg p-3 text-sm ${pollStatus.includes('Error') || pollStatus.includes('Failed') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                <div className={`rounded-lg p-3 text-sm ${pollError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
                   {pollStatus}
                 </div>
               )}

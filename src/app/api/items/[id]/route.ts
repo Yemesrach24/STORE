@@ -36,7 +36,7 @@ export async function GET(
     await dbConnect();
     const { id } = await params;
     const item = await Item.findOne({ _id: id, isActive: true })
-      .populate('categoryId', 'name nameAm imageUrl description descriptionAm')
+      .populate('categoryId', 'name nameAm nameKo imageUrl description descriptionAm descriptionKo')
       .lean();
 
     if (!item) {
@@ -70,7 +70,7 @@ export async function PUT(
       { _id: id },
       body,
       { new: true, runValidators: true }
-    ).populate('categoryId', 'name nameAm description descriptionAm imageUrl');
+    ).populate('categoryId', 'name nameAm nameKo description descriptionAm descriptionKo imageUrl');
 
     if (!item) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });

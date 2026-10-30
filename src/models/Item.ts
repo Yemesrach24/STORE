@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IItemSize {
   name: string;
   nameAm?: string;
+  nameKo?: string;
   // Flexible price: a number, a numeric string, or free text like "300-700".
   // Falls back to the source base price when omitted.
   price?: number | string;
@@ -19,14 +20,17 @@ export interface IItem extends Document {
   // Bilingual names/descriptions
   name: string;
   nameAm?: string;
+  nameKo?: string;
   description: string;
   descriptionAm?: string;
+  descriptionKo?: string;
   uniqueNumber: string;
   categoryId: mongoose.Types.ObjectId;
 
   // Color (bilingual, optional)
   color?: string;
   colorAm?: string;
+  colorKo?: string;
 
   // Local & imported: each can be enabled independently, each has its own base price and sizes
   local: IItemSource;
@@ -35,6 +39,7 @@ export interface IItem extends Document {
   // Company / contact info (shown to buyers)
   companyName?: string;
   companyNameAm?: string;
+  companyNameKo?: string;
   companyPhone?: string;
   companyWhatsapp?: string;
   companyTelegram?: string;
@@ -44,10 +49,12 @@ export interface IItem extends Document {
   // Additional info
   supplier?: string;
   supplierAm?: string;
+  supplierKo?: string;
   imageUrl?: string;
   imageUrls?: string[];
   tags?: string[];
   tagsAm?: string[];
+  tagsKo?: string[];
   location?: string;
 
   // Ownership
@@ -61,6 +68,7 @@ const ItemSizeSchema = new Schema<IItemSize>(
   {
     name: { type: String, required: true, trim: true },
     nameAm: { type: String, trim: true },
+    nameKo: { type: String, trim: true },
     // Flexible: plain number, numeric string, or free text ("300-700", "up to 300")
     price: {
       type: Schema.Types.Mixed,
@@ -114,6 +122,11 @@ const ItemSchema: Schema = new Schema(
       trim: true,
       maxlength: [200, 'Amharic item name cannot exceed 200 characters'],
     },
+    nameKo: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Korean item name cannot exceed 200 characters'],
+    },
     description: {
       type: String,
       required: [true, 'Description is required'],
@@ -124,6 +137,11 @@ const ItemSchema: Schema = new Schema(
       type: String,
       trim: true,
       maxlength: [2000, 'Amharic description cannot exceed 2000 characters'],
+    },
+    descriptionKo: {
+      type: String,
+      trim: true,
+      maxlength: [2000, 'Korean description cannot exceed 2000 characters'],
     },
     uniqueNumber: {
       type: String,
@@ -147,6 +165,11 @@ const ItemSchema: Schema = new Schema(
       trim: true,
       maxlength: [200, 'Amharic color cannot exceed 200 characters'],
     },
+    colorKo: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Korean color cannot exceed 200 characters'],
+    },
 
     // Local vs imported — both can be enabled simultaneously
     local: {
@@ -168,6 +191,11 @@ const ItemSchema: Schema = new Schema(
       type: String,
       trim: true,
       maxlength: [200, 'Amharic company name cannot exceed 200 characters'],
+    },
+    companyNameKo: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Korean company name cannot exceed 200 characters'],
     },
     companyPhone: {
       type: String,
@@ -205,6 +233,11 @@ const ItemSchema: Schema = new Schema(
       trim: true,
       maxlength: [200, 'Amharic supplier cannot exceed 200 characters'],
     },
+    supplierKo: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Korean supplier cannot exceed 200 characters'],
+    },
     imageUrl: {
       type: String,
       trim: true,
@@ -212,6 +245,7 @@ const ItemSchema: Schema = new Schema(
     imageUrls: [{ type: String, trim: true }],
     tags: [{ type: String, trim: true, maxlength: [50, 'Tag cannot exceed 50 characters'] }],
     tagsAm: [{ type: String, trim: true, maxlength: [50, 'Amharic tag cannot exceed 50 characters'] }],
+    tagsKo: [{ type: String, trim: true, maxlength: [50, 'Korean tag cannot exceed 50 characters'] }],
     location: {
       type: String,
       trim: true,

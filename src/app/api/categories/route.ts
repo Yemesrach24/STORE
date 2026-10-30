@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
-    const { name, nameAm, description, descriptionAm, imageUrl, parentId, sortOrder } = body;
+    const { name, nameAm, nameKo, description, descriptionAm, descriptionKo, imageUrl, parentId, sortOrder } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
@@ -62,8 +62,10 @@ export async function POST(request: NextRequest) {
     const category = new Category({
       name,
       nameAm: nameAm || undefined,
+      nameKo: nameKo || undefined,
       description,
       descriptionAm: descriptionAm || undefined,
+      descriptionKo: descriptionKo || undefined,
       imageUrl,
       parentId: parentId || null,
       createdBy: user.dbUserId,

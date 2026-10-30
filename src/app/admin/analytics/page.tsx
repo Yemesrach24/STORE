@@ -298,10 +298,10 @@ export default function AdminAnalyticsPage() {
                       {analytics.recentOrders.map((o: any) => (
                         <tr key={o._id} className="border-b last:border-0">
                           <td className="py-2 font-mono text-xs">{o.orderNumber}</td>
-                          <td className="py-2">{ln(o.itemName, o.itemNameAm)}</td>
-                          <td className="py-2">{ln(o.itemCategory, o.itemCategoryAm)}</td>
+                          <td className="py-2">{ln(o.itemName, o.itemNameAm, o.itemNameKo)}</td>
+                          <td className="py-2">{ln(o.itemCategory, o.itemCategoryAm, o.itemCategoryKo)}</td>
                           <td className="py-2">{o.quantity}</td>
-                          <td className="py-2">{ln(o.companyName, o.companyNameAm) || "—"}</td>
+                          <td className="py-2">{ln(o.companyName, o.companyNameAm, o.companyNameKo) || "—"}</td>
                           <td className="py-2 text-right font-medium">Br {(o.totalPrice || 0).toLocaleString()}</td>
                           <td className="py-2 text-right">
                             <span className={`text-xs font-medium ${o.status === "APPROVED" ? "text-green-600" : o.status === "DECLINED" ? "text-red-600" : "text-yellow-600"}`}>
@@ -374,7 +374,7 @@ export default function AdminAnalyticsPage() {
                 <div className="space-y-2">
                   {analytics.topItems.map((item: any) => (
                     <div key={item._id} className="flex items-center justify-between p-2 border rounded">
-                      <span className="font-medium">{ln(item.itemName, item.itemNameAm)}</span>
+                      <span className="font-medium">{ln(item.itemName, item.itemNameAm, item.itemNameKo)}</span>
                       <div className="text-right">
                         <span className="text-sm text-muted-foreground">{t("ordersCount", { count: item.count })}</span>
                         <span className="ml-2 font-medium">Br {(item.revenue || 0).toLocaleString()}</span>

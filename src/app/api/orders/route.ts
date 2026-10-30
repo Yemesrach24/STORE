@@ -247,14 +247,18 @@ export async function POST(request: NextRequest) {
       itemId: item._id,
       itemName: item.name,
       itemNameAm: item.nameAm || undefined,
+      itemNameKo: item.nameKo || undefined,
       itemCategory: category?.name || 'Unknown',
       itemCategoryAm: category?.nameAm || undefined,
+      itemCategoryKo: category?.nameKo || undefined,
       itemColor: item.color || undefined,
+      itemColorKo: item.colorKo || undefined,
       itemImage: item.imageUrl || undefined,
       lineItems: validatedLineItems,
       totalPrice,
       companyName: item.companyName || undefined,
       companyNameAm: item.companyNameAm || undefined,
+      companyNameKo: item.companyNameKo || undefined,
       companyPhone: item.companyPhone || undefined,
       companyWhatsapp: item.companyWhatsapp || undefined,
       companyTelegram: item.companyTelegram || undefined,
@@ -302,14 +306,14 @@ async function notifySellerTelegram(order: any) {
     }
 
     const { sendTelegramMessage } = await import('@/lib/telegram');
-    const am = seller.language === 'am';
+    const sellerLang = seller.language === 'am' ? 'am' : seller.language === 'ko' ? 'ko' : 'en';
 
     // Build a human-readable line-items summary for Telegram
     const lineSummary = (order.lineItems || [])
       .map((li: any) => `  ${li.source === 'local' ? 'Local' : 'Imported'} ${li.size ? li.size + ' × ' : ''}${li.quantity} @ Br ${li.unitPrice}`)
       .join('\n');
 
-    const msg = am
+    const msg = sellerLang === 'am'
       ? [
           `🛒 <b>አዲስ ትዕዛዝ ደርሷል!</b>`,
           ``,
@@ -326,6 +330,24 @@ async function notifySellerTelegram(order: any) {
           order.message ? `<b>መልዕክት:</b> ${order.message}` : '',
           ``,
           `⚡ ትዕዛዙን ለማጽደቅ ወይም ለመግቀል ወደ ዳሽቦርድዎ ይግቡ።`,
+        ]
+      : sellerLang === 'ko'
+      ? [
+          `🛒 <b>새 주문이 접수되었습니다!</b>`,
+          ``,
+          `<b>주문:</b> #${order.orderNumber}`,
+          `<b>상품:</b> ${order.itemName}`,
+          `<b>카테고리:</b> ${order.itemCategory}`,
+          `<b>상세:</b>\n${lineSummary}`,
+          `<b>합계:</b> <b>Br ${order.totalPrice}</b>`,
+          ``,
+          `<b>구매자:</b> ${order.buyerName}`,
+          order.buyerPhone ? `<b>전화:</b> ${order.buyerPhone}` : '',
+          order.buyerClub ? `<b>도장:</b> ${order.buyerClub}` : '',
+          order.buyerEmail ? `<b>이메일:</b> ${order.buyerEmail}` : '',
+          order.message ? `<b>메시지:</b> ${order.message}` : '',
+          ``,
+          `⚡ 대시보드에 로그인하여 주문을 승인하거나 거절하세요.`,
         ]
       : [
           `🛒 <b>New Order Received!</b>`,

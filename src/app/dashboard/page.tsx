@@ -20,9 +20,10 @@ interface DashItem {
   _id: string;
   name: string;
   nameAm?: string;
+  nameKo?: string;
   imageUrl?: string;
   imageUrls?: string[];
-  categoryId?: { _id: string; name: string; nameAm?: string } | string;
+  categoryId?: { _id: string; name: string; nameAm?: string; nameKo?: string } | string;
   local?: { enabled: boolean; basePrice: number | string };
   imported?: { enabled: boolean; basePrice: number | string };
   companyName?: string;
@@ -230,7 +231,7 @@ export default function DashboardPage() {
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{ln(item.name, item.nameAm)}</p>
+                          <p className="font-medium text-sm truncate">{ln(item.name, item.nameAm, item.nameKo)}</p>
                           <p className="text-xs text-muted-foreground font-mono">{item.uniqueNumber || item._id.slice(-8)}</p>
                           <p className="text-sm font-bold text-[var(--brand)]">{priceLabel(item)}</p>
                         </div>

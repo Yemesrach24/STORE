@@ -20,8 +20,10 @@ export async function GET(request: NextRequest) {
         _id: any;
         name: string;
         nameAm?: string;
+        nameKo?: string;
         description?: string;
         descriptionAm?: string;
+        descriptionKo?: string;
         imageUrl?: string;
         parentId: any;
         sortOrder: number;
@@ -39,8 +41,10 @@ export async function GET(request: NextRequest) {
             _id: cat._id,
             name: cat.name,
             nameAm: cat.nameAm,
+            nameKo: cat.nameKo,
             description: cat.description,
             descriptionAm: cat.descriptionAm,
+            descriptionKo: cat.descriptionKo,
             imageUrl: cat.imageUrl,
             parentId: cat.parentId,
             sortOrder: cat.sortOrder,

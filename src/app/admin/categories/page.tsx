@@ -17,8 +17,10 @@ interface Category {
   _id: string;
   name: string;
   nameAm?: string;
+  nameKo?: string;
   description?: string;
   descriptionAm?: string;
+  descriptionKo?: string;
   imageUrl?: string;
   parentId?: string | null;
   sortOrder: number;
@@ -35,8 +37,10 @@ export default function AdminCategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formName, setFormName] = useState("");
   const [formNameAm, setFormNameAm] = useState("");
+  const [formNameKo, setFormNameKo] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formDescriptionAm, setFormDescriptionAm] = useState("");
+  const [formDescriptionKo, setFormDescriptionKo] = useState("");
   const [formImageUrl, setFormImageUrl] = useState("");
   const [formParentId, setFormParentId] = useState("");
   const [formSortOrder, setFormSortOrder] = useState("0");
@@ -67,8 +71,10 @@ export default function AdminCategoriesPage() {
       setEditingCategory(category);
       setFormName(category.name);
       setFormNameAm(category.nameAm || "");
+      setFormNameKo(category.nameKo || "");
       setFormDescription(category.description || "");
       setFormDescriptionAm(category.descriptionAm || "");
+      setFormDescriptionKo(category.descriptionKo || "");
       setFormImageUrl(category.imageUrl || "");
       setFormParentId(category.parentId || "");
       setFormSortOrder(String(category.sortOrder));
@@ -76,8 +82,10 @@ export default function AdminCategoriesPage() {
       setEditingCategory(null);
       setFormName("");
       setFormNameAm("");
+      setFormNameKo("");
       setFormDescription("");
       setFormDescriptionAm("");
+      setFormDescriptionKo("");
       setFormImageUrl("");
       setFormParentId("");
       setFormSortOrder("0");
@@ -122,8 +130,10 @@ export default function AdminCategoriesPage() {
       const body = {
         name: formName,
         nameAm: formNameAm || undefined,
+        nameKo: formNameKo || undefined,
         description: formDescription || undefined,
         descriptionAm: formDescriptionAm || undefined,
+        descriptionKo: formDescriptionKo || undefined,
         imageUrl: formImageUrl || undefined,
         parentId: formParentId || undefined,
         sortOrder: parseInt(formSortOrder) || 0,
@@ -165,7 +175,7 @@ export default function AdminCategoriesPage() {
     const out: Category[] = [];
     for (const cat of cats) {
       const children = cat.children ? filterCategories(cat.children, q) : [];
-      const hay = `${cat.name || ""} ${cat.nameAm || ""} ${cat.description || ""} ${cat.descriptionAm || ""}`.toLowerCase();
+      const hay = `${cat.name || ""} ${cat.nameAm || ""} ${cat.nameKo || ""} ${cat.description || ""} ${cat.descriptionAm || ""} ${cat.descriptionKo || ""}`.toLowerCase();
       if (hay.includes(term) || children.length > 0) {
         out.push({ ...cat, children });
       }
@@ -186,8 +196,8 @@ export default function AdminCategoriesPage() {
               </div>
             )}
             <div>
-              <p className="font-medium">{ln(cat.name, cat.nameAm)}</p>
-              <p className="text-sm text-muted-foreground">{ln(cat.description, cat.descriptionAm) || t("noDescription")}</p>
+              <p className="font-medium">{ln(cat.name, cat.nameAm, cat.nameKo)}</p>
+              <p className="text-sm text-muted-foreground">{ln(cat.description, cat.descriptionAm, cat.descriptionKo) || t("noDescription")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -267,12 +277,20 @@ export default function AdminCategoriesPage() {
                   <Input value={formNameAm} onChange={(e) => setFormNameAm(e.target.value)} placeholder={t("categoryNameAmPlaceholder")} />
                 </div>
                 <div className="space-y-2">
+                  <Label>{t("nameKorean")}</Label>
+                  <Input value={formNameKo} onChange={(e) => setFormNameKo(e.target.value)} placeholder={t("categoryNameKoPlaceholder")} />
+                </div>
+                <div className="space-y-2">
                   <Label>{t("descriptionLabel")}</Label>
                   <Textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder={t("categoryDescriptionPlaceholder")} rows={2} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t("descriptionAmLabel")}</Label>
                   <Textarea value={formDescriptionAm} onChange={(e) => setFormDescriptionAm(e.target.value)} placeholder={t("categoryDescriptionAmPlaceholder")} rows={2} />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("descriptionKoLabel")}</Label>
+                  <Textarea value={formDescriptionKo} onChange={(e) => setFormDescriptionKo(e.target.value)} placeholder={t("categoryDescriptionKoPlaceholder")} rows={2} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t("categoryImage")}</Label>
@@ -342,7 +360,7 @@ export default function AdminCategoriesPage() {
                     <select className="w-full p-2 border rounded text-sm" value={formParentId} onChange={(e) => setFormParentId(e.target.value)}>
                       <option value="">{t("noneRoot")}</option>
                       {categories.map((c) => (
-                        <option key={c._id} value={c._id}>{ln(c.name, c.nameAm)}</option>
+                        <option key={c._id} value={c._id}>{ln(c.name, c.nameAm, c.nameKo)}</option>
                       ))}
                     </select>
                   </div>

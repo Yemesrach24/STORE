@@ -4,7 +4,9 @@
       "Shell(npx tsc --noEmit)",
       "Shell(npm:*)",
       "Shell(npx eslint \"src/models/Item.ts\" \"src/app/api/items/route.ts\" \"src/app/api/items/[id]/route.ts\" \"src/app/api/shop/categories/route.ts\" \"src/app/api/telegram/webhook/route.ts\" \"src/app/api/orders/route.ts\" \"src/app/api/orders/[id]/route.ts\")",
-      "Shell(dir /b .env* 2>nul & echo --- & type next.config.js)"
+      "Shell(dir /b .env* 2>nul & echo --- & type next.config.js)",
+      "powershell",
+      "Shell(kill:*)"
     ],
     "deny": [],
     "defaultMode": "default"

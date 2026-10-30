@@ -48,9 +48,12 @@ interface Order {
   buyerClub?: string;
   itemName: string;
   itemNameAm?: string;
+  itemNameKo?: string;
   itemCategory: string;
   itemCategoryAm?: string;
+  itemCategoryKo?: string;
   itemColor?: string;
+  itemColorKo?: string;
   itemImage?: string;
   lineItems: LineItem[];
   totalPrice: number;
@@ -60,6 +63,7 @@ interface Order {
   orderDate: string;
   companyName?: string;
   companyNameAm?: string;
+  companyNameKo?: string;
   companyPhone?: string;
   companyWhatsapp?: string;
   createdAt: string;
@@ -279,7 +283,7 @@ export default function AdminOrdersPage() {
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="font-mono text-xs text-muted-foreground">{order.orderNumber}</p>
-                            <p className="font-medium text-sm">{ln(order.itemName, order.itemNameAm)}</p>
+                            <p className="font-medium text-sm">{ln(order.itemName, order.itemNameAm, order.itemNameKo)}</p>
                           </div>
                           {getStatusBadge(order.status)}
                         </div>
@@ -287,7 +291,7 @@ export default function AdminOrdersPage() {
                           <p>{t("buyer")}: {order.buyerName}</p>
                           {order.buyerPhone && <p>{t("phone")}: {order.buyerPhone}</p>}
                           {order.buyerClub && <p>{t("club")}: {order.buyerClub}</p>}
-                          {(order.companyName || order.companyNameAm) && <p>{t("company")}: {ln(order.companyName, order.companyNameAm)}</p>}
+                          {(order.companyName || order.companyNameAm || order.companyNameKo) && <p>{t("company")}: {ln(order.companyName, order.companyNameAm, order.companyNameKo)}</p>}
                           <p>{t("qty")}: {order.lineItems?.reduce((s: number, li: LineItem) => s + li.quantity, 0) ?? 0} — {t("total")}: Br {(order.totalPrice ?? 0).toLocaleString()}</p>
                           <p>{new Date(order.orderDate).toLocaleDateString(locale)}</p>
                         </div>
@@ -331,15 +335,15 @@ export default function AdminOrdersPage() {
                           <TableRow key={order._id}>
                             <TableCell className="font-mono text-sm">{order.orderNumber}</TableCell>
                             <TableCell>
-                              <p className="font-medium text-sm">{ln(order.itemName, order.itemNameAm)}</p>
-                              <p className="text-xs text-muted-foreground">{ln(order.itemCategory, order.itemCategoryAm)}</p>
+                              <p className="font-medium text-sm">{ln(order.itemName, order.itemNameAm, order.itemNameKo)}</p>
+                              <p className="text-xs text-muted-foreground">{ln(order.itemCategory, order.itemCategoryAm, order.itemCategoryKo)}</p>
                             </TableCell>
                             <TableCell>
                               <p className="font-medium text-sm">{order.buyerName}</p>
                               {order.buyerPhone && <p className="text-xs text-muted-foreground">{order.buyerPhone}</p>}
                               {order.buyerClub && <p className="text-xs text-muted-foreground">{order.buyerClub}</p>}
                             </TableCell>
-                            <TableCell className="text-sm">{ln(order.companyName, order.companyNameAm) || "—"}</TableCell>
+                            <TableCell className="text-sm">{ln(order.companyName, order.companyNameAm, order.companyNameKo) || "—"}</TableCell>
                             <TableCell>{order.lineItems?.reduce((s: number, li: LineItem) => s + li.quantity, 0) ?? 0}</TableCell>
                             <TableCell className="font-medium">Br {(order.totalPrice ?? 0).toLocaleString()}</TableCell>
                             <TableCell>{getStatusBadge(order.status)}</TableCell>
@@ -408,9 +412,9 @@ export default function AdminOrdersPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="font-medium text-muted-foreground text-xs">{t("item")}</p>
-                      <p className="font-medium">{ln(selectedOrder.itemName, selectedOrder.itemNameAm)}</p>
-                      <p className="text-muted-foreground">{ln(selectedOrder.itemCategory, selectedOrder.itemCategoryAm)}</p>
-                      {selectedOrder.itemColor && <p>{t("color")}: {selectedOrder.itemColor}</p>}
+                      <p className="font-medium">{ln(selectedOrder.itemName, selectedOrder.itemNameAm, selectedOrder.itemNameKo)}</p>
+                      <p className="text-muted-foreground">{ln(selectedOrder.itemCategory, selectedOrder.itemCategoryAm, selectedOrder.itemCategoryKo)}</p>
+                      {selectedOrder.itemColor && <p>{t("color")}: {ln(selectedOrder.itemColor, undefined, selectedOrder.itemColorKo)}</p>}
                     </div>
                     <div>
                       <p className="font-medium text-muted-foreground text-xs">{t("buyer")}</p>
@@ -420,10 +424,10 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  {(selectedOrder.companyName || selectedOrder.companyNameAm) && (
+                  {(selectedOrder.companyName || selectedOrder.companyNameAm || selectedOrder.companyNameKo) && (
                     <div className="text-sm">
                       <p className="font-medium text-muted-foreground text-xs">{t("company")}</p>
-                      <p>{ln(selectedOrder.companyName, selectedOrder.companyNameAm)}</p>
+                      <p>{ln(selectedOrder.companyName, selectedOrder.companyNameAm, selectedOrder.companyNameKo)}</p>
                     </div>
                   )}
 

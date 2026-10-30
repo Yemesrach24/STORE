@@ -19,8 +19,10 @@ interface Category {
   _id: string;
   name: string;
   nameAm?: string;
+  nameKo?: string;
   description?: string;
   descriptionAm?: string;
+  descriptionKo?: string;
   imageUrl?: string;
   itemCount?: number;
 }
@@ -29,18 +31,21 @@ interface Item {
   _id: string;
   name: string;
   nameAm?: string;
+  nameKo?: string;
   description: string;
   descriptionAm?: string;
+  descriptionKo?: string;
   uniqueNumber: string;
   imageUrl?: string;
   imageUrls?: string[];
-  categoryId: { _id: string; name: string; nameAm?: string; imageUrl?: string };
+  categoryId: { _id: string; name: string; nameAm?: string; nameKo?: string; imageUrl?: string };
   color?: string;
   local?: { enabled: boolean; basePrice: number | string };
   imported?: { enabled: boolean; basePrice: number | string };
   tags?: string[];
   supplier?: string;
   supplierAm?: string;
+  supplierKo?: string;
 }
 
 export default function ShopPage() {
@@ -240,7 +245,7 @@ export default function ShopPage() {
 
   const renderProductCard = (item: Item) => {
     const imgSrc = getItemImage(item);
-    const catName = item.categoryId ? ln(item.categoryId.name, item.categoryId.nameAm) : t("uncategorized");
+    const catName = item.categoryId ? ln(item.categoryId.name, item.categoryId.nameAm, item.categoryId.nameKo) : t("uncategorized");
     return (
       <Card
         key={item._id}
@@ -268,12 +273,12 @@ export default function ShopPage() {
         <CardContent className="p-3">
           {(item.supplier || item.supplierAm) && (
             <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider line-clamp-1 mb-0.5">
-              {ln(item.supplier, item.supplierAm)}
+              {ln(item.supplier, item.supplierAm, item.supplierKo)}
             </p>
           )}
           <Link href={`/shop/${item._id}`}>
             <h3 className="font-bold text-[13px] leading-snug text-stone-900 line-clamp-2 min-h-[2.4rem] hover:text-[var(--brand)] transition-colors">
-              {ln(item.name, item.nameAm)}
+              {ln(item.name, item.nameAm, item.nameKo)}
             </h3>
           </Link>
           <div className="flex items-end justify-between pt-2 mt-2 border-t border-stone-100">
@@ -298,7 +303,7 @@ export default function ShopPage() {
   const selectedCatName = selectedCategory
     ? (() => {
         const cat = categories.find((c) => c._id === selectedCategory);
-        return cat ? ln(cat.name, cat.nameAm) : t("allProductsTitle");
+        return cat ? ln(cat.name, cat.nameAm, cat.nameKo) : t("allProductsTitle");
       })()
     : t("allProductsTitle");
 
@@ -386,7 +391,7 @@ export default function ShopPage() {
                 </div>
                 <div className="p-2.5 flex items-center justify-between gap-1">
                   <div className="min-w-0">
-                    <p className="text-xs font-bold truncate">{ln(cat.name, cat.nameAm)}</p>
+                    <p className="text-xs font-bold truncate">{ln(cat.name, cat.nameAm, cat.nameKo)}</p>
                     <p className="text-[10px] text-stone-400 truncate">{t("itemsCount", { count: cat.itemCount || 0 })}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-stone-300 shrink-0" />
@@ -412,7 +417,7 @@ export default function ShopPage() {
                       <span className="text-xs font-bold text-stone-400">{cat.name.charAt(0)}</span>
                     )}
                   </span>
-                  <span className="text-xs font-semibold max-w-[8rem] truncate">{ln(cat.name, cat.nameAm)}</span>
+                  <span className="text-xs font-semibold max-w-[8rem] truncate">{ln(cat.name, cat.nameAm, cat.nameKo)}</span>
                 </button>
               ))}
             </div>
@@ -579,7 +584,7 @@ export default function ShopPage() {
             <div>
               <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3">{t("supportFooter")}</h4>
               <ul className="space-y-2 text-xs text-stone-400">
-                <li>Telegram: @tkd_equp_bot</li>
+                <li>Telegram: @{process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "K_Force_Ethiopia_store"}</li>
                 <li>info@kforceethiopia.com</li>
                 <li>{t("addisAbaba")}</li>
               </ul>

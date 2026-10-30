@@ -24,12 +24,16 @@ export async function GET(request: NextRequest) {
       query.$or = [
         { name: { $regex: escaped, $options: 'i' } },
         { nameAm: { $regex: escaped, $options: 'i' } },
+        { nameKo: { $regex: escaped, $options: 'i' } },
         { description: { $regex: escaped, $options: 'i' } },
         { descriptionAm: { $regex: escaped, $options: 'i' } },
+        { descriptionKo: { $regex: escaped, $options: 'i' } },
         { color: { $regex: escaped, $options: 'i' } },
         { colorAm: { $regex: escaped, $options: 'i' } },
+        { colorKo: { $regex: escaped, $options: 'i' } },
         { tags: { $regex: escaped, $options: 'i' } },
         { tagsAm: { $regex: escaped, $options: 'i' } },
+        { tagsKo: { $regex: escaped, $options: 'i' } },
       ];
     }
     if (minPrice || maxPrice) {
@@ -50,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     const [items, total] = await Promise.all([
       Item.find(query)
-        .populate('categoryId', 'name nameAm imageUrl')
+        .populate('categoryId', 'name nameAm nameKo imageUrl')
         .sort(sortOption)
         .skip(skip)
         .limit(limit)

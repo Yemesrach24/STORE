@@ -50,6 +50,7 @@ interface CategoryOption {
   _id: string;
   name: string;
   nameAm?: string;
+  nameKo?: string;
 }
 
 export default function AdminInventoryPage() {
@@ -239,7 +240,7 @@ export default function AdminInventoryPage() {
                       <SelectItem value="all">{t("allCategories")}</SelectItem>
                       {categories.map((cat) => (
                         <SelectItem key={cat._id} value={cat._id}>
-                          {ln(cat.name, cat.nameAm)}
+                          {ln(cat.name, cat.nameAm, cat.nameKo)}
                         </SelectItem>
                       ))}
                     </SelectContent>
